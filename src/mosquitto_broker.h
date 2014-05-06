@@ -420,4 +420,11 @@ void service_uninstall(void);
 void service_run(void);
 #endif
 
+/* ============================================================
+ * Websockets related functions
+ * ============================================================ */
+#ifdef WITH_WEBSOCKETS
+struct libwebsocket_context *mosq_websockets_init(int port);
+#endif
+
 #endif

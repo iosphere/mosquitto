@@ -97,7 +97,12 @@ int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 	assert(mosq);
 	assert(topic);
 
+#if defined(WITH_BROKER) && defined(WITH_WEBSOCKETS)
+	if(mosq->sock == INVALID_SOCKET && !mosq->wsi) return MOSQ_ERR_NO_CONN;
+#else
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+#endif
+
 #ifdef WITH_BROKER
 	if(mosq->listener && mosq->listener->mount_point){
 		len = strlen(mosq->listener->mount_point);

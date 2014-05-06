@@ -65,6 +65,9 @@ Contributors:
    extern unsigned long g_pub_msgs_received;
    extern unsigned long g_pub_msgs_sent;
 #  endif
+#  ifdef WITH_WEBSOCKETS
+#    include <libwebsockets.h>
+#  endif
 #else
 #  include <read_handle.h>
 #endif
@@ -155,7 +158,16 @@ int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *pa
 	mosq->out_packet_last = packet;
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
 #ifdef WITH_BROKER
+#  ifdef WITH_WEBSOCKETS
+	if(mosq->wsi){
+		libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
+		return 0;
+	}else{
+		return _mosquitto_packet_write(mosq);
+	}
+#  else
 	return _mosquitto_packet_write(mosq);
+#  endif
 #else
 
 	/* Write a single byte to sockpairW (connected to sockpairR) to break out

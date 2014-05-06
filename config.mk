@@ -70,6 +70,9 @@ WITH_PYTHON:=yes
 # Build with SRV lookup support.
 WITH_SRV:=yes
 
+# Build with websockets support on the broker.
+WITH_WEBSOCKETS:=yes
+
 # Use elliptic keys in broker
 WITH_EC:=yes
 
@@ -210,6 +213,11 @@ endif
 ifeq ($(WITH_SRV),yes)
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SRV
 	LIB_LIBS:=$(LIB_LIBS) -lcares
+endif
+
+ifeq ($(WITH_WEBSOCKETS),yes)
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_WEBSOCKETS
+	BROKER_LIBS:=$(BROKER_LIBS) -lwebsockets
 endif
 
 ifeq ($(UNAME),SunOS)

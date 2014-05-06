@@ -32,6 +32,10 @@ Contributors:
 #include <stdio.h>
 #include <string.h>
 
+#ifdef WITH_WEBSOCKETS
+#  include <libwebsockets.h>
+#endif
+
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 #include <time_mosq.h>
@@ -69,10 +73,17 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	int bridge_sock;
 	int rc;
 #endif
+#ifdef WITH_WEBSOCKETS
+	struct libwebsocket_context *ws_context;
+#endif
 
 #ifndef WIN32
 	sigemptyset(&sigblock);
 	sigaddset(&sigblock, SIGINT);
+#endif
+
+#ifdef WITH_WEBSOCKETS
+	ws_context = mosq_websockets_init(8080);
 #endif
 
 	while(run){
@@ -287,7 +298,13 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			mqtt3_sub_tree_print(&db->subs, 0);
 			flag_tree_print = false;
 		}
+#ifdef WITH_WEBSOCKETS
+		libwebsocket_service(ws_context, 0);
+#endif
 	}
+#ifdef WITH_WEBSOCKETS
+	libwebsocket_context_destroy(ws_context);
+#endif
 
 	if(pollfds) _mosquitto_free(pollfds);
 	return MOSQ_ERR_SUCCESS;
