@@ -1,0 +1,57 @@
+These people have reported bugs / provided patches / done something else to aid
+the mosquitto project. Thanks to you all!
+
+If you think I've missed you off the list, please rest assured that it wasn't
+intentional and get in touch and I'll fix it.
+
+Adam Rudd
+Andrew Elwell
+Andy Piper
+Andy Stanford-Clark
+Bart Van Der Meerssche
+Ben Tobin
+Brad Stancel
+Chris Willing
+Craig Hollabaugh
+Dan Anderson
+Dariusz Suchojad
+David Huang
+David Monro
+Dirk O. Kaar	
+Dominik Obermaier
+Dominik Zajac
+Ed Morris
+Frank Hansen
+Gary Koh
+Joan Zapata
+Karl Palsson
+Larry Lendo
+Martin Assarsson
+Marty Lee
+Matt Daubney
+Michael C
+Michael Frisch
+Michael Rushton
+Mike Bush
+Neil Bothwick
+Nicholas Humfrey
+Nicholas O'Leary
+Nithin Kumar
+Paul Diston
+Peter George
+Rob Pridham
+Robin Gingras
+Roland de Boo
+Sebastian Kroll
+Sharon Ben-Asher
+sskaje
+Stefan Hudelmaier
+Stefano Costa
+Stephen Woods
+Steven Lougheed
+Thomas Hilbig
+Tobias Assarsson
+Toby Jaffey
+Vicente Ruiz
+Wayne Ingram
+Yuvraaj Kelkar
