@@ -216,6 +216,16 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 
 	while(spos < slen && tpos < tlen){
 		if(sub[spos] == topic[tpos]){
+			if(tpos == tlen-1){
+				/* Check for e.g. foo matching foo/# */
+				if(spos == slen-3 
+						&& sub[spos+1] == '/'
+						&& sub[spos+2] == '#'){
+					*result = true;
+					multilevel_wildcard = true;
+					return MOSQ_ERR_SUCCESS;
+				}
+			}
 			spos++;
 			tpos++;
 			if(spos == slen && tpos == tlen){
@@ -247,16 +257,6 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 				}
 			}else{
 				*result = false;
-				return MOSQ_ERR_SUCCESS;
-			}
-		}
-		if(tpos == tlen-1){
-			/* Check for e.g. foo matching foo/# */
-			if(spos == slen-3 
-					&& sub[spos+1] == '/'
-					&& sub[spos+2] == '#'){
-				*result = true;
-				multilevel_wildcard = true;
 				return MOSQ_ERR_SUCCESS;
 			}
 		}
