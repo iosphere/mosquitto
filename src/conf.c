@@ -250,6 +250,8 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
 			if(config->bridges[i].clientid) _mosquitto_free(config->bridges[i].clientid);
 			if(config->bridges[i].username) _mosquitto_free(config->bridges[i].username);
 			if(config->bridges[i].password) _mosquitto_free(config->bridges[i].password);
+			if(config->bridges[i].local_username) _mosquitto_free(config->bridges[i].local_username);
+			if(config->bridges[i].local_password) _mosquitto_free(config->bridges[i].local_password);
 			if(config->bridges[i].topics){
 				for(j=0; j<config->bridges[i].topic_count; j++){
 					if(config->bridges[i].topics[j].topic) _mosquitto_free(config->bridges[i].topics[j].topic);
@@ -1140,6 +1142,54 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty listener value in configuration.");
 						return MOSQ_ERR_INVAL;
 					}
+				}else if(!strcmp(token, "local_password")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(cur_bridge->local_password){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate local_password value in bridge configuration.");
+							return MOSQ_ERR_INVAL;
+						}
+						cur_bridge->local_password = _mosquitto_strdup(token);
+						if(!cur_bridge->local_password){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							return MOSQ_ERR_NOMEM;
+						}
+					}else{
+						cur_bridge->local_password = NULL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
+				}else if(!strcmp(token, "local_username")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(cur_bridge->local_username){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate local_username value in bridge configuration.");
+							return MOSQ_ERR_INVAL;
+						}
+						cur_bridge->local_username = _mosquitto_strdup(token);
+						if(!cur_bridge->local_username){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							return MOSQ_ERR_NOMEM;
+						}
+					}else{
+						cur_bridge->local_username = NULL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
 				}else if(!strcmp(token, "log_dest")){
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
