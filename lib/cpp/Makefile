@@ -10,7 +10,7 @@ all : libmosquittopp.so.${SOVERSION}
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/
-	$(INSTALL) -s libmosquittopp.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquittopp.so.${SOVERSION}
+	$(INSTALL) -s --strip-program=$(STRIP) libmosquittopp.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquittopp.so.${SOVERSION}
 	ln -sf libmosquittopp.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquittopp.so
 	$(INSTALL) -d ${DESTDIR}${prefix}/include/
 	$(INSTALL) mosquittopp.h ${DESTDIR}${prefix}/include/mosquittopp.h
