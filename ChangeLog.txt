@@ -5,8 +5,8 @@ Broker:
 - Ensure that bridges verify certificates by default when using TLS.
 - Fix possible crash when using pattern ACLs that do not include a %u and
   clients that connect without a username.
-
-
+- Fix subscriptions being deleted when clients subscribed to a topic beginning
+  with a $ but that is not $SYS.
 
 Client library:
 - Fix topic matching edge case.

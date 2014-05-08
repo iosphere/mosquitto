@@ -377,7 +377,6 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
-		child->next = NULL;
 		child->topic = _mosquitto_strdup(tokens->topic);
 		if(!child->topic){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
@@ -386,6 +385,11 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 		child->subs = NULL;
 		child->children = NULL;
 		child->retained = NULL;
+		if(db->subs.children){
+			child->next = db->subs.children;
+		}else{
+			child->next = NULL;
+		}
 		db->subs.children = child;
 
 		rc = _sub_add(db, context, qos, child, tokens);
