@@ -12,8 +12,9 @@ http://www.ibm.com/developerworks/webservices/library/ws-mqtt/index.html
 Mosquitto project information is available at the following locations:
 
 http://mosquitto.org/ (main homepage)
-http://launchpad.net/mosquitto (bug tracking, translations)
-http://bitbucket.org/oojah/mosquitto (hg source code repository)
+https://bugs.eclipse.org/bugs/buglist.cgi?product=Mosquitto (Find bugs)
+https://bugs.eclipse.org/bugs/enter_bug.cgi?product=Mosquitto (Submit bugs)
+http://git.eclipse.org/c/mosquitto/org.eclipse.mosquitto.git/ (source code repository, web interface
 
 There is also a public test server available at http://test.mosquitto.org/
 
