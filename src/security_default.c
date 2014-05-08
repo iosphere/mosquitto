@@ -165,6 +165,7 @@ int _add_acl_pattern(struct mosquitto_db *db, const char *topic, int access)
 {
 	struct _mosquitto_acl *acl, *acl_tail;
 	char *local_topic;
+	char *s;
 
 	if(!db || !topic) return MOSQ_ERR_INVAL;
 
@@ -178,6 +179,26 @@ int _add_acl_pattern(struct mosquitto_db *db, const char *topic, int access)
 	acl->access = access;
 	acl->topic = local_topic;
 	acl->next = NULL;
+
+	acl->ccount = 0;
+	s = local_topic;
+	while(s){
+		s = strstr(s, "%c");
+		if(s){
+			acl->ccount++;
+			s+=2;
+		}
+	}
+
+	acl->ccount = 0;
+	s = local_topic;
+	while(s){
+		s = strstr(s, "%u");
+		if(s){
+			acl->ucount++;
+			s+=2;
+		}
+	}
 
 	if(db->acl_patterns){
 		acl_tail = db->acl_patterns;
@@ -199,7 +220,6 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 	bool result;
 	int i;
 	int len, tlen, clen, ulen;
-	int ccount, ucount;
 	char *s;
 
 	if(!db || !context || !topic) return MOSQ_ERR_INVAL;
@@ -238,32 +258,17 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 	while(acl_root){
 		tlen = strlen(acl_root->topic);
 
-		ccount = 0;
-		s = acl_root->topic;
-		while(s){
-			s = strstr(s, "%c");
-			if(s){
-				ccount++;
-				s+=2;
-			}
-		}
-
-		ucount = 0;
-		s = acl_root->topic;
-		while(s){
-			s = strstr(s, "%u");
-			if(s){
-				ucount++;
-				s+=2;
-			}
-		}
-
-		if(ucount && !context->username){
+		if(acl_root->ucount && !context->username){
 			continue;
 		}
 
-		ulen = strlen(context->username);
-		len = tlen + ccount*(clen-2) + ucount*(ulen-2);
+		if(context->username){
+			ulen = strlen(context->username);
+			len = tlen + acl_root->ccount*(clen-2) + acl_root->ucount*(ulen-2);
+		}else{
+			ulen = 0;
+			len = tlen + acl_root->ccount*(clen-2);
+		}
 		local_acl = malloc(len+1);
 		if(!local_acl) return 1; // FIXME
 		s = local_acl;
@@ -274,7 +279,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 					strncpy(s, context->id, clen);
 					s+=clen;
 					continue;
-				}else if(acl_root->topic[i+1] == 'u'){
+				}else if(context->username && acl_root->topic[i+1] == 'u'){
 					i++;
 					strncpy(s, context->username, ulen);
 					s+=ulen;

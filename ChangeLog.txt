@@ -3,6 +3,10 @@
 
 Broker:
 - Ensure that bridges verify certificates by default when using TLS.
+- Fix possible crash when using pattern ACLs that do not include a %u and
+  clients that connect without a username.
+
+
 
 Client library:
 - Fix topic matching edge case.

@@ -164,6 +164,8 @@ struct _mosquitto_acl{
 	struct _mosquitto_acl *next;
 	char *topic;
 	int access;
+	int ucount;
+	int ccount;
 };
 
 struct _mosquitto_acl_user{
