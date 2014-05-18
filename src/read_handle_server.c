@@ -384,7 +384,11 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		db->contexts[i]->clean_session = clean_session;
 		mqtt3_context_cleanup(db, db->contexts[i], false);
 		db->contexts[i]->state = mosq_cs_connected;
-		db->contexts[i]->address = _mosquitto_strdup(context->address);
+		if(context->address){
+			db->contexts[i]->address = _mosquitto_strdup(context->address);
+		}else{
+			db->contexts[i]->address = NULL;
+		}
 		db->contexts[i]->sock = context->sock;
 		db->contexts[i]->listener = context->listener;
 		db->contexts[i]->last_msg_in = mosquitto_time();
