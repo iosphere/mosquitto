@@ -127,8 +127,6 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			mosq = u->mosq;
-			pthread_mutex_lock(&mosq->current_out_packet_mutex);
-			pthread_mutex_lock(&mosq->out_packet_mutex);
 			if(mosq->out_packet && !mosq->current_out_packet){
 				mosq->current_out_packet = mosq->out_packet;
 				mosq->out_packet = mosq->out_packet->next;
@@ -136,7 +134,6 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					mosq->out_packet_last = NULL;
 				}
 			}
-			pthread_mutex_unlock(&mosq->out_packet_mutex);
 
 			while(mosq->current_out_packet){
 				packet = mosq->current_out_packet;
@@ -158,12 +155,10 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				packet->to_process -= count;
 				packet->pos += count;
 				if(packet->to_process > 0){
-					pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 					break;
 				}
 
 				/* Free data and reset values */
-				pthread_mutex_lock(&mosq->out_packet_mutex);
 				mosq->current_out_packet = mosq->out_packet;
 				if(mosq->out_packet){
 					mosq->out_packet = mosq->out_packet->next;
@@ -171,16 +166,12 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						mosq->out_packet_last = NULL;
 					}
 				}
-				pthread_mutex_unlock(&mosq->out_packet_mutex);
 
 				_mosquitto_packet_cleanup(packet);
 				_mosquitto_free(packet);
 
-				pthread_mutex_lock(&mosq->msgtime_mutex);
 				mosq->last_msg_out = mosquitto_time();
-				pthread_mutex_unlock(&mosq->msgtime_mutex);
 			}
-			pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 			break;
 
 		case LWS_CALLBACK_RECEIVE:
@@ -253,9 +244,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				/* Free data and reset values */
 				_mosquitto_packet_cleanup(&mosq->in_packet);
 
-				pthread_mutex_lock(&mosq->msgtime_mutex);
 				mosq->last_msg_in = mosquitto_time();
-				pthread_mutex_unlock(&mosq->msgtime_mutex);
 
 				if(rc){
 					if(db->config->connection_messages == true){
