@@ -151,6 +151,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					packet->pos += LWS_SEND_BUFFER_PRE_PADDING;
 				}
 				count = libwebsocket_write(wsi, &packet->payload[packet->pos], packet->to_process, LWS_WRITE_BINARY);
+				if(count < 0){
+					return 0;
+				}
 				packet->to_process -= count;
 				packet->pos += count;
 				if(packet->to_process > 0){

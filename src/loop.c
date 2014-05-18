@@ -74,7 +74,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	int rc;
 #endif
 #ifdef WITH_WEBSOCKETS
-	struct libwebsocket_context *ws_context;
+	struct libwebsocket_context *ws_context = NULL;
 #endif
 
 #ifndef WIN32
