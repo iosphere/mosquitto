@@ -177,6 +177,7 @@ void mqtt3_config_init(struct mqtt3_config *config)
 	config->default_listener.socks = NULL;
 	config->default_listener.sock_count = 0;
 	config->default_listener.client_count = 0;
+	config->default_listener.protocol = mp_mqtt;
 #ifdef WITH_TLS
 	config->default_listener.tls_version = NULL;
 	config->default_listener.cafile = NULL;
@@ -373,7 +374,8 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 			|| config->default_listener.host
 			|| config->default_listener.port
 			|| config->default_listener.max_connections != -1
-			|| config->default_listener.mount_point){
+			|| config->default_listener.mount_point
+			|| config->default_listener.protocol != mp_mqtt){
 
 		config->listener_count++;
 		config->listeners = _mosquitto_realloc(config->listeners, sizeof(struct _mqtt3_listener)*config->listener_count);
@@ -397,6 +399,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 			config->listeners[config->listener_count-1].mount_point = NULL;
 		}
 		config->listeners[config->listener_count-1].max_connections = config->default_listener.max_connections;
+		config->listeners[config->listener_count-1].protocol = config->default_listener.protocol;
 		config->listeners[config->listener_count-1].client_count = 0;
 		config->listeners[config->listener_count-1].socks = NULL;
 		config->listeners[config->listener_count-1].sock_count = 0;
@@ -1129,6 +1132,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						}
 						cur_listener = &config->listeners[config->listener_count-1];
 						memset(cur_listener, 0, sizeof(struct _mqtt3_listener));
+						cur_listener->protocol = mp_mqtt;
 						cur_listener->port = port_tmp;
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
@@ -1375,6 +1379,28 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 						return MOSQ_ERR_INVAL;
 					}
 					config->default_listener.port = port_tmp;
+				}else if(!strcmp(token, "protocol")){
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(!strcmp(token, "mqtt")){
+							cur_listener->protocol = mp_mqtt;
+						/*
+						}else if(!strcmp(token, "mqttsn")){
+							cur_listener->protocol = mp_mqttsn;
+						*/
+						}else if(!strcmp(token, "websockets")){
+#ifdef WITH_WEBSOCKETS
+							cur_listener->protocol = mp_websockets;
+#else
+							_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Websockets support not available.");
+#endif
+						}else{
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid protocol value (%s).", token);
+							return MOSQ_ERR_INVAL;
+						}
+					}else{
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty protocol value in configuration.");
+					}
 				}else if(!strcmp(token, "psk_file")){
 #ifdef REAL_WITH_TLS_PSK
 					if(reload){

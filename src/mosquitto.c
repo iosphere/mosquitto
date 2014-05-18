@@ -259,26 +259,8 @@ int main(int argc, char *argv[])
 	listener_max = -1;
 	listensock_index = 0;
 	for(i=0; i<config.listener_count; i++){
-		if(mqtt3_socket_listen(&config.listeners[i])){
-			_mosquitto_free(int_db.contexts);
-			mqtt3_db_close(&int_db);
-			if(config.pid_file){
-				remove(config.pid_file);
-			}
-			return 1;
-		}
-		listensock_count += config.listeners[i].sock_count;
-		listensock = _mosquitto_realloc(listensock, sizeof(int)*listensock_count);
-		if(!listensock){
-			_mosquitto_free(int_db.contexts);
-			mqtt3_db_close(&int_db);
-			if(config.pid_file){
-				remove(config.pid_file);
-			}
-			return 1;
-		}
-		for(j=0; j<config.listeners[i].sock_count; j++){
-			if(config.listeners[i].socks[j] == INVALID_SOCKET){
+		if(config.listeners[i].protocol == mp_mqtt){
+			if(mqtt3_socket_listen(&config.listeners[i])){
 				_mosquitto_free(int_db.contexts);
 				mqtt3_db_close(&int_db);
 				if(config.pid_file){
@@ -286,11 +268,35 @@ int main(int argc, char *argv[])
 				}
 				return 1;
 			}
-			listensock[listensock_index] = config.listeners[i].socks[j];
-			if(listensock[listensock_index] > listener_max){
-				listener_max = listensock[listensock_index];
+			listensock_count += config.listeners[i].sock_count;
+			listensock = _mosquitto_realloc(listensock, sizeof(int)*listensock_count);
+			if(!listensock){
+				_mosquitto_free(int_db.contexts);
+				mqtt3_db_close(&int_db);
+				if(config.pid_file){
+					remove(config.pid_file);
+				}
+				return 1;
 			}
-			listensock_index++;
+			for(j=0; j<config.listeners[i].sock_count; j++){
+				if(config.listeners[i].socks[j] == INVALID_SOCKET){
+					_mosquitto_free(int_db.contexts);
+					mqtt3_db_close(&int_db);
+					if(config.pid_file){
+						remove(config.pid_file);
+					}
+					return 1;
+				}
+				listensock[listensock_index] = config.listeners[i].socks[j];
+				if(listensock[listensock_index] > listener_max){
+					listener_max = listensock[listensock_index];
+				}
+				listensock_index++;
+			}
+		}else if(config.listeners[i].protocol == mp_websockets){
+#ifdef WITH_WEBSOCKETS
+			config.listeners[i].ws_context = mosq_websockets_init(config.listeners[i].port);
+#endif
 		}
 	}
 
