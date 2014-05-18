@@ -193,7 +193,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				if(!mosq->in_packet.have_remaining){
 					do{
 						if(pos == len){
-							break;
+							return 0;
 						}
 						byte = buf[pos];
 						pos++;
