@@ -85,6 +85,7 @@ static struct libwebsocket_protocols protocols[] = {
 		callback_mqtt,
 		sizeof(struct libws_mqtt_data),
 		0,
+		1,
 	},
 	{ NULL, NULL, 0, 0 }
 };
