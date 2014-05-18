@@ -903,6 +903,22 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>local_password</option> <replaceable>password</replaceable></term>
+				<listitem>
+					<para>Configure the password to be used when connecting
+						this bridge to the local broker. This may be important
+						when authentication and ACLs are being used.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>local_username</option> <replaceable>username</replaceable></term>
+				<listitem>
+					<para>Configure the username to be used when connecting
+						this bridge to the local broker. This may be important
+						when authentication and ACLs are being used.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>notifications</option> [ true | false ]</term>
 				<listitem>
 					<para>If set to <replaceable>true</replaceable>, publish
