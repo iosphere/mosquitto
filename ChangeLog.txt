@@ -20,6 +20,7 @@ Client library:
 - Fix topic matching edge case.
 - Fix callback deadlocks after calling mosquitto_disconnect(), when using the
   threaded interfaces. Closes bug #1313725.
+- Fix SRV support when building with CMake.
 
 General:
 - Use $(STRIP) for stripping binaries when installing, to allow easier cross

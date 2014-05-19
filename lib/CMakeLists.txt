@@ -50,8 +50,8 @@ if (WIN32)
 	set (LIBRARIES ${LIBRARIES} ws2_32)
 endif (WIN32)
 
-option(WITH_SRV "Include SRV lookup support?" ON)
 if (${WITH_SRV} STREQUAL ON)
+	add_definitions("-DWITH_SRV")
 	set (LIBRARIES ${LIBRARIES} cares)
 endif (${WITH_SRV} STREQUAL ON)
 
