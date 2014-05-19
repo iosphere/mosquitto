@@ -201,7 +201,11 @@ void print_usage(void)
 	printf("mosquitto_pub is a simple mqtt client that will publish a message on a single topic and exit.\n");
 	printf("mosquitto_pub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_pub [-h host] [-p port] [-q qos] [-r] {-f file | -l | -n | -m message} -t topic\n");
+#ifdef WITH_SRV
 	printf("                     [-A bind_address] [-S]\n");
+#else
+	printf("                     [-A bind_address]\n");
+#endif
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [--quiet]\n");
 	printf("                     [-M max_inflight]\n");
@@ -231,7 +235,9 @@ void print_usage(void)
 	printf(" -q : quality of service level to use for all messages. Defaults to 0.\n");
 	printf(" -r : message should be retained.\n");
 	printf(" -s : read message from stdin, sending the entire input as a message.\n");
+#ifdef WITH_SRV
 	printf(" -S : use SRV lookups to determine which host to connect to.\n");
+#endif
 	printf(" -t : mqtt topic to publish to.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
 	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");

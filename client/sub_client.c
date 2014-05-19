@@ -127,7 +127,11 @@ void print_usage(void)
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] -t topic ...\n");
 	printf("                     [-1] [-T filter_out]\n");
+#ifdef WITH_SRV
 	printf("                     [-A bind_address] [-S]\n");
+#else
+	printf("                     [-A bind_address]\n");
+#endif
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [-N] [--quiet] [-v]\n");
 	printf("                     [-u username [-P password]]\n");
@@ -154,7 +158,9 @@ void print_usage(void)
 	printf(" -p : network port to connect to. Defaults to 1883.\n");
 	printf(" -q : quality of service level to use for the subscription. Defaults to 0.\n");
 	printf(" -R : do not print stale messages (those with retain set).\n");
+#ifdef WITH_SRV
 	printf(" -S : use SRV lookups to determine which host to connect to.\n");
+#endif
 	printf(" -t : mqtt topic to subscribe to. May be repeated multiple times.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
 	printf(" -v : print published messages verbosely.\n");
