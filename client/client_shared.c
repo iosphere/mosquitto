@@ -184,6 +184,12 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 			}
 			i++;
+		}else if(!strcmp(argv[i], "-1") || !strcmp(argv[i], "--oneshot")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}else{
+				cfg->oneshot = true;
+			}
 		}else if(!strcmp(argv[i], "-A")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -A argument given but no address specified.\n\n");

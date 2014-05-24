@@ -30,11 +30,15 @@ Contributors:
 #include <mosquitto.h>
 #include "client_shared.h"
 
+bool process_messages = true;
+
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
 	struct mosq_config *cfg;
 	int i;
 	bool res;
+
+	if(process_messages == false) return;
 
 	assert(obj);
 	cfg = (struct mosq_config *)obj;
@@ -68,6 +72,10 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 			}
 			fflush(stdout);
 		}
+	}
+	if(cfg->oneshot){
+		process_messages = false;
+		mosquitto_disconnect(mosq);
 	}
 }
 
@@ -118,7 +126,7 @@ void print_usage(void)
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] -t topic ...\n");
-	printf("                     [-T filter_out]\n");
+	printf("                     [-1] [-T filter_out]\n");
 	printf("                     [-A bind_address] [-S]\n");
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [-N] [--quiet] [-v]\n");
@@ -132,6 +140,7 @@ void print_usage(void)
 #endif
 #endif
 	printf("       mosquitto_sub --help\n\n");
+	printf(" -1 : disconnect and exit after receiving the first message.\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
@@ -229,6 +238,9 @@ int main(int argc, char *argv[])
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
 
+	if(cfg.oneshot && rc == MOSQ_ERR_NO_CONN){
+		rc = 0;
+	}
 	if(rc){
 		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
 	}
