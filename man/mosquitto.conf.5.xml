@@ -740,8 +740,9 @@
 							used for this listener. Possible values are
 							<replaceable>tlsv1.2</replaceable>,
 							<replaceable>tlsv1.1</replaceable> and
-							<replaceable>tlsv1</replaceable>. Defaults to
-							<replaceable>tlsv1.2</replaceable>.</para>
+							<replaceable>tlsv1</replaceable>. If left unset,
+							the default of allowing all of TLS v1.2, v1.1 and
+							v1.0 is used.</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>
@@ -800,8 +801,9 @@
 							used for this listener. Possible values are
 							<replaceable>tlsv1.2</replaceable>,
 							<replaceable>tlsv1.1</replaceable> and
-							<replaceable>tlsv1</replaceable>. Defaults to
-							<replaceable>tlsv1.2</replaceable>.</para>
+							<replaceable>tlsv1</replaceable>. If left unset,
+							the default of allowing all of TLS v1.2, v1.1 and
+							v1.0 is used.</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>
