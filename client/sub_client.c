@@ -28,50 +28,34 @@ Contributors:
 #endif
 
 #include <mosquitto.h>
-
-/* This struct is used to pass data to callbacks.
- * An instance "ud" is created in main() and populated, then passed to
- * mosquitto_new(). */
-struct userdata {
-	char **topics;
-	int topic_count;
-	int topic_qos;
-	char **filter_outs;
-	int filter_out_count;
-	char *username;
-	char *password;
-	int verbose;
-	bool quiet;
-	bool no_retain;
-	bool eol;
-};
+#include "client_shared.h"
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
-	struct userdata *ud;
+	struct mosq_config *cfg;
 	int i;
 	bool res;
 
 	assert(obj);
-	ud = (struct userdata *)obj;
+	cfg = (struct mosq_config *)obj;
 
-	if(message->retain && ud->no_retain) return;
-	if(ud->filter_outs){
-		for(i=0; i<ud->filter_out_count; i++){
-			mosquitto_topic_matches_sub(ud->filter_outs[i], message->topic, &res);
+	if(message->retain && cfg->no_retain) return;
+	if(cfg->filter_outs){
+		for(i=0; i<cfg->filter_out_count; i++){
+			mosquitto_topic_matches_sub(cfg->filter_outs[i], message->topic, &res);
 			if(res) return;
 		}
 	}
 
-	if(ud->verbose){
+	if(cfg->verbose){
 		if(message->payloadlen){
 			printf("%s ", message->topic);
 			fwrite(message->payload, 1, message->payloadlen, stdout);
-			if(ud->eol){
+			if(cfg->eol){
 				printf("\n");
 			}
 		}else{
-			if(ud->eol){
+			if(cfg->eol){
 				printf("%s (null)\n", message->topic);
 			}
 		}
@@ -79,7 +63,7 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 	}else{
 		if(message->payloadlen){
 			fwrite(message->payload, 1, message->payloadlen, stdout);
-			if(ud->eol){
+			if(cfg->eol){
 				printf("\n");
 			}
 			fflush(stdout);
@@ -90,17 +74,17 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 {
 	int i;
-	struct userdata *ud;
+	struct mosq_config *cfg;
 
 	assert(obj);
-	ud = (struct userdata *)obj;
+	cfg = (struct mosq_config *)obj;
 
 	if(!result){
-		for(i=0; i<ud->topic_count; i++){
-			mosquitto_subscribe(mosq, NULL, ud->topics[i], ud->topic_qos);
+		for(i=0; i<cfg->topic_count; i++){
+			mosquitto_subscribe(mosq, NULL, cfg->topics[i], cfg->topic_qos);
 		}
 	}else{
-		if(result && !ud->quiet){
+		if(result && !cfg->quiet){
 			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
 		}
 	}
@@ -109,16 +93,16 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
 	int i;
-	struct userdata *ud;
+	struct mosq_config *cfg;
 
 	assert(obj);
-	ud = (struct userdata *)obj;
+	cfg = (struct mosq_config *)obj;
 
-	if(!ud->quiet) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
+	if(!cfg->quiet) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
 	for(i=1; i<qos_count; i++){
-		if(!ud->quiet) printf(", %d", granted_qos[i]);
+		if(!cfg->quiet) printf(", %d", granted_qos[i]);
 	}
-	if(!ud->quiet) printf("\n");
+	if(!cfg->quiet) printf("\n");
 }
 
 void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
@@ -198,444 +182,47 @@ void print_usage(void)
 
 int main(int argc, char *argv[])
 {
-	char *id = NULL;
-	char *id_prefix = NULL;
-	int i;
-	char *host = "localhost";
-	int port = 1883;
-	char *bind_address = NULL;
-	int keepalive = 60;
-	bool clean_session = true;
-	bool debug = false;
+	struct mosq_config cfg;
 	struct mosquitto *mosq = NULL;
 	int rc;
-	char hostname[256];
-	char err[1024];
-	struct userdata ud;
-	int len;
 	
-	char *will_payload = NULL;
-	long will_payloadlen = 0;
-	int will_qos = 0;
-	bool will_retain = false;
-	char *will_topic = NULL;
-
-	bool insecure = false;
-	char *cafile = NULL;
-	char *capath = NULL;
-	char *certfile = NULL;
-	char *keyfile = NULL;
-	char *tls_version = NULL;
-
-	char *psk = NULL;
-	char *psk_identity = NULL;
-
-	char *ciphers = NULL;
-
-	bool use_srv = false;
-
-	memset(&ud, 0, sizeof(struct userdata));
-	ud.eol = true;
-
-	for(i=1; i<argc; i++){
-		if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -p argument given but no port specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				port = atoi(argv[i+1]);
-				if(port<1 || port>65535){
-					fprintf(stderr, "Error: Invalid port given: %d\n", port);
-					print_usage();
-					return 1;
-				}
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-A")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -A argument given but no address specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				bind_address = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "--disable-clean-session")){
-			clean_session = false;
-		}else if(!strcmp(argv[i], "--cafile")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --cafile argument given but no file specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				cafile = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--capath")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --capath argument given but no directory specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				capath = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--cert")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --cert argument given but no file specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				certfile = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--ciphers")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --ciphers argument given but no ciphers specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				ciphers = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
-			debug = true;
-		}else if(!strcmp(argv[i], "--help")){
-			print_usage();
-			return 0;
-		}else if(!strcmp(argv[i], "-h") || !strcmp(argv[i], "--host")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -h argument given but no host specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				host = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--insecure")){
-			insecure = true;
-		}else if(!strcmp(argv[i], "-i") || !strcmp(argv[i], "--id")){
-			if(id_prefix){
-				fprintf(stderr, "Error: -i and -I argument cannot be used together.\n\n");
-				print_usage();
-				return 1;
-			}
-			if(i==argc-1){
-				fprintf(stderr, "Error: -i argument given but no id specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				id = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-I") || !strcmp(argv[i], "--id-prefix")){
-			if(id){
-				fprintf(stderr, "Error: -i and -I argument cannot be used together.\n\n");
-				print_usage();
-				return 1;
-			}
-			if(i==argc-1){
-				fprintf(stderr, "Error: -I argument given but no id prefix specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				id_prefix = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-k") || !strcmp(argv[i], "--keepalive")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -k argument given but no keepalive specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				keepalive = atoi(argv[i+1]);
-				if(keepalive>65535){
-					fprintf(stderr, "Error: Invalid keepalive given: %d\n", keepalive);
-					print_usage();
-					return 1;
-				}
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--key")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --key argument given but no file specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				keyfile = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-N")){
-			ud.eol = false;
-		}else if(!strcmp(argv[i], "--psk")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --psk argument given but no key specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				psk = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--psk-identity")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --psk-identity argument given but no identity specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				psk_identity = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-q") || !strcmp(argv[i], "--qos")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -q argument given but no QoS specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				ud.topic_qos = atoi(argv[i+1]);
-				if(ud.topic_qos<0 || ud.topic_qos>2){
-					fprintf(stderr, "Error: Invalid QoS given: %d\n", ud.topic_qos);
-					print_usage();
-					return 1;
-				}
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--quiet")){
-			ud.quiet = true;
-		}else if(!strcmp(argv[i], "-R")){
-			ud.no_retain = true;
-		}else if(!strcmp(argv[i], "-S")){
-			use_srv = true;
-		}else if(!strcmp(argv[i], "-t") || !strcmp(argv[i], "--topic")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -t argument given but no topic specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				ud.topic_count++;
-				ud.topics = realloc(ud.topics, ud.topic_count*sizeof(char *));
-				ud.topics[ud.topic_count-1] = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-T") || !strcmp(argv[i], "--filter-out")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -T argument given but no topic filter specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				ud.filter_out_count++;
-				ud.filter_outs = realloc(ud.filter_outs, ud.filter_out_count*sizeof(char *));
-				ud.filter_outs[ud.filter_out_count-1] = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--tls-version")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --tls-version argument given but no version specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				tls_version = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -u argument given but no username specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				ud.username = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")){
-			ud.verbose = 1;
-		}else if(!strcmp(argv[i], "-P") || !strcmp(argv[i], "--pw")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -P argument given but no password specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				ud.password = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--will-payload")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --will-payload argument given but no will payload specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				will_payload = argv[i+1];
-				will_payloadlen = strlen(will_payload);
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--will-qos")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --will-qos argument given but no will QoS specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				will_qos = atoi(argv[i+1]);
-				if(will_qos < 0 || will_qos > 2){
-					fprintf(stderr, "Error: Invalid will QoS %d.\n\n", will_qos);
-					return 1;
-				}
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--will-retain")){
-			will_retain = true;
-		}else if(!strcmp(argv[i], "--will-topic")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --will-topic argument given but no will topic specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				will_topic = argv[i+1];
-			}
-			i++;
-		}else{
-			fprintf(stderr, "Error: Unknown option '%s'.\n",argv[i]);
-			print_usage();
-			return 1;
-		}
-	}
-
-	if(clean_session == false && (id_prefix || !id)){
-		if(!ud.quiet) fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
-		return 1;
-	}
-
-	if(ud.topic_count == 0){
-		fprintf(stderr, "Error: You must specify a topic to subscribe to.\n");
+	if(client_config_load(&cfg, CLIENT_SUB, argc, argv)){
 		print_usage();
-		return 1;
-	}
-	if(will_payload && !will_topic){
-		fprintf(stderr, "Error: Will payload given, but no will topic given.\n");
-		print_usage();
-		return 1;
-	}
-	if(will_retain && !will_topic){
-		fprintf(stderr, "Error: Will retain given, but no will topic given.\n");
-		print_usage();
-		return 1;
-	}
-	if(ud.password && !ud.username){
-		if(!ud.quiet) fprintf(stderr, "Warning: Not using password since username not set.\n");
-	}
-	if((certfile && !keyfile) || (keyfile && !certfile)){
-		fprintf(stderr, "Error: Both certfile and keyfile must be provided if one of them is.\n");
-		print_usage();
-		return 1;
-	}
-	if((cafile || capath) && psk){
-		if(!ud.quiet) fprintf(stderr, "Error: Only one of --psk or --cafile/--capath may be used at once.\n");
-		return 1;
-	}
-	if(psk && !psk_identity){
-		if(!ud.quiet) fprintf(stderr, "Error: --psk-identity required if --psk used.\n");
 		return 1;
 	}
 
 	mosquitto_lib_init();
 
-	if(id_prefix){
-		id = malloc(strlen(id_prefix)+10);
-		if(!id){
-			if(!ud.quiet) fprintf(stderr, "Error: Out of memory.\n");
-			mosquitto_lib_cleanup();
-			return 1;
-		}
-		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
-	}else if(!id){
-		hostname[0] = '\0';
-		gethostname(hostname, 256);
-		hostname[255] = '\0';
-		len = strlen("mosqsub/-") + 6 + strlen(hostname);
-		id = malloc(len);
-		if(!id){
-			if(!ud.quiet) fprintf(stderr, "Error: Out of memory.\n");
-			mosquitto_lib_cleanup();
-			return 1;
-		}
-		snprintf(id, len, "mosqsub/%d-%s", getpid(), hostname);
-		if(strlen(id) > MOSQ_MQTT_ID_MAX_LENGTH){
-			/* Enforce maximum client id length of 23 characters */
-			id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
-		}
+	if(client_id_generate(&cfg, "mosqsub")){
+		return 1;
 	}
 
-	mosq = mosquitto_new(id, clean_session, &ud);
+	mosq = mosquitto_new(cfg.id, cfg.clean_session, &cfg);
 	if(!mosq){
 		switch(errno){
 			case ENOMEM:
-				if(!ud.quiet) fprintf(stderr, "Error: Out of memory.\n");
+				if(!cfg.quiet) fprintf(stderr, "Error: Out of memory.\n");
 				break;
 			case EINVAL:
-				if(!ud.quiet) fprintf(stderr, "Error: Invalid id and/or clean_session.\n");
+				if(!cfg.quiet) fprintf(stderr, "Error: Invalid id and/or clean_session.\n");
 				break;
 		}
 		mosquitto_lib_cleanup();
 		return 1;
 	}
-	if(debug){
+	if(client_opts_set(mosq, &cfg)){
+		return 1;
+	}
+	if(cfg.debug){
 		mosquitto_log_callback_set(mosq, my_log_callback);
-	}
-	if(will_topic && mosquitto_will_set(mosq, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
-		if(!ud.quiet) fprintf(stderr, "Error: Problem setting will.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-	if(ud.username && mosquitto_username_pw_set(mosq, ud.username, ud.password)){
-		if(!ud.quiet) fprintf(stderr, "Error: Problem setting username and password.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-	if((cafile || capath) && mosquitto_tls_set(mosq, cafile, capath, certfile, keyfile, NULL)){
-		if(!ud.quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-	if(insecure && mosquitto_tls_insecure_set(mosq, true)){
-		if(!ud.quiet) fprintf(stderr, "Error: Problem setting TLS insecure option.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-	if(psk && mosquitto_tls_psk_set(mosq, psk, psk_identity, NULL)){
-		if(!ud.quiet) fprintf(stderr, "Error: Problem setting TLS-PSK options.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-	if(tls_version && mosquitto_tls_opts_set(mosq, 1, tls_version, ciphers)){
-		if(!ud.quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
-		mosquitto_lib_cleanup();
-		return 1;
+		mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 	}
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
 	mosquitto_message_callback_set(mosq, my_message_callback);
-	if(debug){
-		mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
-	}
 
-	if(use_srv){
-		rc = mosquitto_connect_srv(mosq, host, keepalive, bind_address);
-	}else{
-		rc = mosquitto_connect_bind(mosq, host, port, keepalive, bind_address);
-	}
-	if(rc){
-		if(!ud.quiet){
-			if(rc == MOSQ_ERR_ERRNO){
-#ifndef WIN32
-				strerror_r(errno, err, 1024);
-#else
-				FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errno, 0, (LPTSTR)&err, 1024, NULL);
-#endif
-				fprintf(stderr, "Error: %s\n", err);
-			}else{
-				fprintf(stderr, "Unable to connect (%d).\n", rc);
-			}
-		}
-		mosquitto_lib_cleanup();
-		return rc;
-	}
+	rc = client_connect(mosq, &cfg);
+	if(rc) return rc;
+
 
 	rc = mosquitto_loop_forever(mosq, -1, 1);
 

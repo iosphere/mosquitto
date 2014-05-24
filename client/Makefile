@@ -4,16 +4,19 @@ include ../config.mk
 
 all : mosquitto_pub mosquitto_sub
 
-mosquitto_pub : pub_client.o ../lib/libmosquitto.so.${SOVERSION}
-	${CC} $< -o $@ ${CLIENT_LDFLAGS}
+mosquitto_pub : pub_client.o client_shared.o
+	${CC} $^ -o $@ ${CLIENT_LDFLAGS}
 
-mosquitto_sub : sub_client.o ../lib/libmosquitto.so.${SOVERSION}
-	${CC} $< -o $@ ${CLIENT_LDFLAGS}
+mosquitto_sub : sub_client.o client_shared.o
+	${CC} $^ -o $@ ${CLIENT_LDFLAGS}
 
 pub_client.o : pub_client.c ../lib/libmosquitto.so.${SOVERSION}
 	${CC} -c $< -o $@ ${CLIENT_CFLAGS}
 
 sub_client.o : sub_client.c ../lib/libmosquitto.so.${SOVERSION}
+	${CC} -c $< -o $@ ${CLIENT_CFLAGS}
+
+client_shared.o : client_shared.c client_shared.h
 	${CC} -c $< -o $@ ${CLIENT_CFLAGS}
 
 ../lib/libmosquitto.so.${SOVERSION} :

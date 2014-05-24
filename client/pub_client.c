@@ -29,13 +29,7 @@ Contributors:
 #endif
 
 #include <mosquitto.h>
-
-#define MSGMODE_NONE 0
-#define MSGMODE_CMD 1
-#define MSGMODE_STDIN_LINE 2
-#define MSGMODE_STDIN_FILE 3
-#define MSGMODE_FILE 4
-#define MSGMODE_NULL 5
+#include "client_shared.h"
 
 #define STATUS_CONNECTING 0
 #define STATUS_CONNACK_RECVD 1
@@ -273,328 +267,36 @@ void print_usage(void)
 
 int main(int argc, char *argv[])
 {
-	char *id = NULL;
-	char *id_prefix = NULL;
-	int i;
-	char *host = "localhost";
-	int port = 1883;
-	char *bind_address = NULL;
-	int keepalive = 60;
+	struct mosq_config cfg;
 	char buf[1024];
 	bool debug = false;
 	struct mosquitto *mosq = NULL;
 	int rc;
 	int rc2;
-	char hostname[256];
-	char err[1024];
-	int len;
-	unsigned int max_inflight = 20;
 
-	char *will_payload = NULL;
-	long will_payloadlen = 0;
-	int will_qos = 0;
-	bool will_retain = false;
-	char *will_topic = NULL;
+	if(client_config_load(&cfg, CLIENT_PUB, argc, argv)){
+		print_usage();
+		return 1;
+	}
 
-	bool insecure = false;
-	char *cafile = NULL;
-	char *capath = NULL;
-	char *certfile = NULL;
-	char *keyfile = NULL;
-	char *tls_version = NULL;
+	topic = cfg.topic;
+	message = cfg.message;
+	msglen = cfg.msglen;
+	qos = cfg.qos;
+	retain = cfg.retain;
+	mode = cfg.pub_mode;
+	username = cfg.username;
+	password = cfg.password;
+	quiet = cfg.quiet;
 
-	char *psk = NULL;
-	char *psk_identity = NULL;
-
-	char *ciphers = NULL;
-
-	bool use_srv = false;
-
-	for(i=1; i<argc; i++){
-		if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -p argument given but no port specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				port = atoi(argv[i+1]);
-				if(port<1 || port>65535){
-					fprintf(stderr, "Error: Invalid port given: %d\n", port);
-					print_usage();
-					return 1;
-				}
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-A")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -A argument given but no address specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				bind_address = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--cafile")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --cafile argument given but no file specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				cafile = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--capath")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --capath argument given but no directory specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				capath = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--cert")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --cert argument given but no file specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				certfile = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--ciphers")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --ciphers argument given but no ciphers specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				ciphers = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
-			debug = true;
-		}else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--file")){
-			if(mode != MSGMODE_NONE){
-				fprintf(stderr, "Error: Only one type of message can be sent at once.\n\n");
-				print_usage();
-				return 1;
-			}else if(i==argc-1){
-				fprintf(stderr, "Error: -f argument given but no file specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				if(load_file(argv[i+1])) return 1;
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--help")){
-			print_usage();
-			return 0;
-		}else if(!strcmp(argv[i], "-h") || !strcmp(argv[i], "--host")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -h argument given but no host specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				host = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--insecure")){
-			insecure = true;
-		}else if(!strcmp(argv[i], "-i") || !strcmp(argv[i], "--id")){
-			if(id_prefix){
-				fprintf(stderr, "Error: -i and -I argument cannot be used together.\n\n");
-				print_usage();
-				return 1;
-			}
-			if(i==argc-1){
-				fprintf(stderr, "Error: -i argument given but no id specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				id = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-I") || !strcmp(argv[i], "--id-prefix")){
-			if(id){
-				fprintf(stderr, "Error: -i and -I argument cannot be used together.\n\n");
-				print_usage();
-				return 1;
-			}
-			if(i==argc-1){
-				fprintf(stderr, "Error: -I argument given but no id prefix specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				id_prefix = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--key")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --key argument given but no file specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				keyfile = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-l") || !strcmp(argv[i], "--stdin-line")){
-			if(mode != MSGMODE_NONE){
-				fprintf(stderr, "Error: Only one type of message can be sent at once.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				mode = MSGMODE_STDIN_LINE;
-			}
-		}else if(!strcmp(argv[i], "-m") || !strcmp(argv[i], "--message")){
-			if(mode != MSGMODE_NONE){
-				fprintf(stderr, "Error: Only one type of message can be sent at once.\n\n");
-				print_usage();
-				return 1;
-			}else if(i==argc-1){
-				fprintf(stderr, "Error: -m argument given but no message specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				message = argv[i+1];
-				msglen = strlen(message);
-				mode = MSGMODE_CMD;
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-M")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -M argument given but max_inflight not specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				max_inflight = atoi(argv[i+1]);
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-n") || !strcmp(argv[i], "--null-message")){
-			if(mode != MSGMODE_NONE){
-				fprintf(stderr, "Error: Only one type of message can be sent at once.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				mode = MSGMODE_NULL;
-			}
-		}else if(!strcmp(argv[i], "--psk")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --psk argument given but no key specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				psk = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--psk-identity")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --psk-identity argument given but no identity specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				psk_identity = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-q") || !strcmp(argv[i], "--qos")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -q argument given but no QoS specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				qos = atoi(argv[i+1]);
-				if(qos<0 || qos>2){
-					fprintf(stderr, "Error: Invalid QoS given: %d\n", qos);
-					print_usage();
-					return 1;
-				}
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--quiet")){
-			quiet = true;
-		}else if(!strcmp(argv[i], "-r") || !strcmp(argv[i], "--retain")){
-			retain = 1;
-		}else if(!strcmp(argv[i], "-s") || !strcmp(argv[i], "--stdin-file")){
-			if(mode != MSGMODE_NONE){
-				fprintf(stderr, "Error: Only one type of message can be sent at once.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				if(load_stdin()) return 1;
-			}
-		}else if(!strcmp(argv[i], "-S")){
-			use_srv = true;
-		}else if(!strcmp(argv[i], "-t") || !strcmp(argv[i], "--topic")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -t argument given but no topic specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				topic = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--tls-version")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --tls-version argument given but no version specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				tls_version = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -u argument given but no username specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				username = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-P") || !strcmp(argv[i], "--pw")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -P argument given but no password specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				password = argv[i+1];
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--will-payload")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --will-payload argument given but no will payload specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				will_payload = argv[i+1];
-				will_payloadlen = strlen(will_payload);
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--will-qos")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --will-qos argument given but no will QoS specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				will_qos = atoi(argv[i+1]);
-				if(will_qos < 0 || will_qos > 2){
-					fprintf(stderr, "Error: Invalid will QoS %d.\n\n", will_qos);
-					return 1;
-				}
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--will-retain")){
-			will_retain = true;
-		}else if(!strcmp(argv[i], "--will-topic")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --will-topic argument given but no will topic specified.\n\n");
-				print_usage();
-				return 1;
-			}else{
-				will_topic = argv[i+1];
-			}
-			i++;
-		}else{
-			fprintf(stderr, "Error: Unknown option '%s'.\n",argv[i]);
-			print_usage();
+	if(cfg.pub_mode == MSGMODE_STDIN_FILE){
+		if(load_stdin()){
+			fprintf(stderr, "Error loading input from stdin.\n");
+			return 1;
+		}
+	}else if(cfg.file_input){
+		if(load_file(cfg.file_input)){
+			fprintf(stderr, "Error loading input file \"%s\".\n", cfg.file_input);
 			return 1;
 		}
 	}
@@ -605,62 +307,14 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(will_payload && !will_topic){
-		fprintf(stderr, "Error: Will payload given, but no will topic given.\n");
-		print_usage();
-		return 1;
-	}
-	if(will_retain && !will_topic){
-		fprintf(stderr, "Error: Will retain given, but no will topic given.\n");
-		print_usage();
-		return 1;
-	}
-	if(password && !username){
-		if(!quiet) fprintf(stderr, "Warning: Not using password since username not set.\n");
-	}
-	if((certfile && !keyfile) || (keyfile && !certfile)){
-		fprintf(stderr, "Error: Both certfile and keyfile must be provided if one of them is.\n");
-		print_usage();
-		return 1;
-	}
-	if((cafile || capath) && psk){
-		if(!quiet) fprintf(stderr, "Error: Only one of --psk or --cafile/--capath may be used at once.\n");
-		return 1;
-	}
-	if(psk && !psk_identity){
-		if(!quiet) fprintf(stderr, "Error: --psk-identity required if --psk used.\n");
-		return 1;
-	}
 
 	mosquitto_lib_init();
 
-	if(id_prefix){
-		id = malloc(strlen(id_prefix)+10);
-		if(!id){
-			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
-			mosquitto_lib_cleanup();
-			return 1;
-		}
-		snprintf(id, strlen(id_prefix)+10, "%s%d", id_prefix, getpid());
-	}else if(!id){
-		hostname[0] = '\0';
-		gethostname(hostname, 256);
-		hostname[255] = '\0';
-		len = strlen("mosqpub/-") + 6 + strlen(hostname);
-		id = malloc(len);
-		if(!id){
-			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
-			mosquitto_lib_cleanup();
-			return 1;
-		}
-		snprintf(id, len, "mosqpub/%d-%s", getpid(), hostname);
-		if(strlen(id) > MOSQ_MQTT_ID_MAX_LENGTH){
-			/* Enforce maximum client id length of 23 characters */
-			id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
-		}
+	if(client_id_generate(&cfg, "mosqpub")){
+		return 1;
 	}
 
-	mosq = mosquitto_new(id, true, NULL);
+	mosq = mosquitto_new(cfg.id, true, NULL);
 	if(!mosq){
 		switch(errno){
 			case ENOMEM:
@@ -676,62 +330,15 @@ int main(int argc, char *argv[])
 	if(debug){
 		mosquitto_log_callback_set(mosq, my_log_callback);
 	}
-	if(will_topic && mosquitto_will_set(mosq, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
-		if(!quiet) fprintf(stderr, "Error: Problem setting will.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-	if(username && mosquitto_username_pw_set(mosq, username, password)){
-		if(!quiet) fprintf(stderr, "Error: Problem setting username and password.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-	if((cafile || capath) && mosquitto_tls_set(mosq, cafile, capath, certfile, keyfile, NULL)){
-		if(!quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-	if(insecure && mosquitto_tls_insecure_set(mosq, true)){
-		if(!quiet) fprintf(stderr, "Error: Problem setting TLS insecure option.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-	if(psk && mosquitto_tls_psk_set(mosq, psk, psk_identity, NULL)){
-		if(!quiet) fprintf(stderr, "Error: Problem setting TLS-PSK options.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-	if(tls_version && mosquitto_tls_opts_set(mosq, 1, tls_version, ciphers)){
-		if(!quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
-		mosquitto_lib_cleanup();
-		return 1;
-	}
-	mosquitto_max_inflight_messages_set(mosq, max_inflight);
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 
-	if(use_srv){
-		rc = mosquitto_connect_srv(mosq, host, keepalive, bind_address);
-	}else{
-		rc = mosquitto_connect_bind(mosq, host, port, keepalive, bind_address);
+	if(client_opts_set(mosq, &cfg)){
+		return 1;
 	}
-	if(rc){
-		if(!quiet){
-			if(rc == MOSQ_ERR_ERRNO){
-#ifndef WIN32
-				strerror_r(errno, err, 1024);
-#else
-				FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errno, 0, (LPTSTR)&err, 1024, NULL);
-#endif
-				fprintf(stderr, "Error: %s\n", err);
-			}else{
-				fprintf(stderr, "Unable to connect (%d).\n", rc);
-			}
-		}
-		mosquitto_lib_cleanup();
-		return rc;
-	}
+	rc = client_connect(mosq, &cfg);
+	if(rc) return rc;
 
 	if(mode == MSGMODE_STDIN_LINE){
 		mosquitto_loop_start(mosq);
