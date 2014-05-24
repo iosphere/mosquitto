@@ -342,13 +342,13 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
 #if OPENSSL_VERSION_NUMBER >= 0x10001000L
 			if(listener->tls_version == NULL){
-				listener->ssl_ctx = SSL_CTX_new(TLSv1_2_server_method());
+				listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
 			}else if(!strcmp(listener->tls_version, "tlsv1.2")){
 				listener->ssl_ctx = SSL_CTX_new(TLSv1_2_server_method());
 			}else if(!strcmp(listener->tls_version, "tlsv1.1")){
 				listener->ssl_ctx = SSL_CTX_new(TLSv1_1_server_method());
 			}else if(!strcmp(listener->tls_version, "tlsv1")){
-				listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
+				listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
 			}
 #else
 			listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
