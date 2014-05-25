@@ -67,6 +67,7 @@ struct mosq_config {
 	char *psk;
 	char *psk_identity;
 #  endif
+#endif
 	bool clean_session; /* sub */
 	char **topics; /* sub */
 	int topic_count; /* sub */
@@ -77,7 +78,6 @@ struct mosq_config {
 	bool verbose; /* sub */
 	bool eol; /* sub */
 	bool oneshot; /* sub */
-#endif
 };
 
 int client_config_load(struct mosq_config *config, int pub_or_sub, int argc, char *argv[]);
