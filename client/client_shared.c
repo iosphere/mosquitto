@@ -92,6 +92,8 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		fptr = fopen(loc, "rt");
 		if(fptr){
 			while(fgets(line, 1024, fptr)){
+				if(line[0] == '#') continue; /* Comments */
+
 				while(line[strlen(line)-1] == 10 || line[strlen(line)-1] == 13){
 					line[strlen(line)-1] = 0;
 				}

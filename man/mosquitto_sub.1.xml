@@ -89,7 +89,9 @@
 			this are <option>-t</option> and <option>-T</option>, which if
 			given in the config file will not be overridden. Note also that
 			currently some options cannot be negated, e.g.
-			<option>-S</option>.</para>
+			<option>-S</option>. Config file lines that have a
+			<option>#</option> as the first character are treated as comments
+			and not processed any further.</para>
 		<variablelist>
 			<varlistentry>
 				<term><option>-1</option></term>

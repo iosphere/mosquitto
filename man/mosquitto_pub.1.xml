@@ -89,7 +89,9 @@
 			and can be overridden by using the command line. The exceptions to
 			this are the message type options, of which only one can be
 			specified. Note also that currently some options cannot be negated,
-			e.g. <option>-S</option>.</para>
+			e.g. <option>-S</option>. Config file lines that have a
+			<option>#</option> as the first character are treated as comments
+			and not processed any further.</para>
 		<variablelist>
 			<varlistentry>
 				<term><option>-A</option></term>
