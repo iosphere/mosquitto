@@ -776,6 +776,7 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 				mosq->on_disconnect(mosq, mosq->userdata, 0);
 				mosq->in_callback = false;
 			}
+			pthread_mutex_unlock(&mosq->callback_mutex);
 			pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 			return MOSQ_ERR_SUCCESS;
 		}

@@ -65,6 +65,8 @@ else (${WITH_TLS} STREQUAL ON)
 	set (OPENSSL_INCLUDE_DIR "")
 endif (${WITH_TLS} STREQUAL ON)
 
+option(WITH_SRV "Include SRV lookup support?" ON)
+
 # ========================================
 # Include projects
 # ========================================

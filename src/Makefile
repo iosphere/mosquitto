@@ -100,10 +100,10 @@ mosquitto_passwd.o : mosquitto_passwd.c
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/sbin
-	$(INSTALL) -s mosquitto ${DESTDIR}${prefix}/sbin/mosquitto
+	$(INSTALL) -s --strip-program=$(STRIP) mosquitto ${DESTDIR}${prefix}/sbin/mosquitto
 	$(INSTALL) mosquitto_plugin.h ${DESTDIR}${prefix}/include/mosquitto_plugin.h
 ifeq ($(WITH_TLS),yes)
-	$(INSTALL) -s mosquitto_passwd ${DESTDIR}${prefix}/bin/mosquitto_passwd
+	$(INSTALL) -s --strip-program=$(STRIP) mosquitto_passwd ${DESTDIR}${prefix}/bin/mosquitto_passwd
 endif
 
 uninstall :
