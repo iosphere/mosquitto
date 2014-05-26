@@ -71,6 +71,9 @@ all : 01 02 03 04 08 09
 08-ssl-connect-cert-auth.test : 08-ssl-connect-cert-auth.cpp
 	$(CXX) $< -o $@ $(CFLAGS) $(LIBS)
 
+08-ssl-connect-cert-auth-enc.test : 08-ssl-connect-cert-auth-enc.cpp
+	$(CXX) $< -o $@ $(CFLAGS) $(LIBS)
+
 08-ssl-bad-cacert.test : 08-ssl-bad-cacert.cpp
 	$(CXX) $< -o $@ $(CFLAGS) $(LIBS)
 
@@ -91,7 +94,7 @@ all : 01 02 03 04 08 09
 
 04 : 04-retain-qos0.test
 
-08 : 08-ssl-connect-no-auth.test 08-ssl-connect-cert-auth.test 08-ssl-bad-cacert.test 08-ssl-fake-cacert.test
+08 : 08-ssl-connect-no-auth.test 08-ssl-connect-cert-auth.test 08-ssl-connect-cert-auth-enc.test 08-ssl-bad-cacert.test 08-ssl-fake-cacert.test
 
 09 : 09-util-topic-matching.test 09-util-topic-tokenise.test
 

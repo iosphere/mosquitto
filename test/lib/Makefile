@@ -38,6 +38,7 @@ c cpp : test-compile
 	./04-retain-qos0.py $@/04-retain-qos0.test
 	./08-ssl-connect-no-auth.py $@/08-ssl-connect-no-auth.test
 	./08-ssl-connect-cert-auth.py $@/08-ssl-connect-cert-auth.test
+	./08-ssl-connect-cert-auth-enc.py $@/08-ssl-connect-cert-auth-enc.test
 	./08-ssl-bad-cacert.py $@/08-ssl-bad-cacert.test
 	./08-ssl-fake-cacert.py $@/08-ssl-fake-cacert.test
 	./09-util-topic-matching.py $@/09-util-topic-matching.test

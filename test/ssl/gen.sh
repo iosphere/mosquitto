@@ -63,6 +63,11 @@ openssl ca -config openssl.cnf -name CA_signing -out client-revoked.crt -infiles
 openssl ca -config openssl.cnf -name CA_signing -revoke client-revoked.crt
 openssl ca -config openssl.cnf -name CA_signing -gencrl -out crl.pem
 
+# Valid client key and certificate, encrypted (use "password" as password)
+openssl genrsa -des3 -out client-encrypted.key 1024
+openssl req -new -key client-encrypted.key -out client-encrypted.csr -config openssl.cnf -subj "${SBASESUBJ}/CN=test client encrypted/"
+openssl ca -config openssl.cnf -name CA_signing -out client-encrypted.crt -infiles client-encrypted.csr
+
 cat test-signing-ca.crt test-root-ca.crt > all-ca.crt
 #mkdir certs
 #cp test-signing-ca.crt certs/test-signing-ca.pem
