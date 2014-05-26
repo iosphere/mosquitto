@@ -27,13 +27,13 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifdef WITH_WEBSOCKETS
+
 #include <libwebsockets.h>
 #include "mosquitto_internal.h"
 #include "mosquitto_broker.h"
 #include "mqtt3_protocol.h"
 #include "memory_mosq.h"
-
-#ifdef WITH_WEBSOCKETS
 
 #ifdef WITH_SYS_TREE
 extern uint64_t g_bytes_received;
