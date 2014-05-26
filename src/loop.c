@@ -73,17 +73,10 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	int bridge_sock;
 	int rc;
 #endif
-#ifdef WITH_WEBSOCKETS
-	struct libwebsocket_context *ws_context = NULL;
-#endif
 
 #ifndef WIN32
 	sigemptyset(&sigblock);
 	sigaddset(&sigblock, SIGINT);
-#endif
-
-#ifdef WITH_WEBSOCKETS
-	ws_context = mosq_websockets_init(8080);
 #endif
 
 	while(run){
@@ -299,11 +292,24 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			flag_tree_print = false;
 		}
 #ifdef WITH_WEBSOCKETS
-		libwebsocket_service(ws_context, 0);
+		for(i=0; i<listener_max; i++){
+			/* Extremely hacky, should be using the lws provided external poll
+			 * interface, but their interface has changed recently and ours
+			 * will soon, so for now websockets clients are second class
+			 * citizens. */
+			if(db->config->listeners[i].ws_context){
+				libwebsocket_service(db->config->listeners[i].ws_context, 0);
+			}
+		}
 #endif
 	}
+
 #ifdef WITH_WEBSOCKETS
-	libwebsocket_context_destroy(ws_context);
+	for(i=0; i<listener_max; i++){
+		if(db->config->listeners[i].ws_context){
+			libwebsocket_context_destroy(db->config->listeners[i].ws_context);
+		}
+	}
 #endif
 
 	if(pollfds) _mosquitto_free(pollfds);
