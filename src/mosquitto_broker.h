@@ -39,6 +39,12 @@ Contributors:
 #define MQTT3_LOG_TOPIC 0x10
 #define MQTT3_LOG_ALL 0xFF
 
+enum mosquitto_protocol {
+	mp_mqtt,
+	mp_mqttsn,
+	mp_websockets
+};
+
 typedef uint64_t dbid_t;
 
 struct _mqtt3_listener {
@@ -50,6 +56,7 @@ struct _mqtt3_listener {
 	int *socks;
 	int sock_count;
 	int client_count;
+	enum mosquitto_protocol protocol;
 #ifdef WITH_TLS
 	char *cafile;
 	char *capath;
@@ -62,6 +69,9 @@ struct _mqtt3_listener {
 	char *crlfile;
 	bool use_identity_as_username;
 	char *tls_version;
+#endif
+#ifdef WITH_WEBSOCKETS
+	struct libwebsocket_context *ws_context;
 #endif
 };
 
@@ -420,6 +430,13 @@ int mosquitto_psk_key_get_default(struct mosquitto_db *db, const char *hint, con
 void service_install(void);
 void service_uninstall(void);
 void service_run(void);
+#endif
+
+/* ============================================================
+ * Websockets related functions
+ * ============================================================ */
+#ifdef WITH_WEBSOCKETS
+struct libwebsocket_context *mosq_websockets_init(int port);
 #endif
 
 #endif

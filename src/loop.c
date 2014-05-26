@@ -32,6 +32,10 @@ Contributors:
 #include <stdio.h>
 #include <string.h>
 
+#ifdef WITH_WEBSOCKETS
+#  include <libwebsockets.h>
+#endif
+
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 #include <time_mosq.h>
@@ -287,7 +291,26 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			mqtt3_sub_tree_print(&db->subs, 0);
 			flag_tree_print = false;
 		}
+#ifdef WITH_WEBSOCKETS
+		for(i=0; i<listener_max; i++){
+			/* Extremely hacky, should be using the lws provided external poll
+			 * interface, but their interface has changed recently and ours
+			 * will soon, so for now websockets clients are second class
+			 * citizens. */
+			if(db->config->listeners[i].ws_context){
+				libwebsocket_service(db->config->listeners[i].ws_context, 0);
+			}
+		}
+#endif
 	}
+
+#ifdef WITH_WEBSOCKETS
+	for(i=0; i<listener_max; i++){
+		if(db->config->listeners[i].ws_context){
+			libwebsocket_context_destroy(db->config->listeners[i].ws_context);
+		}
+	}
+#endif
 
 	if(pollfds) _mosquitto_free(pollfds);
 	return MOSQ_ERR_SUCCESS;

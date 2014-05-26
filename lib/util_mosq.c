@@ -34,6 +34,10 @@ Contributors:
 #include <mosquitto_broker.h>
 #endif
 
+#ifdef WITH_WEBSOCKETS
+#include <libwebsockets.h>
+#endif
+
 int _mosquitto_packet_alloc(struct _mosquitto_packet *packet)
 {
 	uint8_t remaining_bytes[5], byte;
@@ -57,7 +61,11 @@ int _mosquitto_packet_alloc(struct _mosquitto_packet *packet)
 	}while(remaining_length > 0 && packet->remaining_count < 5);
 	if(packet->remaining_count == 5) return MOSQ_ERR_PAYLOAD_SIZE;
 	packet->packet_length = packet->remaining_length + 1 + packet->remaining_count;
+#ifdef WITH_WEBSOCKETS
+	packet->payload = _mosquitto_malloc(sizeof(uint8_t)*packet->packet_length + LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING);
+#else
 	packet->payload = _mosquitto_malloc(sizeof(uint8_t)*packet->packet_length);
+#endif
 	if(!packet->payload) return MOSQ_ERR_NOMEM;
 
 	packet->payload[0] = packet->command;

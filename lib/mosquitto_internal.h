@@ -192,6 +192,10 @@ struct mosquitto {
 	int db_index;
 	struct _mosquitto_packet *out_packet_last;
 	bool is_dropping;
+#  ifdef WITH_WEBSOCKETS
+	struct libwebsocket_context *ws_context;
+	struct libwebsocket *wsi;
+#  endif
 #else
 	void *userdata;
 	bool in_callback;

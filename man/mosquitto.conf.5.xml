@@ -651,6 +651,15 @@
 						<para>Not reloaded on reload signal.</para>
 					</listitem>
 				</varlistentry>
+				<varlistentry>
+					<term><option>protocol</option> <replaceable>value</replaceable></term>
+					<listitem>
+						<para>Set the protocol to accept for this listener. Can
+							be <option>mqtt</option>, the default, or
+							<option>websockets</option> if available.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
 			</variablelist>
 		</refsect2>
 		<refsect2>

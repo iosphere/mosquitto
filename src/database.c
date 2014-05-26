@@ -256,7 +256,11 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 			}
 		}
 	}
+#ifdef WITH_WEBSOCKETS
+	if(context->sock == INVALID_SOCKET && !context->wsi){
+#else
 	if(context->sock == INVALID_SOCKET){
+#endif
 		/* Client is not connected only queue messages with QoS>0. */
 		if(qos == 0 && !db->config->queue_qos0_messages){
 			if(!context->bridge){
@@ -269,7 +273,11 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 		}
 	}
 
+#ifdef WITH_WEBSOCKETS
+	if(context->sock != INVALID_SOCKET || context->wsi){
+#else
 	if(context->sock != INVALID_SOCKET){
+#endif
 		if(qos == 0 || max_inflight == 0 || context->msg_count12 < max_inflight){
 			if(dir == mosq_md_out){
 				switch(qos){
@@ -383,7 +391,15 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	}
 #endif
 
+#ifdef WITH_WEBSOCKETS
+	if(context->wsi){
+		return mqtt3_db_message_write(context);
+	}else{
+		return rc;
+	}
+#else
 	return rc;
+#endif
 }
 
 int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state)
@@ -743,8 +759,13 @@ int mqtt3_db_message_write(struct mosquitto *context)
 	const void *payload;
 	int msg_count = 0;
 
+#ifdef WITH_WEBSOCKETS
+	if(!context || (context->sock == -1 && !context->wsi)
+			|| (context->state == mosq_cs_connected && !context->id)){
+#else
 	if(!context || context->sock == -1
 			|| (context->state == mosq_cs_connected && !context->id)){
+#endif
 		return MOSQ_ERR_INVAL;
 	}
 

@@ -26,6 +26,7 @@ set (MOSQ_SRCS
 	../lib/time_mosq.c
 	../lib/tls_mosq.c
 	../lib/util_mosq.c ../lib/util_mosq.h
+	websockets.c
 	../lib/will_mosq.c ../lib/will_mosq.h)
 
 option(INC_BRIDGE_SUPPORT
@@ -65,6 +66,12 @@ if (${WITH_SYS_TREE} STREQUAL ON)
 	add_definitions("-DWITH_SYS_TREE")
 endif (${WITH_SYS_TREE} STREQUAL ON)
 
+option(WITH_WEBSOCKETS
+	"Include websockets support?" ON)
+if (${WITH_WEBSOCKETS} STREQUAL ON)
+	add_definitions("-DWITH_WEBSOCKETS")
+endif (${WITH_WEBSOCKETS} STREQUAL ON)
+
 if (WIN32 OR CYGWIN)
 	set (MOSQ_SRCS ${MOSQ_SRCS} service.c)
 endif (WIN32 OR CYGWIN)
@@ -86,6 +93,10 @@ endif (UNIX)
 if (WIN32)
 	set (MOSQ_LIBS ${MOSQ_LIBS} ws2_32)
 endif (WIN32)
+
+if (${WITH_WEBSOCKETS} STREQUAL ON)
+	set (MOSQ_LIBS ${MOSQ_LIBS} websockets)
+endif (${WITH_WEBSOCKETS} STREQUAL ON)
 
 target_link_libraries(mosquitto ${MOSQ_LIBS})
 
