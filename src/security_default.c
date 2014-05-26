@@ -129,7 +129,10 @@ int _add_acl(struct mosquitto_db *db, const char *user, const char *topic, int a
 	}
 
 	acl= _mosquitto_malloc(sizeof(struct _mosquitto_acl));
-	if(!acl) return MOSQ_ERR_NOMEM;
+	if(!acl){
+		_mosquitto_free(local_topic);
+		return MOSQ_ERR_NOMEM;
+	}
 	acl->access = access;
 	acl->topic = local_topic;
 	acl->next = NULL;
@@ -175,7 +178,10 @@ int _add_acl_pattern(struct mosquitto_db *db, const char *topic, int access)
 	}
 
 	acl = _mosquitto_malloc(sizeof(struct _mosquitto_acl));
-	if(!acl) return MOSQ_ERR_NOMEM;
+	if(!acl){
+		_mosquitto_free(local_topic);
+		return MOSQ_ERR_NOMEM;
+	}
 	acl->access = access;
 	acl->topic = local_topic;
 	acl->next = NULL;
@@ -295,6 +301,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 		if(result){
 			if(access & acl_root->access){
 				/* And access is allowed. */
+				_mosquitto_free(local_acl);
 				return MOSQ_ERR_SUCCESS;
 			}
 		}
