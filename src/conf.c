@@ -385,6 +385,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
+		memset(&config->listeners[config->listener_count-1], 0, sizeof(struct _mqtt3_listener));
 		if(config->default_listener.port){
 			config->listeners[config->listener_count-1].port = config->default_listener.port;
 		}else{

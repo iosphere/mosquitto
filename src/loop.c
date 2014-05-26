@@ -292,7 +292,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			flag_tree_print = false;
 		}
 #ifdef WITH_WEBSOCKETS
-		for(i=0; i<listener_max; i++){
+		for(i=0; i<db->config->listener_count; i++){
 			/* Extremely hacky, should be using the lws provided external poll
 			 * interface, but their interface has changed recently and ours
 			 * will soon, so for now websockets clients are second class
@@ -305,7 +305,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	}
 
 #ifdef WITH_WEBSOCKETS
-	for(i=0; i<listener_max; i++){
+	for(i=0; i<db->config->listener_count; i++){
 		if(db->config->listeners[i].ws_context){
 			libwebsocket_context_destroy(db->config->listeners[i].ws_context);
 		}
