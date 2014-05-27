@@ -106,6 +106,7 @@ int output_new_password(FILE *fptr, const char *username, const char *password)
 
 	digest = EVP_get_digestbyname("sha512");
 	if(!digest){
+		if(salt64) free(salt64);
 		fprintf(stderr, "Error: Unable to create openssl digest.\n");
 		return 1;
 	}
