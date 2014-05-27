@@ -275,7 +275,6 @@ int main(int argc, char *argv[])
 {
 	struct mosq_config cfg;
 	char buf[1024];
-	bool debug = false;
 	struct mosquitto *mosq = NULL;
 	int rc;
 	int rc2;
@@ -333,7 +332,7 @@ int main(int argc, char *argv[])
 		mosquitto_lib_cleanup();
 		return 1;
 	}
-	if(debug){
+	if(cfg.debug){
 		mosquitto_log_callback_set(mosq, my_log_callback);
 	}
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
