@@ -833,6 +833,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 					maxfd = rc;
 				}
 			}else{
+				pthread_mutex_unlock(&mosq->state_mutex);
 				return MOSQ_ERR_NO_CONN;
 			}
 			pthread_mutex_unlock(&mosq->state_mutex);
