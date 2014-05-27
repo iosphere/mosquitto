@@ -278,6 +278,7 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 		}else if(rp->ai_family == PF_INET6){
 			((struct sockaddr_in6 *)rp->ai_addr)->sin6_port = htons(port);
 		}else{
+			COMPAT_CLOSE(*sock);
 			continue;
 		}
 
