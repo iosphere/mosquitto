@@ -67,7 +67,7 @@ if (${WITH_SYS_TREE} STREQUAL ON)
 endif (${WITH_SYS_TREE} STREQUAL ON)
 
 option(WITH_WEBSOCKETS
-	"Include websockets support?" ON)
+	"Include websockets support?" OFF)
 if (${WITH_WEBSOCKETS} STREQUAL ON)
 	add_definitions("-DWITH_WEBSOCKETS")
 endif (${WITH_WEBSOCKETS} STREQUAL ON)
