@@ -81,7 +81,7 @@ static struct libwebsocket_protocols protocols[] = {
 		0,
 	},
 	{
-		"mqttv3.1",
+		"mqtt",
 		callback_mqtt,
 		sizeof(struct libws_mqtt_data),
 		0,
