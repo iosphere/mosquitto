@@ -8,6 +8,7 @@ Broker:
 - Support for ECDHE-ECDSA family ciphers.
 - Fix bug #1324411, which could have had unexpected consequences for delayed
   messages in rare circumstances.
+- Add support for "session present" in CONNACK messages for MQTT v3.1.1.
 
 Clients:
 - Both clients can now load default configuration options from a file.

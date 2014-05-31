@@ -319,7 +319,7 @@ void mqtt3_config_cleanup(struct mqtt3_config *config);
 /* ============================================================
  * Server send functions
  * ============================================================ */
-int _mosquitto_send_connack(struct mosquitto *context, int result);
+int _mosquitto_send_connack(struct mosquitto *context, int ack, int result);
 int _mosquitto_send_suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload);
 
 /* ============================================================
