@@ -156,12 +156,11 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		}else{ /* mqtt311 */
 			_mosquitto_free(client_id);
 
-			if(clean_session == 0){
+			if(clean_session == 0 || db->config->allow_zero_length_clientid == false){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
 				mqtt3_context_disconnect(db, context);
 				return MOSQ_ERR_PROTOCOL;
-			}
-			if(db->config->allow_zero_length_clientid == true){
+			}else{
 				client_id = (char *)_mosquitto_calloc(65 + db->config->auto_id_prefix_len, sizeof(char));
 				if(!client_id){
 					mqtt3_context_disconnect(db, context);
@@ -172,10 +171,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 					client_id[i+db->config->auto_id_prefix_len] = (rand()%73)+48;
 				}
 				client_id[i] = '\0';
-			}else{
-				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
-				mqtt3_context_disconnect(db, context);
-				return MOSQ_ERR_PROTOCOL;
 			}
 		}
 	}
