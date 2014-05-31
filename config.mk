@@ -28,15 +28,6 @@ WITH_TLS_PSK:=yes
 # Comment out to disable client client threading support.
 WITH_THREADING:=yes
 
-# Uncomment to compile the broker with strict protocol support. This means that
-# both the client library and the broker will be very strict about protocol
-# compliance on incoming data. Neither of them will return an error on
-# incorrect "remaining length" values if this is commented out. The old
-# behaviour (prior to 0.12) is equivalent to compiling with
-# WITH_STRICT_PROTOCOL defined and means that clients will be immediately
-# disconnected from the broker on non-compliance.
-#WITH_STRICT_PROTOCOL:=yes
-
 # Comment out to remove bridge support from the broker. This allow the broker
 # to connect to other brokers and subscribe/publish to topics. You probably
 # want to leave this included unless you want to save a very small amount of
@@ -181,11 +172,6 @@ endif
 ifeq ($(WITH_THREADING),yes)
 	LIB_LIBS:=$(LIB_LIBS) -lpthread
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_THREADING
-endif
-
-ifeq ($(WITH_STRICT_PROTOCOL),yes)
-	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_STRICT_PROTOCOL
-	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_STRICT_PROTOCOL
 endif
 
 ifeq ($(WITH_BRIDGE),yes)

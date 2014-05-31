@@ -36,11 +36,6 @@ int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
 	if(!context){
 		return MOSQ_ERR_INVAL;
 	}
-#ifdef WITH_STRICT_PROTOCOL
-	if(context->in_packet.remaining_length != 2){
-		return MOSQ_ERR_PROTOCOL;
-	}
-#endif
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received CONNACK on connection %s.", context->id);
 	if(_mosquitto_read_byte(&context->in_packet, &byte)) return 1; // Reserved byte, not used
 	if(_mosquitto_read_byte(&context->in_packet, &rc)) return 1;

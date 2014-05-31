@@ -29,11 +29,6 @@ int _mosquitto_handle_connack(struct mosquitto *mosq)
 	int rc;
 
 	assert(mosq);
-#ifdef WITH_STRICT_PROTOCOL
-	if(mosq->in_packet.remaining_length != 2){
-		return MOSQ_ERR_PROTOCOL;
-	}
-#endif
 	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK", mosq->id);
 	rc = _mosquitto_read_byte(&mosq->in_packet, &byte); // Reserved byte, not used
 	if(rc) return rc;

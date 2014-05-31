@@ -34,11 +34,6 @@ Contributors:
 int _mosquitto_handle_pingreq(struct mosquitto *mosq)
 {
 	assert(mosq);
-#ifdef WITH_STRICT_PROTOCOL
-	if(mosq->in_packet.remaining_length != 0){
-		return MOSQ_ERR_PROTOCOL;
-	}
-#endif
 #ifdef WITH_BROKER
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PINGREQ from %s", mosq->id);
 #else
@@ -50,11 +45,6 @@ int _mosquitto_handle_pingreq(struct mosquitto *mosq)
 int _mosquitto_handle_pingresp(struct mosquitto *mosq)
 {
 	assert(mosq);
-#ifdef WITH_STRICT_PROTOCOL
-	if(mosq->in_packet.remaining_length != 0){
-		return MOSQ_ERR_PROTOCOL;
-	}
-#endif
 	mosq->ping_t = 0; /* No longer waiting for a PINGRESP. */
 #ifdef WITH_BROKER
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PINGRESP from %s", mosq->id);
@@ -70,11 +60,6 @@ int _mosquitto_handle_pubackcomp(struct mosquitto *mosq, const char *type)
 	int rc;
 
 	assert(mosq);
-#ifdef WITH_STRICT_PROTOCOL
-	if(mosq->in_packet.remaining_length != 2){
-		return MOSQ_ERR_PROTOCOL;
-	}
-#endif
 	rc = _mosquitto_read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
@@ -108,11 +93,6 @@ int _mosquitto_handle_pubrec(struct mosquitto *mosq)
 	int rc;
 
 	assert(mosq);
-#ifdef WITH_STRICT_PROTOCOL
-	if(mosq->in_packet.remaining_length != 2){
-		return MOSQ_ERR_PROTOCOL;
-	}
-#endif
 	rc = _mosquitto_read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
@@ -140,11 +120,6 @@ int _mosquitto_handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	int rc;
 
 	assert(mosq);
-#ifdef WITH_STRICT_PROTOCOL
-	if(mosq->in_packet.remaining_length != 2){
-		return MOSQ_ERR_PROTOCOL;
-	}
-#endif
 	if(mosq->protocol == mosq_p_mqtt311){
 		if((mosq->in_packet.command&0x0F) != 0x02){
 			return MOSQ_ERR_PROTOCOL;
@@ -231,11 +206,6 @@ int _mosquitto_handle_unsuback(struct mosquitto *mosq)
 	int rc;
 
 	assert(mosq);
-#ifdef WITH_STRICT_PROTOCOL
-	if(mosq->in_packet.remaining_length != 2){
-		return MOSQ_ERR_PROTOCOL;
-	}
-#endif
 #ifdef WITH_BROKER
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBACK from %s", mosq->id);
 #else

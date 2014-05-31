@@ -147,11 +147,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	slen = strlen(client_id);
-#ifdef WITH_STRICT_PROTOCOL
-	if(slen > 23 || slen == 0){
-#else
 	if(slen == 0){
-#endif
 		if(context->protocol == mosq_p_mqtt31){
 			_mosquitto_free(client_id);
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
