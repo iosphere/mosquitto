@@ -518,10 +518,9 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno)
+int _config_read_file_core(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno, FILE *fptr)
 {
 	int rc;
-	FILE *fptr = NULL;
 	char buf[1024];
 	char *token;
 	int port_tmp;
@@ -548,12 +547,6 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 	int i;
 #endif
 	int lineno_ext;
-	
-	fptr = _mosquitto_fopen(file, "rt");
-	if(!fptr){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open config file %s\n", file);
-		return 1;
-	}
 
 	*lineno = 0;
 
@@ -1781,9 +1774,24 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 			}
 		}
 	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno)
+{
+	int rc;
+	FILE *fptr = NULL;
+
+	fptr = _mosquitto_fopen(file, "rt");
+	if(!fptr){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open config file %s\n", file);
+		return 1;
+	}
+
+	rc = _config_read_file_core(config, reload, file, cr, level, lineno, fptr);
 	fclose(fptr);
 
-	return MOSQ_ERR_SUCCESS;
+	return rc;
 }
 
 static int _conf_parse_bool(char **token, const char *name, bool *value, char *saveptr)
