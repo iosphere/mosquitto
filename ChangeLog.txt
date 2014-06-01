@@ -10,6 +10,8 @@ Broker:
   messages in rare circumstances.
 - Add support for "session present" in CONNACK messages for MQTT v3.1.1.
 - Remove strict protocol #ifdefs.
+- Change $SYS/broker/clients/active -> $SYS/broker/clients/connected
+- Change $SYS/broker/clients/inactive -> $SYS/broker/clients/disconnected
 
 Clients:
 - Both clients can now load default configuration options from a file.

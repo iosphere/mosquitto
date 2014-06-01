@@ -110,7 +110,8 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>$SYS/broker/clients/active</option></term>
+				<term><option>$SYS/broker/clients/connected</option></term>
+				<term><option>$SYS/broker/clients/active</option> (deprecated)</term>
 				<listitem>
 					<para>The number of currently connected clients</para>
 				</listitem>
@@ -124,7 +125,8 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>$SYS/broker/clients/inactive</option></term>
+				<term><option>$SYS/broker/clients/disconnected</option></term>
+				<term><option>$SYS/broker/clients/inactive</option> (deprecated)</term>
 				<listitem>
 					<para>The total number of persistent clients (with clean
 					session disabled) that are registered at the broker but are
