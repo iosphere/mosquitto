@@ -58,6 +58,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 #ifdef WITH_SYS_TREE
 	g_connection_count++;
+	db->connected_count++;
 #endif
 
 	/* Don't accept multiple CONNECT commands. */
@@ -367,6 +368,9 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(db->contexts[i]->sock == -1){
 			/* Client is reconnecting after a disconnect */
 			/* FIXME - does anything else need to be done here? */
+#ifdef WITH_SYS_TREE
+			db->disconnected_count--;
+#endif
 		}else{
 			/* Client is already connected, disconnect old version */
 			if(db->config->connection_messages == true){
@@ -409,32 +413,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	context->id = client_id;
-	client_id = NULL;
-	context->clean_session = clean_session;
-	context->ping_t = 0;
-	context->is_dropping = false;
-	if((protocol_version&0x80) == 0x80){
-		context->is_bridge = true;
-	}
-
-	// Add the client ID to the DB hash table here
-	new_cih = _mosquitto_malloc(sizeof(struct _clientid_index_hash));
-	if(!new_cih){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		mqtt3_context_disconnect(db, context);
-		rc = MOSQ_ERR_NOMEM;
-		goto handle_connect_error;
-	}
-	new_cih->id = context->id;
-	new_cih->db_context_index = context->db_index;
-	HASH_ADD_KEYPTR(hh, db->clientid_index_hash, context->id, strlen(context->id), new_cih);
-
-#ifdef WITH_PERSISTENCE
-	if(!clean_session){
-		db->persistence_changes++;
-	}
-#endif
 	/* Associate user with its ACL, assuming we have ACLs loaded. */
 	if(db->acl_list){
 		acl_tail = db->acl_list;
@@ -473,19 +451,45 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(db->config->connection_messages == true){
 		if(context->is_bridge){
 			if(context->username){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d, u%s).", context->address, context->id, context->clean_session, context->keepalive, context->username);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d, u%s).", context->address, context->id, clean_session, context->keepalive, context->username);
 			}else{
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d).", context->address, context->id, context->clean_session, context->keepalive);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d).", context->address, context->id, clean_session, context->keepalive);
 			}
 		}else{
 			if(context->username){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d, u%s).", context->address, context->id, context->clean_session, context->keepalive, context->username);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d, u%s).", context->address, context->id, clean_session, context->keepalive, context->username);
 			}else{
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d).", context->address, context->id, context->clean_session, context->keepalive);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d).", context->address, context->id, clean_session, context->keepalive);
 			}
 		}
 	}
 
+	context->id = client_id;
+	client_id = NULL;
+	context->clean_session = clean_session;
+	context->ping_t = 0;
+	context->is_dropping = false;
+	if((protocol_version&0x80) == 0x80){
+		context->is_bridge = true;
+	}
+
+	// Add the client ID to the DB hash table here
+	new_cih = _mosquitto_malloc(sizeof(struct _clientid_index_hash));
+	if(!new_cih){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		mqtt3_context_disconnect(db, context);
+		rc = MOSQ_ERR_NOMEM;
+		goto handle_connect_error;
+	}
+	new_cih->id = context->id;
+	new_cih->db_context_index = context->db_index;
+	HASH_ADD_KEYPTR(hh, db->clientid_index_hash, context->id, strlen(context->id), new_cih);
+
+#ifdef WITH_PERSISTENCE
+	if(!clean_session){
+		db->persistence_changes++;
+	}
+#endif
 	context->state = mosq_cs_connected;
 	return _mosquitto_send_connack(context, connect_ack, CONNACK_ACCEPTED);
 

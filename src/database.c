@@ -125,31 +125,6 @@ int mqtt3_db_close(struct mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
-/* Returns the number of client currently in the database.
- * This includes inactive clients.
- * Returns 1 on failure (count is NULL)
- * Returns 0 on success.
- */
-int mqtt3_db_client_count(struct mosquitto_db *db, unsigned int *count, unsigned int *inactive_count)
-{
-	int i;
-
-	if(!db || !count || !inactive_count) return MOSQ_ERR_INVAL;
-
-	*count = 0;
-	*inactive_count = 0;
-	for(i=0; i<db->context_count; i++){
-		if(db->contexts[i]){
-			(*count)++;
-			if(db->contexts[i]->sock == INVALID_SOCKET){
-				(*inactive_count)++;
-			}
-		}
-	}
-
-	return MOSQ_ERR_SUCCESS;
-}
-
 static void _message_remove(struct mosquitto *context, struct mosquitto_client_msg **msg, struct mosquitto_client_msg *last)
 {
 	if(!context || !msg || !(*msg)){

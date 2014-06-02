@@ -113,7 +113,7 @@
 				<term><option>$SYS/broker/clients/connected</option></term>
 				<term><option>$SYS/broker/clients/active</option> (deprecated)</term>
 				<listitem>
-					<para>The number of currently connected clients</para>
+					<para>The number of currently connected clients.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -136,10 +136,8 @@
 			<varlistentry>
 				<term><option>$SYS/broker/clients/maximum</option></term>
 				<listitem>
-					<para>The maximum number of active clients that have been
-					connected to the broker. This is only calculated when the
-					$SYS topic tree is updated, so short lived client
-					connections may not be counted.</para>
+					<para>The maximum number of clients that have been
+						connected to the broker at the same time.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

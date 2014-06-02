@@ -47,34 +47,30 @@ static void _sys_update_clients(struct mosquitto_db *db, char *buf)
 	static unsigned int client_max = -1;
 	static unsigned int disconnected_count = -1;
 	static unsigned int connected_count = -1;
-	unsigned int value;
-	unsigned int disconnected;
-	unsigned int connected;
 
-	if(!mqtt3_db_client_count(db, &value, &disconnected)){
-		if(client_count != value){
-			client_count = value;
-			snprintf(buf, BUFLEN, "%d", client_count);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/total", 2, strlen(buf), buf, 1);
-		}
-		if(disconnected_count != disconnected){
-			disconnected_count = disconnected;
-			snprintf(buf, BUFLEN, "%d", disconnected_count);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/inactive", 2, strlen(buf), buf, 1);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/disconnected", 2, strlen(buf), buf, 1);
-		}
-		connected = client_count - disconnected;
-		if(connected_count != connected){
-			connected_count = connected;
-			snprintf(buf, BUFLEN, "%d", connected_count);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/active", 2, strlen(buf), buf, 1);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/connected", 2, strlen(buf), buf, 1);
-		}
-		if(value != client_max){
-			client_max = value;
+	if(client_count != db->connected_count + db->disconnected_count){
+		client_count = db->connected_count + db->disconnected_count;
+		snprintf(buf, BUFLEN, "%d", client_count);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/total", 2, strlen(buf), buf, 1);
+
+		if(client_count > client_max){
+			client_max = client_count;
 			snprintf(buf, BUFLEN, "%d", client_max);
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/maximum", 2, strlen(buf), buf, 1);
 		}
+	}
+
+	if(disconnected_count != db->disconnected_count){
+		disconnected_count = db->disconnected_count;
+		snprintf(buf, BUFLEN, "%d", disconnected_count);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/inactive", 2, strlen(buf), buf, 1);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/disconnected", 2, strlen(buf), buf, 1);
+	}
+	if(connected_count != db->connected_count){
+		connected_count = db->connected_count;
+		snprintf(buf, BUFLEN, "%d", connected_count);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/active", 2, strlen(buf), buf, 1);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/connected", 2, strlen(buf), buf, 1);
 	}
 	if(g_clients_expired != clients_expired){
 		clients_expired = g_clients_expired;

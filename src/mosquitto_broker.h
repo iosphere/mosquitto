@@ -222,6 +222,10 @@ struct mosquitto_db{
 	struct _mosquitto_auth_plugin auth_plugin;
 	int subscription_count;
 	int retained_count;
+#ifdef WITH_SYS_TREE
+	int connected_count;
+	int disconnected_count;
+#endif
 };
 
 enum mqtt3_bridge_direction{
@@ -349,7 +353,6 @@ int mqtt3_db_close(struct mosquitto_db *db);
 int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown);
 int mqtt3_db_restore(struct mosquitto_db *db);
 #endif
-int mqtt3_db_client_count(struct mosquitto_db *db, unsigned int *count, unsigned int *inactive_count);
 void mqtt3_db_limits_set(int inflight, int queued);
 /* Return the number of in-flight messages in count. */
 int mqtt3_db_message_count(int *count);
