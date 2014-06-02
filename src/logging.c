@@ -19,6 +19,7 @@ Contributors:
 #ifndef WIN32
 #include <syslog.h>
 #endif
+#include <time.h>
 
 #ifndef CMAKE
 #include <config.h>
