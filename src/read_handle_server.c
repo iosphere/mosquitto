@@ -457,12 +457,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(will_struct){
-		if(mosquitto_acl_check(db, context, will_topic, MOSQ_ACL_WRITE) != MOSQ_ERR_SUCCESS){
-			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
-			mqtt3_context_disconnect(db, context);
-			rc = MOSQ_ERR_SUCCESS;
-			goto handle_connect_error;
-		}
 		context->will = will_struct;
 		context->will->topic = will_topic;
 		if(will_payload){
