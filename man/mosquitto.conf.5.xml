@@ -657,6 +657,13 @@
 						<para>Set the protocol to accept for this listener. Can
 							be <option>mqtt</option>, the default, or
 							<option>websockets</option> if available.</para>
+						<para>Websockets support is currently disabled by
+							default at compile time. Certificate based TLS may be used
+							with websockets, except that only the
+							<option>cafile</option>, <option>certfile</option>,
+							<option>keyfile</option> and
+							<option>ciphers</option> options are
+							supported.</para>
 						<para>Not reloaded on reload signal.</para>
 					</listitem>
 				</varlistentry>

@@ -275,18 +275,28 @@ static int callback_http(struct libwebsocket_context *context,
 		void *in,
 		size_t len)
 {
+	/* FIXME - ssl cert verification is done here. */
 	return 0;
 }
 
-struct libwebsocket_context *mosq_websockets_init(int port)
+struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener)
 {
 	struct lws_context_creation_info info;
 
 	memset(&info, 0, sizeof(info));
-	info.port = port;
+	info.port = listener->port;
 	info.protocols = protocols;
 	info.gid = -1;
 	info.uid = -1;
+#ifdef WITH_TLS
+	info.ssl_ca_filepath = listener->cafile;
+	info.ssl_cert_filepath = listener->certfile;
+	info.ssl_private_key_filepath = listener->keyfile;
+	info.ssl_cipher_list = listener->ciphers;
+	if(listener->require_certificate){
+		info.options |= LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
+	}
+#endif
 
 	lws_set_log_level(0, NULL);
 

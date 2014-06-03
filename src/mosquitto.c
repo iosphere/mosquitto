@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
 			}
 		}else if(config.listeners[i].protocol == mp_websockets){
 #ifdef WITH_WEBSOCKETS
-			config.listeners[i].ws_context = mosq_websockets_init(config.listeners[i].port);
+			config.listeners[i].ws_context = mosq_websockets_init(&config.listeners[i]);
 #endif
 		}
 	}

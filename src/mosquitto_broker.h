@@ -439,7 +439,7 @@ void service_run(void);
  * Websockets related functions
  * ============================================================ */
 #ifdef WITH_WEBSOCKETS
-struct libwebsocket_context *mosq_websockets_init(int port);
+struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener);
 #endif
 
 #endif
