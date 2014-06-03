@@ -124,7 +124,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		mqtt3_context_disconnect(db, context);
 		return 1;
 	}
-	clean_session = connect_flags & 0x02;
+	clean_session = (connect_flags & 0x02) >> 1;
 	will = connect_flags & 0x04;
 	will_qos = (connect_flags & 0x18) >> 3;
 	if(will_qos == 3){
@@ -451,15 +451,15 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(db->config->connection_messages == true){
 		if(context->is_bridge){
 			if(context->username){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d, u%s).", context->address, context->id, clean_session, context->keepalive, context->username);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d, u%s).", context->address, client_id, clean_session, context->keepalive, context->username);
 			}else{
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d).", context->address, context->id, clean_session, context->keepalive);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d).", context->address, client_id, clean_session, context->keepalive);
 			}
 		}else{
 			if(context->username){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d, u%s).", context->address, context->id, clean_session, context->keepalive, context->username);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d, u%s).", context->address, client_id, clean_session, context->keepalive, context->username);
 			}else{
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d).", context->address, context->id, clean_session, context->keepalive);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d).", context->address, client_id, clean_session, context->keepalive);
 			}
 		}
 	}
