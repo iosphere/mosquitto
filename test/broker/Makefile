@@ -64,7 +64,6 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10
 07 :
 	./07-will-qos0.py
 	./07-will-null.py
-	./07-will-acl-denied.py
 	./07-will-null-topic.py
 
 08 :
