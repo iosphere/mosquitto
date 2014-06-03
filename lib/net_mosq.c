@@ -215,6 +215,14 @@ int _mosquitto_socket_close(struct mosquitto *mosq)
 		mosq->sock = INVALID_SOCKET;
 	}
 
+#ifdef WITH_BROKER
+	if(mosq->listener){
+		mosq->listener->client_count--;
+		assert(mosq->listener->client_count >= 0);
+		mosq->listener = NULL;
+	}
+#endif
+
 	return rc;
 }
 

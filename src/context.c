@@ -118,12 +118,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 	}
 #endif
 	if(context->sock != -1){
-		if(context->listener){
-			context->listener->client_count--;
-			assert(context->listener->client_count >= 0);
-		}
 		_mosquitto_socket_close(context);
-		context->listener = NULL;
 	}
 	if(context->clean_session && db){
 		mqtt3_subs_clean_session(db, context, &db->subs);
@@ -191,11 +186,6 @@ void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 		if(ctxt->will->payload) _mosquitto_free(ctxt->will->payload);
 		_mosquitto_free(ctxt->will);
 		ctxt->will = NULL;
-	}
-	if(ctxt->listener){
-		ctxt->listener->client_count--;
-		assert(ctxt->listener->client_count >= 0);
-		ctxt->listener = NULL;
 	}
 	ctxt->disconnect_t = mosquitto_time();
 #ifdef WITH_SYS_TREE
