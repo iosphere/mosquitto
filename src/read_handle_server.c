@@ -390,6 +390,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		}else{
 			db->contexts[i]->address = NULL;
 		}
+		db->contexts[i]->disconnect_t = 0;
 		db->contexts[i]->sock = context->sock;
 		db->contexts[i]->listener = context->listener;
 		db->contexts[i]->last_msg_in = mosquitto_time();
