@@ -60,6 +60,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	time_t last_backup = mosquitto_time();
 	time_t last_store_clean = mosquitto_time();
 	time_t now;
+	time_t now_time;
 	int time_count;
 	int fdcount;
 #ifndef WIN32
@@ -104,6 +105,8 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			pollfds[pollfd_index].revents = 0;
 			pollfd_index++;
 		}
+
+		now_time = time(NULL);
 
 		time_count = 0;
 		for(i=0; i<db->context_count; i++){
@@ -215,7 +218,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 							 * persistent_client_expiration seconds ago. If so,
 							 * expire it and clean up.
 							 */
-							if(now > db->contexts[i]->disconnect_t+db->config->persistent_client_expiration){
+							if(now_time > db->contexts[i]->disconnect_t+db->config->persistent_client_expiration){
 								_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", db->contexts[i]->id);
 #ifdef WITH_SYS_TREE
 								g_clients_expired++;

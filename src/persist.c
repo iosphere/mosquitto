@@ -495,7 +495,7 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	last_mid = ntohs(i16temp);
 
 	if(db_version == 2){
-		disconnect_t = mosquitto_time();
+		disconnect_t = time(NULL);
 	}else{
 		read_e(db_fptr, &disconnect_t, sizeof(time_t));
 	}
