@@ -151,11 +151,12 @@ uint16_t _mosquitto_mid_generate(struct mosquitto *mosq)
 	return mosq->last_mid;
 }
 
-/* Search for + or # in a topic. Return MOSQ_ERR_INVAL if found.
+/* Check that a topic used for publishing is valid.
+ * Search for + or # in a topic. Return MOSQ_ERR_INVAL if found.
  * Also returns MOSQ_ERR_INVAL if the topic string is too long.
  * Returns MOSQ_ERR_SUCCESS if everything is fine.
  */
-int _mosquitto_topic_wildcard_len_check(const char *str)
+int _mosquitto_pub_topic_check(const char *str)
 {
 	int len = 0;
 	while(str && str[0]){
@@ -170,12 +171,14 @@ int _mosquitto_topic_wildcard_len_check(const char *str)
 	return MOSQ_ERR_SUCCESS;
 }
 
-/* Search for + or # in a topic, check they aren't in invalid positions such as foo/#/bar, foo/+bar or foo/bar#.
+/* Check that a topic used for subscriptions is valid.
+ * Search for + or # in a topic, check they aren't in invalid positions such as
+ * foo/#/bar, foo/+bar or foo/bar#.
  * Return MOSQ_ERR_INVAL if invalid position found.
  * Also returns MOSQ_ERR_INVAL if the topic string is too long.
  * Returns MOSQ_ERR_SUCCESS if everything is fine.
  */
-int _mosquitto_topic_wildcard_pos_check(const char *str)
+int _mosquitto_sub_topic_check(const char *str)
 {
 	char c = '\0';
 	int len = 0;

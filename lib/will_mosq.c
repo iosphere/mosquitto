@@ -45,7 +45,7 @@ int _mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadle
 	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
 	if(payloadlen > 0 && !payload) return MOSQ_ERR_INVAL;
 
-	if(_mosquitto_topic_wildcard_pos_check(topic)) return MOSQ_ERR_INVAL;
+	if(_mosquitto_pub_topic_check(topic)) return MOSQ_ERR_INVAL;
 
 	if(mosq->will){
 		if(mosq->will->topic){

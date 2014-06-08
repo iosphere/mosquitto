@@ -157,7 +157,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 #endif
-	if(_mosquitto_topic_wildcard_len_check(topic) != MOSQ_ERR_SUCCESS){
+	if(_mosquitto_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
 		/* Invalid publish topic, just swallow it. */
 		_mosquitto_free(topic);
 		return 1;

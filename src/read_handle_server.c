@@ -203,7 +203,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = 1;
 			goto handle_connect_error;
 		}
-		if(_mosquitto_topic_wildcard_pos_check(will_topic)){
+		if(_mosquitto_pub_topic_check(will_topic)){
 			mqtt3_context_disconnect(db, context);
 			rc = 1;
 			goto handle_connect_error;
@@ -563,7 +563,7 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				if(payload) _mosquitto_free(payload);
 				return 1;
 			}
-			if(_mosquitto_topic_wildcard_pos_check(sub)){
+			if(_mosquitto_sub_topic_check(sub)){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid subscription string from %s, disconnecting.",
 					context->address);
 				_mosquitto_free(sub);
@@ -673,7 +673,7 @@ int mqtt3_handle_unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 				_mosquitto_free(sub);
 				return 1;
 			}
-			if(_mosquitto_topic_wildcard_pos_check(sub)){
+			if(_mosquitto_sub_topic_check(sub)){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid unsubscription string from %s, disconnecting.",
 					context->id);
 				_mosquitto_free(sub);

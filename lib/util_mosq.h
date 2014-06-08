@@ -24,8 +24,8 @@ Contributors:
 int _mosquitto_packet_alloc(struct _mosquitto_packet *packet);
 void _mosquitto_check_keepalive(struct mosquitto *mosq);
 uint16_t _mosquitto_mid_generate(struct mosquitto *mosq);
-int _mosquitto_topic_wildcard_len_check(const char *str);
-int _mosquitto_topic_wildcard_pos_check(const char *str);
+int _mosquitto_pub_topic_check(const char *str);
+int _mosquitto_sub_topic_check(const char *str);
 FILE *_mosquitto_fopen(const char *path, const char *mode);
 
 #ifdef REAL_WITH_TLS_PSK
