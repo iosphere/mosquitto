@@ -272,6 +272,7 @@ struct _mqtt3_bridge{
 	time_t restart_t;
 	char *username;
 	char *password;
+	char *local_clientid;
 	char *local_username;
 	char *local_password;
 	bool notifications;

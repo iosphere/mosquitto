@@ -1,9 +1,20 @@
 1.4 - xxxxxxxx
 ==============
 
+Important changes:
+- Bridge behaviour on the local broker has changed due to the introduction of
+  the local_* options. This may affect you if you are using authentication
+  and/or ACLs with bridges.
+- The default TLS behaviour has changed to accept all of TLS v1.2, v1.1 and
+  v1.0, rather than only only one version of the protocol. It is still
+  possible to restrict a listener to a single version of TLS.
+- The Python client has been removed now that the Eclipse Paho Python client
+  has had a release.
+
+
 Broker:
-- Add local_username, local_password for bridge connections to authenticate to
-  the local broker.
+- Add local_clientid, local_username, local_password for bridge connections to
+  authenticate to the local broker.
 - Default TLS mode now accepts TLS v1.2, v1.1 and v1.0.
 - Support for ECDHE-ECDSA family ciphers.
 - Fix bug #1324411, which could have had unexpected consequences for delayed

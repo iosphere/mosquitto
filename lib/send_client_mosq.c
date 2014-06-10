@@ -37,14 +37,25 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	uint8_t byte;
 	int rc;
 	uint8_t version = PROTOCOL_VERSION_v31;
+	char *clientid;
 
 	assert(mosq);
 	assert(mosq->id);
 
+#if defined(WITH_BROKER) && defined(WITH_BRIDGE)
+	if(mosq->bridge){
+		clientid = mosq->bridge->clientid;
+	}else{
+		clientid = mosq->id;
+	}
+#else
+	clientid = mosq->id;
+#endif
+
 	packet = _mosquitto_calloc(1, sizeof(struct _mosquitto_packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
-	payloadlen = 2+strlen(mosq->id);
+	payloadlen = 2+strlen(clientid);
 	if(mosq->will){
 		will = 1;
 		assert(mosq->will->topic);
@@ -89,7 +100,7 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	_mosquitto_write_uint16(packet, keepalive);
 
 	/* Payload */
-	_mosquitto_write_string(packet, mosq->id, strlen(mosq->id));
+	_mosquitto_write_string(packet, clientid, strlen(clientid));
 	if(will){
 		_mosquitto_write_string(packet, mosq->will->topic, strlen(mosq->will->topic));
 		_mosquitto_write_string(packet, (const char *)mosq->will->payload, mosq->will->payloadlen);
@@ -104,10 +115,10 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	mosq->keepalive = keepalive;
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending CONNECT", mosq->id);
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending CONNECT", clientid);
 # endif
 #else
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending CONNECT", mosq->id);
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending CONNECT", clientid);
 #endif
 	return _mosquitto_packet_queue(mosq, packet);
 }

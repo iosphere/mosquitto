@@ -251,6 +251,7 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
 			if(config->bridges[i].clientid) _mosquitto_free(config->bridges[i].clientid);
 			if(config->bridges[i].username) _mosquitto_free(config->bridges[i].username);
 			if(config->bridges[i].password) _mosquitto_free(config->bridges[i].password);
+			if(config->bridges[i].local_clientid) _mosquitto_free(config->bridges[i].local_clientid);
 			if(config->bridges[i].local_username) _mosquitto_free(config->bridges[i].local_username);
 			if(config->bridges[i].local_password) _mosquitto_free(config->bridges[i].local_password);
 			if(config->bridges[i].topics){
@@ -1140,6 +1141,30 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty listener value in configuration.");
 						return MOSQ_ERR_INVAL;
 					}
+				}else if(!strcmp(token, "local_clientid")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(cur_bridge->local_clientid){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate local_clientid value in bridge configuration.");
+							return MOSQ_ERR_INVAL;
+						}
+						cur_bridge->local_clientid = _mosquitto_strdup(token);
+						if(!cur_bridge->local_clientid){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							return MOSQ_ERR_NOMEM;
+						}
+					}else{
+						cur_bridge->local_clientid = NULL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
 				}else if(!strcmp(token, "local_password")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME

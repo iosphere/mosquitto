@@ -50,14 +50,12 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	struct mosquitto **tmp_contexts;
 	char hostname[256];
 	int len;
-	char *id;
+	char *id, *local_id;
 
 	assert(db);
 	assert(bridge);
 
-	if(bridge->clientid){
-		id = _mosquitto_strdup(bridge->clientid);
-	}else{
+	if(!bridge->clientid){
 		if(!gethostname(hostname, 256)){
 			len = strlen(hostname) + strlen(bridge->name) + 2;
 			id = _mosquitto_malloc(len);
@@ -68,16 +66,25 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 		}else{
 			return 1;
 		}
+		bridge->clientid = id;
 	}
-	if(!id){
-		return MOSQ_ERR_NOMEM;
+	if(bridge->local_clientid){
+		local_id = bridge->local_clientid;
+	}else{
+		len = strlen(bridge->clientid) + strlen("local.") + 2;
+		local_id = _mosquitto_malloc(len);
+		if(!local_id){
+			return MOSQ_ERR_NOMEM;
+		}
+		snprintf(local_id, len, "local.%s", bridge->clientid);
+		bridge->local_clientid = local_id;
 	}
 
 	/* Search for existing id (possible from persistent db) and also look for a
 	 * gap in the db->contexts[] array in case the id isn't found. */
 	for(i=0; i<db->context_count; i++){
 		if(db->contexts[i]){
-			if(!strcmp(db->contexts[i]->id, id)){
+			if(!strcmp(db->contexts[i]->id, local_id)){
 				new_context = db->contexts[i];
 				break;
 			}
@@ -90,7 +97,6 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 		/* id wasn't found, so generate a new context */
 		new_context = mqtt3_context_init(-1);
 		if(!new_context){
-			_mosquitto_free(id);
 			return MOSQ_ERR_NOMEM;
 		}
 		if(null_index == -1){
@@ -101,17 +107,13 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 				db->contexts = tmp_contexts;
 				db->contexts[db->context_count-1] = new_context;
 			}else{
-				_mosquitto_free(id);
 				_mosquitto_free(new_context);
 				return MOSQ_ERR_NOMEM;
 			}
 		}else{
 			db->contexts[null_index] = new_context;
 		}
-		new_context->id = id;
-	}else{
-		/* id was found, so context->id already in memory. */
-		_mosquitto_free(id);
+		new_context->id = local_id;
 	}
 	new_context->bridge = bridge;
 	new_context->is_bridge = true;
