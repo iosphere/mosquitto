@@ -156,15 +156,16 @@ void print_usage(void)
 	printf(" -k : keep alive in seconds for this client. Defaults to 60.\n");
 	printf(" -N : do not add an end of line character when printing the payload.\n");
 	printf(" -p : network port to connect to. Defaults to 1883.\n");
+	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
 	printf(" -q : quality of service level to use for the subscription. Defaults to 0.\n");
 	printf(" -R : do not print stale messages (those with retain set).\n");
 #ifdef WITH_SRV
 	printf(" -S : use SRV lookups to determine which host to connect to.\n");
 #endif
 	printf(" -t : mqtt topic to subscribe to. May be repeated multiple times.\n");
+	printf(" -T : topic string to filter out of results. May be repeated.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
 	printf(" -v : print published messages verbosely.\n");
-	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
 	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
