@@ -10,6 +10,9 @@ Important changes:
   possible to restrict a listener to a single version of TLS.
 - The Python client has been removed now that the Eclipse Paho Python client
   has had a release.
+- When a durable client reconnects, its queued messages are now checked
+  against ACLs in case of a change in username/ACL state since it last
+  connected.
 
 
 Broker:
@@ -23,6 +26,9 @@ Broker:
 - Remove strict protocol #ifdefs.
 - Change $SYS/broker/clients/active -> $SYS/broker/clients/connected
 - Change $SYS/broker/clients/inactive -> $SYS/broker/clients/disconnected
+- When a durable client reconnects, its queued messages are now checked
+  against ACLs in case of a change in username/ACL state since it last
+  connected.
 
 Clients:
 - Both clients can now load default configuration options from a file.
