@@ -228,6 +228,7 @@ static int mqtt3_db_client_write(struct mosquitto_db *db, FILE *db_fptr)
 	struct mosquitto *context;
 	uint16_t i16temp, slen;
 	uint32_t length;
+	time_t disconnect_t;
 
 	assert(db);
 	assert(db_fptr);
@@ -247,7 +248,12 @@ static int mqtt3_db_client_write(struct mosquitto_db *db, FILE *db_fptr)
 			write_e(db_fptr, context->id, slen);
 			i16temp = htons(context->last_mid);
 			write_e(db_fptr, &i16temp, sizeof(uint16_t));
-			write_e(db_fptr, &(context->disconnect_t), sizeof(time_t));
+			if(context->disconnect_t){
+				disconnect_t = context->disconnect_t;
+			}else{
+				disconnect_t = time(NULL);
+			}
+			write_e(db_fptr, &disconnect_t, sizeof(time_t));
 
 			if(mqtt3_db_client_messages_write(db, db_fptr, context)) return 1;
 		}
