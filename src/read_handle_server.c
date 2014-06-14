@@ -31,6 +31,23 @@ Contributors:
 extern unsigned int g_connection_count;
 #endif
 
+static char *client_id_gen(struct mosquitto_db *db)
+{
+	char *client_id;
+	int i;
+
+	client_id = (char *)_mosquitto_calloc(65 + db->config->auto_id_prefix_len, sizeof(char));
+	if(!client_id){
+		return NULL;
+	}
+	memcpy(client_id, db->config->auto_id_prefix, db->config->auto_id_prefix_len);
+	for(i=0; i<64; i++){
+		client_id[i+db->config->auto_id_prefix_len] = (rand()%73)+48;
+	}
+	client_id[i] = '\0';
+	return client_id;
+}
+
 int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 {
 	char *protocol_name = NULL;
@@ -163,16 +180,11 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 				mqtt3_context_disconnect(db, context);
 				return MOSQ_ERR_PROTOCOL;
 			}else{
-				client_id = (char *)_mosquitto_calloc(65 + db->config->auto_id_prefix_len, sizeof(char));
+				client_id = client_id_gen(db);
 				if(!client_id){
 					mqtt3_context_disconnect(db, context);
 					return MOSQ_ERR_NOMEM;
 				}
-				memcpy(client_id, db->config->auto_id_prefix, db->config->auto_id_prefix_len);
-				for(i=0; i<64; i++){
-					client_id[i+db->config->auto_id_prefix_len] = (rand()%73)+48;
-				}
-				client_id[i] = '\0';
 			}
 		}
 	}
