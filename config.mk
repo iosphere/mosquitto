@@ -117,8 +117,9 @@ LIB_LIBS:=
 PASSWD_LIBS:=
 
 ifeq ($(UNAME),Linux)
-	BROKER_LIBS:=$(BROKER_LIBS) -lrt
+	BROKER_LIBS:=$(BROKER_LIBS) -lrt -luuid
 	LIB_LIBS:=$(LIB_LIBS) -lrt
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_UUID
 endif
 
 CLIENT_LDFLAGS:=$(LDFLAGS) -L../lib ../lib/libmosquitto.so.${SOVERSION}

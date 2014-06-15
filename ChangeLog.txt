@@ -29,6 +29,8 @@ Broker:
 - When a durable client reconnects, its queued messages are now checked
   against ACLs in case of a change in username/ACL state since it last
   connected.
+- libuuid is used to generate client ids, where it is available, when an MQTT
+  v3.1.1 client connects with a zero length client id.
 
 Clients:
 - Both clients can now load default configuration options from a file.

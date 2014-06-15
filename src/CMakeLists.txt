@@ -98,6 +98,13 @@ if (${WITH_WEBSOCKETS} STREQUAL ON)
 	set (MOSQ_LIBS ${MOSQ_LIBS} websockets)
 endif (${WITH_WEBSOCKETS} STREQUAL ON)
 
+# Simple detect libuuid
+FIND_PATH(UUID_HEADER uuid/uuid.h)
+if (UUID_HEADER)
+	add_definitions(-DWITH_UUID)
+	set (MOSQ_LIBS ${MOSQ_LIBS} uuid)
+endif (UUID_HEADER)
+
 target_link_libraries(mosquitto ${MOSQ_LIBS})
 
 install(TARGETS mosquitto RUNTIME DESTINATION ${SBINDIR} LIBRARY DESTINATION ${LIBDIR})
