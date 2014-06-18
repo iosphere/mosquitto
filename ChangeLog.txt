@@ -31,6 +31,8 @@ Broker:
   connected.
 - libuuid is used to generate client ids, where it is available, when an MQTT
   v3.1.1 client connects with a zero length client id.
+- Anonymous clients are no longer accidently disconnected from the broker
+  after a SIGHUP.
 
 Clients:
 - Both clients can now load default configuration options from a file.
