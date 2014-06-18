@@ -61,6 +61,10 @@ WITH_PYTHON:=yes
 # Build with SRV lookup support.
 WITH_SRV:=yes
 
+# Build using libuuid for clientid generation (Linux only - please report if
+# supported on your platform).
+WITH_UUID:=yes
+
 # Build with websockets support on the broker.
 WITH_WEBSOCKETS:=no
 
@@ -117,9 +121,8 @@ LIB_LIBS:=
 PASSWD_LIBS:=
 
 ifeq ($(UNAME),Linux)
-	BROKER_LIBS:=$(BROKER_LIBS) -lrt -luuid
+	BROKER_LIBS:=$(BROKER_LIBS) -lrt
 	LIB_LIBS:=$(LIB_LIBS) -lrt
-	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_UUID
 endif
 
 CLIENT_LDFLAGS:=$(LDFLAGS) -L../lib ../lib/libmosquitto.so.${SOVERSION}
@@ -173,6 +176,13 @@ endif
 ifeq ($(WITH_THREADING),yes)
 	LIB_LIBS:=$(LIB_LIBS) -lpthread
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_THREADING
+endif
+
+ifeq ($(WITH_UUID),yes)
+	ifeq ($(UNAME),Linux)
+		BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_UUID
+		BROKER_LIBS:=$(BROKER_LIBS) -luuid
+	endif
 endif
 
 ifeq ($(WITH_BRIDGE),yes)
