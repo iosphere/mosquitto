@@ -33,6 +33,8 @@ Broker:
   v3.1.1 client connects with a zero length client id.
 - Anonymous clients are no longer accidently disconnected from the broker
   after a SIGHUP.
+- mosquitto_passwd now supports -b (batch mode) to allow the password to be
+  provided at the command line.
 
 Clients:
 - Both clients can now load default configuration options from a file.

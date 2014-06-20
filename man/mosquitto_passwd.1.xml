@@ -26,6 +26,13 @@
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_passwd</command>
+			<arg choice='plain'><option>-b</option></arg>
+			<arg choice='plain'><replaceable>passwordfile</replaceable></arg>
+			<arg choice='plain'><replaceable>username</replaceable></arg>
+			<arg choice='plain'><replaceable>password</replaceable></arg>
+		</cmdsynopsis>
+		<cmdsynopsis>
+			<command>mosquitto_passwd</command>
 			<arg choice='plain'><option>-U</option></arg>
 			<arg choice='plain'><replaceable>passwordfile</replaceable></arg>
 		</cmdsynopsis>
@@ -43,6 +50,16 @@
 	<refsect1>
 		<title>Options</title>
 		<variablelist>
+			<varlistentry>
+				<term><option>-b</option></term>
+				<listitem>
+					<para>Run in batch mode. This allows the password to be
+						provided at the command line which can be convenient
+						but should be used with care because the password will
+						be visible on the command line and in command
+						history.</para>
+				</listitem>
+			</varlistentry>
 			<varlistentry>
 				<term><option>-c</option></term>
 				<listitem>
@@ -80,6 +97,12 @@
 				<term><option>username</option></term>
 				<listitem>
 					<para>The username to add/update/delete.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>password</option></term>
+				<listitem>
+					<para>The password to use when in batch mode.</para>
 				</listitem>
 			</varlistentry>
 		</variablelist>
