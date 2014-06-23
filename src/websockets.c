@@ -130,10 +130,10 @@ static int callback_mqtt(struct libwebsocket_context *context,
 		case LWS_CALLBACK_CLOSED:
 			mosq = u->mosq;
 			mqtt3_context_disconnect(db, mosq);
+			mosq->wsi = NULL;
 			if(mosq->clean_session){
 				mqtt3_context_cleanup(db, mosq, true);
 			}
-			mosq->wsi = NULL;
 			break;
 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
