@@ -419,7 +419,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		mqtt3_context_cleanup(db, found_context, false);
 		found_context->state = mosq_cs_connected;
 		if(context->address){
-			//found_context->address = _mosquitto_strdup(context->address);
 			found_context->address = context->address;
 			context->address = NULL;
 		}else{

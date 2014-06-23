@@ -54,6 +54,9 @@ static struct mosquitto *_db_find_or_add_context(struct mosquitto_db *db, const 
 			return NULL;
 		}
 
+#ifdef WITH_SYS_TREE
+		db->disconnected_count++;
+#endif
 		context->clean_session = false;
 
 		HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, context->id, strlen(context->id), context);
