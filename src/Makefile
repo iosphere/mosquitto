@@ -10,7 +10,7 @@ mosquitto : mosquitto.o bridge.o conf.o context.o database.o logging.o loop.o me
 	${CROSS_COMPILE}${CC} $^ -o $@ ${LDFLAGS} $(BROKER_LIBS)
 
 mosquitto.o : mosquitto.c mosquitto_broker.h
-	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@ -DCHANGESET=\"$$(cat ../changeset)\"
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 bridge.o : bridge.c mosquitto_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@

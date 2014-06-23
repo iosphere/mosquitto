@@ -103,13 +103,6 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>$SYS/broker/changeset</option></term>
-				<listitem>
-					<para>The repository changeset (revision) associated with
-					this build. Static.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>$SYS/broker/clients/connected</option></term>
 				<term><option>$SYS/broker/clients/active</option> (deprecated)</term>
 				<listitem>
