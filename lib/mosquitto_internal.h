@@ -54,6 +54,7 @@ Contributors:
 #include "mosquitto.h"
 #include "time_mosq.h"
 #ifdef WITH_BROKER
+#  include "uthash.h"
 struct mosquitto_client_msg;
 #endif
 
@@ -189,7 +190,6 @@ struct mosquitto {
 	struct _mqtt3_listener *listener;
 	time_t disconnect_t;
 	int pollfd_index;
-	int db_index;
 	struct _mosquitto_packet *out_packet_last;
 	bool is_dropping;
 #  ifdef WITH_WEBSOCKETS
@@ -227,6 +227,15 @@ struct mosquitto {
 	int max_inflight_messages;
 #  ifdef WITH_SRV
 	ares_channel achan;
+#  endif
+#endif
+
+#ifdef WITH_BROKER
+	UT_hash_handle hh_id;
+	UT_hash_handle hh_sock;
+	UT_hash_handle hh_for_free;
+#  ifdef WITH_BRIDGE
+	UT_hash_handle hh_bridge;
 #  endif
 #endif
 };

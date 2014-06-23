@@ -89,7 +89,6 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 {
 	struct _mosquitto_packet *packet;
 	struct mosquitto_client_msg *msg, *next;
-	struct _clientid_index_hash *find_cih;
 
 	if(!context) return;
 
@@ -111,15 +110,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		}
 	}
 #endif
-#ifdef WITH_TLS
-	if(context->ssl){
-		SSL_free(context->ssl);
-		context->ssl = NULL;
-	}
-#endif
-	if(context->sock != -1){
-		_mosquitto_socket_close(context);
-	}
+	_mosquitto_socket_close(db, context);
 	if(context->clean_session && db){
 		mqtt3_subs_clean_session(db, context, &db->subs);
 		mqtt3_db_messages_delete(context);
@@ -132,15 +123,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		assert(db); /* db can only be NULL here if the client hasn't sent a
 					   CONNECT and hence wouldn't have an id. */
 
-		// Remove the context's ID from the DB hash
-		HASH_FIND_STR(db->clientid_index_hash, context->id, find_cih);
-		if(find_cih){
-			// FIXME - internal level debug? _mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Found id for client \"%s\", their index was %d.", context->id, find_cih->db_context_index);
-			HASH_DEL(db->clientid_index_hash, find_cih);
-			_mosquitto_free(find_cih);
-		}else{
-			// FIXME - internal level debug? _mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Unable to find id for client \"%s\".", context->id);
-		}
+		HASH_DELETE(hh_id, db->contexts_by_id, context);
 		_mosquitto_free(context->id);
 		context->id = NULL;
 	}
@@ -194,6 +177,6 @@ void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 		db->disconnected_count++;
 	}
 #endif
-	_mosquitto_socket_close(ctxt);
+	_mosquitto_socket_close(db, ctxt);
 }
 

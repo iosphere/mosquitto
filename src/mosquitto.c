@@ -161,6 +161,7 @@ int main(int argc, char *argv[])
 #else
 	struct timeval tv;
 #endif
+	struct mosquitto *ctxt, *ctxt_tmp;
 
 #if defined(WIN32) || defined(__CYGWIN__)
 	if(argc == 2){
@@ -265,7 +266,6 @@ int main(int argc, char *argv[])
 	for(i=0; i<config.listener_count; i++){
 		if(config.listeners[i].protocol == mp_mqtt){
 			if(mqtt3_socket_listen(&config.listeners[i])){
-				_mosquitto_free(int_db.contexts);
 				mqtt3_db_close(&int_db);
 				if(config.pid_file){
 					remove(config.pid_file);
@@ -275,7 +275,6 @@ int main(int argc, char *argv[])
 			listensock_count += config.listeners[i].sock_count;
 			listensock = _mosquitto_realloc(listensock, sizeof(int)*listensock_count);
 			if(!listensock){
-				_mosquitto_free(int_db.contexts);
 				mqtt3_db_close(&int_db);
 				if(config.pid_file){
 					remove(config.pid_file);
@@ -284,7 +283,6 @@ int main(int argc, char *argv[])
 			}
 			for(j=0; j<config.listeners[i].sock_count; j++){
 				if(config.listeners[i].socks[j] == INVALID_SOCKET){
-					_mosquitto_free(int_db.contexts);
 					mqtt3_db_close(&int_db);
 					if(config.pid_file){
 						remove(config.pid_file);
@@ -336,13 +334,11 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	for(i=0; i<int_db.context_count; i++){
-		if(int_db.contexts[i]){
-			mqtt3_context_cleanup(&int_db, int_db.contexts[i], true);
-		}
+	HASH_ITER(hh_id, int_db.contexts_by_id, ctxt, ctxt_tmp){
+		mqtt3_context_cleanup(&int_db, ctxt, true);
 	}
-	_mosquitto_free(int_db.contexts);
-	int_db.contexts = NULL;
+	HASH_CLEAR(hh_sock, int_db.contexts_by_sock);
+	HASH_CLEAR(hh_bridge, int_db.contexts_bridge);
 	mqtt3_db_close(&int_db);
 
 	if(listensock){

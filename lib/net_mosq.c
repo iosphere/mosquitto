@@ -193,7 +193,11 @@ int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *pa
  * Returns 1 on failure (context is NULL)
  * Returns 0 on success.
  */
+#ifdef WITH_BROKER
+int _mosquitto_socket_close(struct mosquitto_db *db, struct mosquitto *mosq)
+#else
 int _mosquitto_socket_close(struct mosquitto *mosq)
+#endif
 {
 	int rc = 0;
 
@@ -211,6 +215,9 @@ int _mosquitto_socket_close(struct mosquitto *mosq)
 #endif
 
 	if(mosq->sock != INVALID_SOCKET){
+#ifdef WITH_BROKER
+		HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
+#endif
 		rc = COMPAT_CLOSE(mosq->sock);
 		mosq->sock = INVALID_SOCKET;
 	}

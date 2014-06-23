@@ -42,41 +42,21 @@ static int _db_restore_sub(struct mosquitto_db *db, const char *client_id, const
 static struct mosquitto *_db_find_or_add_context(struct mosquitto_db *db, const char *client_id, uint16_t last_mid)
 {
 	struct mosquitto *context;
-	struct mosquitto **tmp_contexts;
-	int i;
 
 	context = NULL;
-	for(i=0; i<db->context_count; i++){
-		if(db->contexts[i] && !strcmp(db->contexts[i]->id, client_id)){
-			context = db->contexts[i];
-			break;
-		}
-	}
+	HASH_FIND(hh_id, db->contexts_by_id, client_id, strlen(client_id), context);
 	if(!context){
 		context = mqtt3_context_init(-1);
 		if(!context) return NULL;
+		context->id = _mosquitto_strdup(client_id);
+		if(!context){
+			_mosquitto_free(context);
+			return NULL;
+		}
 
 		context->clean_session = false;
 
-		for(i=0; i<db->context_count; i++){
-			if(!db->contexts[i]){
-				db->contexts[i] = context;
-				break;
-			}
-		}
-		if(i==db->context_count){
-			db->context_count++;
-			tmp_contexts = _mosquitto_realloc(db->contexts, sizeof(struct mosquitto*)*db->context_count);
-			if(tmp_contexts){
-				db->contexts = tmp_contexts;
-				db->contexts[db->context_count-1] = context;
-			}else{
-				mqtt3_context_cleanup(db, context, true);
-				return NULL;
-			}
-		}
-		context->id = _mosquitto_strdup(client_id);
-		context->db_index = i;
+		HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, context->id, strlen(context->id), context);
 	}
 	if(last_mid){
 		context->last_mid = last_mid;
@@ -224,8 +204,7 @@ error:
 
 static int mqtt3_db_client_write(struct mosquitto_db *db, FILE *db_fptr)
 {
-	int i;
-	struct mosquitto *context;
+	struct mosquitto *context, *ctxt_tmp;
 	uint16_t i16temp, slen;
 	uint32_t length;
 	time_t disconnect_t;
@@ -233,8 +212,7 @@ static int mqtt3_db_client_write(struct mosquitto_db *db, FILE *db_fptr)
 	assert(db);
 	assert(db_fptr);
 
-	for(i=0; i<db->context_count; i++){
-		context = db->contexts[i];
+	HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
 		if(context && context->clean_session == false){
 			length = htonl(2+strlen(context->id) + sizeof(uint16_t) + sizeof(time_t));
 
@@ -480,7 +458,6 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	int rc = 0;
 	struct mosquitto *context;
 	time_t disconnect_t;
-	struct _clientid_index_hash *new_cih;
 
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
@@ -515,16 +492,6 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	_mosquitto_free(client_id);
 
-	if(!rc){
-		new_cih = _mosquitto_malloc(sizeof(struct _clientid_index_hash));
-		if(!new_cih){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
-		}
-		new_cih->id = context->id;
-		new_cih->db_context_index = context->db_index;
-		HASH_ADD_KEYPTR(hh, db->clientid_index_hash, context->id, strlen(context->id), new_cih);
-	}
 	return rc;
 error:
 	_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));

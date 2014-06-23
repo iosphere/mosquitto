@@ -87,14 +87,13 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	int rc;
 	struct _mosquitto_acl_user *acl_tail;
 	struct mosquitto_client_msg *msg_tail, *msg_prev;
+	struct mosquitto *found_context;
 	int slen;
 #ifdef WITH_TLS
 	X509 *client_cert;
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
 #endif
-	struct _clientid_index_hash *find_cih;
-	struct _clientid_index_hash *new_cih;
 
 #ifdef WITH_SYS_TREE
 	g_connection_count++;
@@ -396,11 +395,10 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 
 	/* Find if this client already has an entry. This must be done *after* any security checks. */
-	HASH_FIND_STR(db->clientid_index_hash, client_id, find_cih);
-	if(find_cih){
-		i = find_cih->db_context_index;
+	HASH_FIND(hh_id, db->contexts_by_id, client_id, strlen(client_id), found_context);
+	if(found_context){
 		/* Found a matching client */
-		if(db->contexts[i]->sock == -1){
+		if(found_context->sock == -1){
 			/* Client is reconnecting after a disconnect */
 			/* FIXME - does anything else need to be done here? */
 #ifdef WITH_SYS_TREE
@@ -417,33 +415,39 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 				connect_ack |= 0x01;
 			}
 		}
-		db->contexts[i]->clean_session = clean_session;
-		mqtt3_context_cleanup(db, db->contexts[i], false);
-		db->contexts[i]->state = mosq_cs_connected;
+		found_context->clean_session = clean_session;
+		mqtt3_context_cleanup(db, found_context, false);
+		found_context->state = mosq_cs_connected;
 		if(context->address){
-			db->contexts[i]->address = _mosquitto_strdup(context->address);
+			//found_context->address = _mosquitto_strdup(context->address);
+			found_context->address = context->address;
+			context->address = NULL;
 		}else{
-			db->contexts[i]->address = NULL;
+			found_context->address = NULL;
 		}
-		db->contexts[i]->disconnect_t = 0;
-		db->contexts[i]->sock = context->sock;
-		db->contexts[i]->listener = context->listener;
-		db->contexts[i]->last_msg_in = mosquitto_time();
-		db->contexts[i]->last_msg_out = mosquitto_time();
-		db->contexts[i]->keepalive = context->keepalive;
-		db->contexts[i]->pollfd_index = context->pollfd_index;
+		found_context->disconnect_t = 0;
+		HASH_DELETE(hh_sock, db->contexts_by_sock, context);
+		found_context->sock = context->sock;
+		found_context->listener = context->listener;
+		context->listener = NULL;
+		found_context->last_msg_in = mosquitto_time();
+		found_context->last_msg_out = mosquitto_time();
+		found_context->keepalive = context->keepalive;
+		found_context->pollfd_index = context->pollfd_index;
 #ifdef WITH_TLS
-		db->contexts[i]->ssl = context->ssl;
+		found_context->ssl = context->ssl;
 #endif
 		if(context->username){
-			db->contexts[i]->username = _mosquitto_strdup(context->username);
+			found_context->username = _mosquitto_strdup(context->username);
 		}
 		context->sock = -1;
 #ifdef WITH_TLS
 		context->ssl = NULL;
 #endif
 		context->state = mosq_cs_disconnecting;
-		context = db->contexts[i];
+		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(context), context);
+		context = found_context;
+		HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
 		if(context->msgs){
 			mqtt3_db_message_reconnect_reset(context);
 		}
@@ -536,17 +540,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	// Add the client ID to the DB hash table here
-	new_cih = _mosquitto_malloc(sizeof(struct _clientid_index_hash));
-	if(!new_cih){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		mqtt3_context_disconnect(db, context);
-		rc = MOSQ_ERR_NOMEM;
-		goto handle_connect_error;
-	}
-	new_cih->id = context->id;
-	new_cih->db_context_index = context->db_index;
-	HASH_ADD_KEYPTR(hh, db->clientid_index_hash, context->id, strlen(context->id), new_cih);
+	HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, context->id, strlen(context->id), context);
 
 #ifdef WITH_PERSISTENCE
 	if(!clean_session){

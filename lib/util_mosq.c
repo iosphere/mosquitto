@@ -77,7 +77,11 @@ int _mosquitto_packet_alloc(struct _mosquitto_packet *packet)
 	return MOSQ_ERR_SUCCESS;
 }
 
+#ifdef WITH_BROKER
+void _mosquitto_check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq)
+#else
 void _mosquitto_check_keepalive(struct mosquitto *mosq)
+#endif
 {
 	time_t last_msg_out;
 	time_t last_msg_in;
@@ -94,7 +98,7 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 				&& now - mosq->last_msg_out >= mosq->bridge->idle_timeout){
 
 		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", mosq->id);
-		_mosquitto_socket_close(mosq);
+		_mosquitto_socket_close(db, mosq);
 		return;
 	}
 #endif
@@ -119,9 +123,9 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 				assert(mosq->listener->client_count >= 0);
 			}
 			mosq->listener = NULL;
-#endif
+			_mosquitto_socket_close(db, mosq);
+#else
 			_mosquitto_socket_close(mosq);
-#ifndef WITH_BROKER
 			pthread_mutex_lock(&mosq->state_mutex);
 			if(mosq->state == mosq_cs_disconnecting){
 				rc = MOSQ_ERR_SUCCESS;

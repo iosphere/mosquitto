@@ -434,7 +434,7 @@ static void _free_acl(struct _mosquitto_acl *acl)
 
 static int _acl_cleanup(struct mosquitto_db *db, bool reload)
 {
-	int i;
+	struct mosquitto *context, *ctxt_tmp;
 	struct _mosquitto_acl_user *user_tail;
 
 	if(!db) return MOSQ_ERR_INVAL;
@@ -446,12 +446,8 @@ static int _acl_cleanup(struct mosquitto_db *db, bool reload)
 	 * is called if we are reloading the config. If this is not done, all 
 	 * access will be denied to currently connected clients.
 	 */
-	if(db->contexts){
-		for(i=0; i<db->context_count; i++){
-			if(db->contexts[i] && db->contexts[i]->acl_list){
-				db->contexts[i]->acl_list = NULL;
-			}
-		}
+	HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
+		context->acl_list = NULL;
 	}
 
 	while(db->acl_list){
@@ -695,49 +691,45 @@ static int _unpwd_cleanup(struct _mosquitto_unpwd **root, bool reload)
  */
 int mosquitto_security_apply_default(struct mosquitto_db *db)
 {
+	struct mosquitto *context, *ctxt_tmp;
 	struct _mosquitto_acl_user *acl_user_tail;
 	bool allow_anonymous;
-	int i;
 
 	if(!db) return MOSQ_ERR_INVAL;
 
 	allow_anonymous = db->config->allow_anonymous;
 	
-	if(db->contexts){
-		for(i=0; i<db->context_count; i++){
-			if(db->contexts[i]){
-				/* Check for anonymous clients when allow_anonymous is false */
-				if(!allow_anonymous && !db->contexts[i]->username){
-					db->contexts[i]->state = mosq_cs_disconnecting;
-					_mosquitto_socket_close(db->contexts[i]);
-					continue;
-				}
-				/* Check for connected clients that are no longer authorised */
-				if(mosquitto_unpwd_check_default(db, db->contexts[i]->username, db->contexts[i]->password) != MOSQ_ERR_SUCCESS){
-					db->contexts[i]->state = mosq_cs_disconnecting;
-					_mosquitto_socket_close(db->contexts[i]);
-					continue;
-				}
-				/* Check for ACLs and apply to user. */
-				if(db->acl_list){
-  					acl_user_tail = db->acl_list;
-					while(acl_user_tail){
-						if(acl_user_tail->username){
-							if(db->contexts[i]->username){
-								if(!strcmp(acl_user_tail->username, db->contexts[i]->username)){
-									db->contexts[i]->acl_list = acl_user_tail;
-									break;
-								}
-							}
-						}else{
-							if(!db->contexts[i]->username){
-								db->contexts[i]->acl_list = acl_user_tail;
-								break;
-							}
+	HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
+		/* Check for anonymous clients when allow_anonymous is false */
+		if(!allow_anonymous && !context->username){
+			context->state = mosq_cs_disconnecting;
+			_mosquitto_socket_close(db, context);
+			continue;
+		}
+		/* Check for connected clients that are no longer authorised */
+		if(mosquitto_unpwd_check_default(db, context->username, context->password) != MOSQ_ERR_SUCCESS){
+			context->state = mosq_cs_disconnecting;
+			_mosquitto_socket_close(db, context);
+			continue;
+		}
+		/* Check for ACLs and apply to user. */
+		if(db->acl_list){
+			acl_user_tail = db->acl_list;
+			while(acl_user_tail){
+				if(acl_user_tail->username){
+					if(context->username){
+						if(!strcmp(acl_user_tail->username, context->username)){
+							context->acl_list = acl_user_tail;
+							break;
 						}
-						acl_user_tail = acl_user_tail->next;
+					}
+				}else{
+					if(!context->username){
+						context->acl_list = acl_user_tail;
+						break;
 					}
 				}
+				acl_user_tail = acl_user_tail->next;
 			}
 		}
 	}

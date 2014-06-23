@@ -22,7 +22,11 @@ Contributors:
 #include "mosquitto.h"
 
 int _mosquitto_packet_alloc(struct _mosquitto_packet *packet);
+#ifdef WITH_BROKER
+void _mosquitto_check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq);
+#else
 void _mosquitto_check_keepalive(struct mosquitto *mosq);
+#endif
 uint16_t _mosquitto_mid_generate(struct mosquitto *mosq);
 int _mosquitto_pub_topic_check(const char *str);
 int _mosquitto_sub_topic_check(const char *str);

@@ -39,10 +39,11 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 
 	db->last_db_id = 0;
 
-	db->context_count = 1;
-	db->contexts = _mosquitto_malloc(sizeof(struct mosquitto*)*db->context_count);
-	if(!db->contexts) return MOSQ_ERR_NOMEM;
-	db->contexts[0] = NULL;
+	db->contexts_by_id = NULL;
+	db->contexts_by_sock = NULL;
+	db->contexts_for_free = NULL;
+	db->contexts_bridge = NULL;
+
 	// Initialize the hashtable
 	db->clientid_index_hash = NULL;
 
@@ -610,18 +611,14 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto *context)
 
 int mqtt3_db_message_timeout_check(struct mosquitto_db *db, unsigned int timeout)
 {
-	int i;
 	time_t threshold;
 	enum mosquitto_msg_state new_state;
-	struct mosquitto *context;
+	struct mosquitto *context, *ctxt_tmp;
 	struct mosquitto_client_msg *msg;
 
 	threshold = mosquitto_time() - timeout;
-	
-	for(i=0; i<db->context_count; i++){
-		context = db->contexts[i];
-		if(!context) continue;
 
+	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
 		msg = context->msgs;
 		while(msg){
 			new_state = mosq_ms_invalid;

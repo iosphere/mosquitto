@@ -68,7 +68,6 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	int i;
 	int j;
 	int new_sock = -1;
-	struct mosquitto **tmp_contexts = NULL;
 	struct mosquitto *new_context;
 #ifdef WITH_TLS
 	BIO *bio;
@@ -172,26 +171,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 #endif
 
 	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
-	for(i=0; i<db->context_count; i++){
-		if(db->contexts[i] == NULL){
-			db->contexts[i] = new_context;
-			break;
-		}
-	}
-	if(i==db->context_count){
-		tmp_contexts = _mosquitto_realloc(db->contexts, sizeof(struct mosquitto*)*(db->context_count+1));
-		if(tmp_contexts){
-			db->context_count++;
-			db->contexts = tmp_contexts;
-			db->contexts[i] = new_context;
-		}else{
-			// Out of memory
-			mqtt3_context_cleanup(NULL, new_context, true);
-			return -1;
-		}
-	}
-	// If we got here then the context's DB index is "i" regardless of how we got here
-	new_context->db_index = i;
+	HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(new_context->sock), new_context);
 
 	return new_sock;
 }

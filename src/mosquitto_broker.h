@@ -197,14 +197,6 @@ struct _mosquitto_auth_plugin{
 	int (*psk_key_get)(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
 };
 
-struct _clientid_index_hash{
-	/* this is the key */
-	char *id;
-	/* this is the index where the client ID exists in the db->contexts array */
-	int db_context_index;
-	UT_hash_handle hh;
-};
-
 struct mosquitto_db{
 	dbid_t last_db_id;
 	struct _mosquitto_subhier subs;
@@ -212,9 +204,11 @@ struct mosquitto_db{
 	struct _mosquitto_acl_user *acl_list;
 	struct _mosquitto_acl *acl_patterns;
 	struct _mosquitto_unpwd *psk_id;
-	struct mosquitto **contexts;
+	struct mosquitto *contexts_by_id;
+	struct mosquitto *contexts_by_sock;
+	struct mosquitto *contexts_for_free;
+	struct mosquitto *contexts_bridge;
 	struct _clientid_index_hash *clientid_index_hash;
-	int context_count;
 	struct mosquitto_msg_store *msg_store;
 	int msg_store_count;
 	struct mqtt3_config *config;
