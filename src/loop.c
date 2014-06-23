@@ -130,7 +130,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			}
 			context->pollfd_index = -1;
 
+#ifdef WITH_WEBSOCKETS
+			if(context->sock != INVALID_SOCKET || context->wsi){
+#else
 			if(context->sock != INVALID_SOCKET){
+#endif
 #ifdef WITH_BRIDGE
 				if(context->bridge){
 					_mosquitto_check_keepalive(db, context);
@@ -348,6 +352,9 @@ static void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 	mqtt3_context_disconnect(db, context);
+	if(context->clean_session){
+		mqtt3_context_cleanup(db, context, true);
+	}
 }
 
 /* Error ocurred, probably an fd has been closed. 
