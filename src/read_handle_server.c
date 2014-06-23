@@ -425,7 +425,9 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			found_context->address = NULL;
 		}
 		found_context->disconnect_t = 0;
-		HASH_DELETE(hh_sock, db->contexts_by_sock, context);
+		if(context->sock != INVALID_SOCKET){
+			HASH_DELETE(hh_sock, db->contexts_by_sock, context);
+		}
 		found_context->sock = context->sock;
 		found_context->listener = context->listener;
 		context->listener = NULL;
