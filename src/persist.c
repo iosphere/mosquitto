@@ -46,7 +46,7 @@ static struct mosquitto *_db_find_or_add_context(struct mosquitto_db *db, const 
 	context = NULL;
 	HASH_FIND(hh_id, db->contexts_by_id, client_id, strlen(client_id), context);
 	if(!context){
-		context = mqtt3_context_init(-1);
+		context = mqtt3_context_init(db, -1);
 		if(!context) return NULL;
 		context->id = _mosquitto_strdup(client_id);
 		if(!context){

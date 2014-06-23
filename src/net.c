@@ -104,7 +104,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 		return -1;
 	}
 #endif
-	new_context = mqtt3_context_init(new_sock);
+	new_context = mqtt3_context_init(db, new_sock);
 	if(!new_context){
 		COMPAT_CLOSE(new_sock);
 		return -1;
@@ -171,7 +171,6 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 #endif
 
 	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
-	HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(new_context->sock), new_context);
 
 	return new_sock;
 }

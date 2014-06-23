@@ -82,7 +82,7 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 		/* (possible from persistent db) */
 	}else{
 		/* id wasn't found, so generate a new context */
-		new_context = mqtt3_context_init(-1);
+		new_context = mqtt3_context_init(db, -1);
 		if(!new_context){
 			return MOSQ_ERR_NOMEM;
 		}

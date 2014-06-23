@@ -24,7 +24,7 @@ Contributors:
 
 #include "uthash.h"
 
-struct mosquitto *mqtt3_context_init(int sock)
+struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, int sock)
 {
 	struct mosquitto *context;
 	char address[1024];
@@ -76,6 +76,9 @@ struct mosquitto *mqtt3_context_init(int sock)
 	context->ssl = NULL;
 #endif
 
+	if(context->sock != INVALID_SOCKET){
+		HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
+	}
 	return context;
 }
 
