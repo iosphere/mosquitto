@@ -43,13 +43,12 @@ suback_packet = mosq_test.gen_suback(mid, 0)
 
 publish_packet = mosq_test.gen_publish(topic="psk/test", payload="message", qos=0)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '08-tls-psk-bridge.conf'], stderr=subprocess.PIPE)
-bridge = subprocess.Popen(['../../src/mosquitto', '-c', '08-tls-psk-bridge.conf2'], stderr=subprocess.PIPE)
+bridge_cmd = ['../../src/mosquitto', '-c', '08-tls-psk-bridge.conf2']
+broker = mosq_test.start_broker(filename=os.path.basename(__file__))
+bridge = mosq_test.start_broker(filename=os.path.basename(__file__)+'_bridge', cmd=bridge_cmd, port=1890)
 
 pub = None
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=30)
     sock.send(subscribe_packet)
 

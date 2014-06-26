@@ -23,11 +23,10 @@ connack_packet = mosq_test.gen_connack(rc=0)
 subscribe_packet = mosq_test.gen_subscribe(mid, "qos2/test", 2)
 suback_packet = mosq_test.gen_suback(mid, 2)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
+cmd = ['../../src/mosquitto', '-p', '1888']
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
 
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
     sock.send(subscribe_packet)
 

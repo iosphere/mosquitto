@@ -29,11 +29,9 @@ publish_packet = mosq_test.gen_publish("qos1/timeout/test", qos=1, mid=mid, payl
 publish_dup_packet = mosq_test.gen_publish("qos1/timeout/test", qos=1, mid=mid, payload="timeout-message", dup=True)
 puback_packet = mosq_test.gen_puback(mid)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-b2c-timeout-qos1.conf'], stderr=subprocess.PIPE)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__))
 
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
     sock.send(subscribe_packet)
 

@@ -23,7 +23,8 @@ connack_packet = mosq_test.gen_connack(rc=0)
 subscribe_packet = mosq_test.gen_subscribe(mid, "qos0/test", 0)
 suback_packet = mosq_test.gen_suback(mid, 0)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
+cmd = ['../../src/mosquitto', '-p', '1888']
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
 
 try:
     time.sleep(0.5)

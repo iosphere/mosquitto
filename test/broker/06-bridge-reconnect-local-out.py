@@ -31,18 +31,17 @@ try:
 except OSError:
     pass
 
-broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
-time.sleep(0.5)
-local_broker = subprocess.Popen(['../../src/mosquitto', '-c', '06-bridge-reconnect-local-out.conf'], stderr=subprocess.PIPE)
-time.sleep(0.5)
+cmd = ['../../src/mosquitto', '-p', '1888']
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
+
+local_cmd = ['../../src/mosquitto', '-c', '06-bridge-reconnect-local-out.conf']
+local_broker = mosq_test.start_broker(cmd=local_cmd, filename=os.path.basename(__file__)+'_local1')
 local_broker.terminate()
 local_broker.wait()
-local_broker = subprocess.Popen(['../../src/mosquitto', '-c', '06-bridge-reconnect-local-out.conf'], stderr=subprocess.PIPE)
+local_broker = mosq_test.start_broker(cmd=local_cmd, filename=os.path.basename(__file__)+'_local2')
 
 pub = None
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
     sock.send(subscribe_packet)
 

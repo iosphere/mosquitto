@@ -27,11 +27,9 @@ pubrec_packet = mosq_test.gen_pubrec(mid)
 pubrel_packet = mosq_test.gen_pubrel(mid)
 pubcomp_packet = mosq_test.gen_pubcomp(mid)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-c2b-timeout-qos2.conf'], stderr=subprocess.PIPE)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__))
 
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
     sock.send(publish_packet)
 

@@ -25,9 +25,7 @@ keepalive = 10
 connect_packet = mosq_test.gen_connect("connect-success-test", keepalive=keepalive)
 connack_packet = mosq_test.gen_connack(rc=0)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '08-ssl-connect-no-auth-wrong-ca.conf'], stderr=subprocess.PIPE)
-
-time.sleep(0.5)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-alt-ca.crt", cert_reqs=ssl.CERT_REQUIRED)
