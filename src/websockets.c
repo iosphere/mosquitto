@@ -138,6 +138,10 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			mosq = u->mosq;
+			if(mosq->state == mosq_cs_disconnecting){
+				return -1;
+			}
+
 			if(mosq->out_packet && !mosq->current_out_packet){
 				mosq->current_out_packet = mosq->out_packet;
 				mosq->out_packet = mosq->out_packet->next;
