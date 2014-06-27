@@ -787,12 +787,12 @@ int _base64_decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
 	BIO_write(bmem, in, strlen(in));
 
 	if(BIO_flush(bmem) != 1){
-		BIO_free_all(bmem);
+		BIO_free_all(b64);
 		return 1;
 	}
 	*decoded = calloc(strlen(in), 1);
 	*decoded_len =  BIO_read(b64, *decoded, strlen(in));
-	BIO_free_all(bmem);
+	BIO_free_all(b64);
 
 	return 0;
 }
