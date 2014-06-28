@@ -38,6 +38,7 @@ except ssl.SSLError as err:
 finally:
     ssock.close()
 
+time.sleep(0.5)
 broker.terminate()
 broker.wait
 if rc:

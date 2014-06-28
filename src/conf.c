@@ -265,9 +265,13 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
 				_mosquitto_free(config->bridges[i].topics);
 			}
 			if(config->bridges[i].notification_topic) _mosquitto_free(config->bridges[i].notification_topic);
+#ifdef WITH_TLS
+			if(config->bridges[i].tls_version) _mosquitto_free(config->bridges[i].tls_version);
+			if(config->bridges[i].tls_cafile) _mosquitto_free(config->bridges[i].tls_cafile);
 #ifdef REAL_WITH_TLS_PSK
 			if(config->bridges[i].tls_psk_identity) _mosquitto_free(config->bridges[i].tls_psk_identity);
 			if(config->bridges[i].tls_psk) _mosquitto_free(config->bridges[i].tls_psk);
+#endif
 #endif
 		}
 		_mosquitto_free(config->bridges);

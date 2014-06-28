@@ -333,8 +333,16 @@ int main(int argc, char *argv[])
 	HASH_ITER(hh_id, int_db.contexts_by_id, ctxt, ctxt_tmp){
 		mqtt3_context_cleanup(&int_db, ctxt, true);
 	}
-	HASH_CLEAR(hh_sock, int_db.contexts_by_sock);
-	HASH_CLEAR(hh_bridge, int_db.contexts_bridge);
+	HASH_ITER(hh_sock, int_db.contexts_by_sock, ctxt, ctxt_tmp){
+		mqtt3_context_cleanup(&int_db, ctxt, true);
+	}
+	HASH_ITER(hh_bridge, int_db.contexts_bridge, ctxt, ctxt_tmp){
+		mqtt3_context_cleanup(&int_db, ctxt, true);
+	}
+	HASH_ITER(hh_for_free, int_db.contexts_for_free, ctxt, ctxt_tmp){
+		HASH_DELETE(hh_for_free, int_db.contexts_for_free, ctxt);
+		mqtt3_context_cleanup(&int_db, ctxt, true);
+	}
 	mqtt3_db_close(&int_db);
 
 	if(listensock){
@@ -356,8 +364,8 @@ int main(int argc, char *argv[])
 		remove(config.pid_file);
 	}
 
-	_mosquitto_net_cleanup();
 	mqtt3_config_cleanup(int_db.config);
+	_mosquitto_net_cleanup();
 
 	return rc;
 }

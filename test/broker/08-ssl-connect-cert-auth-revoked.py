@@ -40,6 +40,7 @@ try:
             raise ValueError(err.errno)
 
 finally:
+    time.sleep(0.5)
     broker.terminate()
     broker.wait()
     if rc:

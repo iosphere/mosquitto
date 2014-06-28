@@ -41,6 +41,7 @@ except socket.error as err:
     if err.errno == errno.ECONNRESET:
         rc = 0
 
+time.sleep(0.5)
 broker.terminate()
 broker.wait()
 if rc:

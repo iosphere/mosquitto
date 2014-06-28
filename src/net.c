@@ -211,15 +211,22 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 	if(!psk_key) return 0;
 
 	if(mosquitto_psk_key_get(db, psk_hint, identity, psk_key, max_psk_len*2) != MOSQ_ERR_SUCCESS){
+		_mosquitto_free(psk_key);
 		return 0;
 	}
 
 	len = _mosquitto_hex2bin(psk_key, psk, max_psk_len);
-	if (len < 0) return 0;
+	if (len < 0){
+		_mosquitto_free(psk_key);
+		return 0;
+	}
 
 	if(listener->use_identity_as_username){
 		context->username = _mosquitto_strdup(identity);
-		if(!context->username) return 0;
+		if(!context->username){
+			_mosquitto_free(psk_key);
+			return 0;
+		}
 	}
 
 	return len;

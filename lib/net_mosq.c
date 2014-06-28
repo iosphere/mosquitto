@@ -51,6 +51,8 @@ Contributors:
 #endif
 
 #ifdef WITH_TLS
+#include <openssl/conf.h>
+#include <openssl/engine.h>
 #include <openssl/err.h>
 #include <tls_mosq.h>
 #endif
@@ -107,6 +109,9 @@ void _mosquitto_net_init(void)
 void _mosquitto_net_cleanup(void)
 {
 #ifdef WITH_TLS
+	ERR_remove_state(0);
+	ENGINE_cleanup();
+	CONF_modules_unload(1);
 	ERR_free_strings();
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();

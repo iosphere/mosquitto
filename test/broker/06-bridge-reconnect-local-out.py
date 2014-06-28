@@ -36,6 +36,7 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
 
 local_cmd = ['../../src/mosquitto', '-c', '06-bridge-reconnect-local-out.conf']
 local_broker = mosq_test.start_broker(cmd=local_cmd, filename=os.path.basename(__file__)+'_local1')
+time.sleep(0.5)
 local_broker.terminate()
 local_broker.wait()
 local_broker = mosq_test.start_broker(cmd=local_cmd, filename=os.path.basename(__file__)+'_local2')

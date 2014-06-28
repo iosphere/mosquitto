@@ -102,20 +102,24 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	/* Don't accept multiple CONNECT commands. */
 	if(context->state != mosq_cs_new){
-		mqtt3_context_disconnect(db, context);
-		return MOSQ_ERR_PROTOCOL;
+		rc = MOSQ_ERR_PROTOCOL;
+		goto handle_connect_error;
 	}
 
 	if(_mosquitto_read_string(&context->in_packet, &protocol_name)){
-		mqtt3_context_disconnect(db, context);
+		rc = 1;
+		goto handle_connect_error;
 		return 1;
 	}
 	if(!protocol_name){
-		mqtt3_context_disconnect(db, context);
+		rc = 3;
+		goto handle_connect_error;
 		return 3;
 	}
 	if(_mosquitto_read_byte(&context->in_packet, &protocol_version)){
-		mqtt3_context_disconnect(db, context);
+		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(context), context);
+		rc = 1;
+		goto handle_connect_error;
 		return 1;
 	}
 	if(!strcmp(protocol_name, PROTOCOL_NAME_v31)){
@@ -125,9 +129,9 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 						protocol_version, context->address);
 			}
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_PROTOCOL_VERSION);
-			mqtt3_context_disconnect(db, context);
 			_mosquitto_free(protocol_name);
-			return MOSQ_ERR_PROTOCOL;
+			rc = MOSQ_ERR_PROTOCOL;
+			goto handle_connect_error;
 		}
 		context->protocol = mosq_p_mqtt31;
 	}else if(!strcmp(protocol_name, PROTOCOL_NAME_v311)){
@@ -137,15 +141,15 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 						protocol_version, context->address);
 			}
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_PROTOCOL_VERSION);
-			mqtt3_context_disconnect(db, context);
 			_mosquitto_free(protocol_name);
-			return MOSQ_ERR_PROTOCOL;
+			rc = MOSQ_ERR_PROTOCOL;
+			goto handle_connect_error;
 		}
 		if((context->in_packet.command&0x0F) != 0x00){
 			/* Reserved flags not set to 0, must disconnect. */ 
-			mqtt3_context_disconnect(db, context);
 			_mosquitto_free(protocol_name);
-			return MOSQ_ERR_PROTOCOL;
+			rc = MOSQ_ERR_PROTOCOL;
+			goto handle_connect_error;
 		}
 		context->protocol = mosq_p_mqtt311;
 	}else{
@@ -154,14 +158,14 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 					protocol_name, context->address);
 		}
 		_mosquitto_free(protocol_name);
-		mqtt3_context_disconnect(db, context);
-		return MOSQ_ERR_PROTOCOL;
+		rc = MOSQ_ERR_PROTOCOL;
+		goto handle_connect_error;
 	}
 	_mosquitto_free(protocol_name);
 
 	if(_mosquitto_read_byte(&context->in_packet, &connect_flags)){
-		mqtt3_context_disconnect(db, context);
-		return 1;
+		rc = 1;
+		goto handle_connect_error;
 	}
 	clean_session = (connect_flags & 0x02) >> 1;
 	will = connect_flags & 0x04;
@@ -169,42 +173,41 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(will_qos == 3){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Invalid Will QoS in CONNECT from %s.",
 				context->address);
-		mqtt3_context_disconnect(db, context);
-		return MOSQ_ERR_PROTOCOL;
+		rc = MOSQ_ERR_PROTOCOL;
+		goto handle_connect_error;
 	}
 	will_retain = connect_flags & 0x20;
 	password_flag = connect_flags & 0x40;
 	username_flag = connect_flags & 0x80;
 
 	if(_mosquitto_read_uint16(&context->in_packet, &(context->keepalive))){
-		mqtt3_context_disconnect(db, context);
-		return 1;
+		rc = 1;
+		goto handle_connect_error;
 	}
 
 	if(_mosquitto_read_string(&context->in_packet, &client_id)){
-		mqtt3_context_disconnect(db, context);
-		return 1;
+		rc = 1;
+		goto handle_connect_error;
 	}
 
 	slen = strlen(client_id);
 	if(slen == 0){
 		if(context->protocol == mosq_p_mqtt31){
-			_mosquitto_free(client_id);
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
-			mqtt3_context_disconnect(db, context);
-			return MOSQ_ERR_PROTOCOL;
+			rc = MOSQ_ERR_PROTOCOL;
+			goto handle_connect_error;
 		}else{ /* mqtt311 */
 			_mosquitto_free(client_id);
 
 			if(clean_session == 0 || db->config->allow_zero_length_clientid == false){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
-				mqtt3_context_disconnect(db, context);
-				return MOSQ_ERR_PROTOCOL;
+				rc = MOSQ_ERR_PROTOCOL;
+				goto handle_connect_error;
 			}else{
 				client_id = client_id_gen(db);
 				if(!client_id){
-					mqtt3_context_disconnect(db, context);
-					return MOSQ_ERR_NOMEM;
+					rc = MOSQ_ERR_NOMEM;
+					goto handle_connect_error;
 				}
 			}
 		}
@@ -213,52 +216,44 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	/* clientid_prefixes check */
 	if(db->config->clientid_prefixes){
 		if(strncmp(db->config->clientid_prefixes, client_id, strlen(db->config->clientid_prefixes))){
-			_mosquitto_free(client_id);
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
-			mqtt3_context_disconnect(db, context);
-			return MOSQ_ERR_SUCCESS;
+			rc = MOSQ_ERR_SUCCESS;
+			goto handle_connect_error;
 		}
 	}
 
 	if(will){
 		will_struct = _mosquitto_calloc(1, sizeof(struct mosquitto_message));
 		if(!will_struct){
-			mqtt3_context_disconnect(db, context);
 			rc = MOSQ_ERR_NOMEM;
 			goto handle_connect_error;
 		}
 		if(_mosquitto_read_string(&context->in_packet, &will_topic)){
-			mqtt3_context_disconnect(db, context);
 			rc = 1;
 			goto handle_connect_error;
 		}
 		if(strlen(will_topic) == 0){
-			mqtt3_context_disconnect(db, context);
 			rc = 1;
 			goto handle_connect_error;
 		}
 		if(_mosquitto_pub_topic_check(will_topic)){
-			mqtt3_context_disconnect(db, context);
 			rc = 1;
 			goto handle_connect_error;
 		}
 
 		if(_mosquitto_read_uint16(&context->in_packet, &will_payloadlen)){
-			mqtt3_context_disconnect(db, context);
 			rc = 1;
 			goto handle_connect_error;
 		}
 		if(will_payloadlen > 0){
 			will_payload = _mosquitto_malloc(will_payloadlen);
 			if(!will_payload){
-				mqtt3_context_disconnect(db, context);
 				rc = 1;
 				goto handle_connect_error;
 			}
 
 			rc = _mosquitto_read_bytes(&context->in_packet, will_payload, will_payloadlen);
 			if(rc){
-				mqtt3_context_disconnect(db, context);
 				rc = 1;
 				goto handle_connect_error;
 			}
@@ -266,7 +261,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	}else{
 		if(context->protocol == mosq_p_mqtt311){
 			if(will_qos != 0 || will_retain != 0){
-				mqtt3_context_disconnect(db, context);
 				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}
@@ -286,7 +280,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 						/* Password flag given, but no password. Ignore. */
 						password_flag = 0;
 					}else if(context->protocol == mosq_p_mqtt311){
-						mqtt3_context_disconnect(db, context);
 						rc = MOSQ_ERR_PROTOCOL;
 						goto handle_connect_error;
 					}
@@ -300,7 +293,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 				/* Username flag given, but no username. Ignore. */
 				username_flag = 0;
 			}else if(context->protocol == mosq_p_mqtt311){
-				mqtt3_context_disconnect(db, context);
 				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}
@@ -309,7 +301,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(context->protocol == mosq_p_mqtt311){
 			if(password_flag){
 				/* username_flag == 0 && password_flag == 1 is forbidden */
-				mqtt3_context_disconnect(db, context);
 				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}
@@ -320,7 +311,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->listener && context->listener->ssl_ctx && context->listener->use_identity_as_username){
 		if(!context->ssl){
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-			mqtt3_context_disconnect(db, context);
 			rc = MOSQ_ERR_SUCCESS;
 			goto handle_connect_error;
 		}
@@ -329,7 +319,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			/* Client should have provided an identity to get this far. */
 			if(!context->username){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				mqtt3_context_disconnect(db, context);
 				rc = MOSQ_ERR_SUCCESS;
 				goto handle_connect_error;
 			}
@@ -338,14 +327,12 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			client_cert = SSL_get_peer_certificate(context->ssl);
 			if(!client_cert){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				mqtt3_context_disconnect(db, context);
 				rc = MOSQ_ERR_SUCCESS;
 				goto handle_connect_error;
 			}
 			name = X509_get_subject_name(client_cert);
 			if(!name){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				mqtt3_context_disconnect(db, context);
 				rc = MOSQ_ERR_SUCCESS;
 				goto handle_connect_error;
 			}
@@ -353,7 +340,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			i = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
 			if(i == -1){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				mqtt3_context_disconnect(db, context);
 				rc = MOSQ_ERR_SUCCESS;
 				goto handle_connect_error;
 			}
@@ -372,7 +358,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = mosquitto_unpwd_check(db, username, password);
 			if(rc == MOSQ_ERR_AUTH){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				mqtt3_context_disconnect(db, context);
 				rc = MOSQ_ERR_SUCCESS;
 				goto handle_connect_error;
 			}else if(rc == MOSQ_ERR_INVAL){
@@ -386,7 +371,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 		if(!username_flag && db->config->allow_anonymous == false){
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
-			mqtt3_context_disconnect(db, context);
 			rc = MOSQ_ERR_SUCCESS;
 			goto handle_connect_error;
 		}
@@ -558,6 +542,10 @@ handle_connect_error:
 	if(will_payload) _mosquitto_free(will_payload);
 	if(will_topic) _mosquitto_free(will_topic);
 	if(will_struct) _mosquitto_free(will_struct);
+	if(context){
+		mqtt3_context_disconnect(db, context);
+		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(context), context);
+	}
 	return rc;
 }
 

@@ -66,7 +66,7 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 		bridge->clientid = id;
 	}
 	if(bridge->local_clientid){
-		local_id = bridge->local_clientid;
+		local_id = _mosquitto_strdup(bridge->local_clientid);
 	}else{
 		len = strlen(bridge->clientid) + strlen("local.") + 2;
 		local_id = _mosquitto_malloc(len);
@@ -111,7 +111,7 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 
 	bridge->try_private_accepted = true;
 
-	HASH_ADD_KEYPTR(hh_bridge, db->contexts_bridge, new_context->id, strlen(new_context->id), new_context);
+	HASH_ADD_KEYPTR(hh_bridge, db->contexts_bridge, new_context->bridge->local_clientid, strlen(new_context->bridge->local_clientid), new_context);
 
 	return mqtt3_bridge_connect(db, new_context);
 }
