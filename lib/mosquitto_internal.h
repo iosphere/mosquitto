@@ -84,7 +84,8 @@ enum mosquitto_client_state {
 	mosq_cs_disconnecting = 2,
 	mosq_cs_connect_async = 3,
 	mosq_cs_connect_pending = 4,
-	mosq_cs_connect_srv = 5
+	mosq_cs_connect_srv = 5,
+	mosq_cs_disconnect_ws = 6
 };
 
 enum _mosquitto_protocol {

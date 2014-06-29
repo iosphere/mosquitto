@@ -119,7 +119,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 	switch (reason) {
 		case LWS_CALLBACK_ESTABLISHED:
-			mosq = mqtt3_context_init(db, -1);
+			mosq = mqtt3_context_init(db, WEBSOCKET_CLIENT);
 			if(mosq){
 				mosq->ws_context = context;
 				mosq->wsi = wsi;
@@ -138,7 +138,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			mosq = u->mosq;
-			if(mosq->state == mosq_cs_disconnecting){
+			if(mosq->state == mosq_cs_disconnect_ws || mosq->state == mosq_cs_disconnecting){
 				return -1;
 			}
 

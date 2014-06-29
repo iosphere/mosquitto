@@ -49,7 +49,7 @@ static struct mosquitto *_db_find_or_add_context(struct mosquitto_db *db, const 
 		context = mqtt3_context_init(db, -1);
 		if(!context) return NULL;
 		context->id = _mosquitto_strdup(client_id);
-		if(!context){
+		if(!context->id){
 			_mosquitto_free(context);
 			return NULL;
 		}

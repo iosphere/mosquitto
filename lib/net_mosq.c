@@ -109,6 +109,7 @@ void _mosquitto_net_init(void)
 void _mosquitto_net_cleanup(void)
 {
 #ifdef WITH_TLS
+	sk_SSL_COMP_free(SSL_COMP_get_compression_methods());
 	ERR_remove_state(0);
 	ENGINE_cleanup();
 	CONF_modules_unload(1);
@@ -219,12 +220,20 @@ int _mosquitto_socket_close(struct mosquitto *mosq)
 	}
 #endif
 
-	if(mosq->sock != INVALID_SOCKET){
+	if(mosq->sock >= 0){
 #ifdef WITH_BROKER
 		HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
 #endif
 		rc = COMPAT_CLOSE(mosq->sock);
 		mosq->sock = INVALID_SOCKET;
+#ifdef WITH_WEBSOCKETS
+	}else if(mosq->sock == WEBSOCKET_CLIENT){
+		if(mosq->state != mosq_cs_disconnecting){
+			mosq->state = mosq_cs_disconnect_ws;
+		}
+		libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
+		mosq->sock = INVALID_SOCKET;
+#endif
 	}
 
 #ifdef WITH_BROKER

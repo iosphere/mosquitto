@@ -130,11 +130,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			}
 			context->pollfd_index = -1;
 
-#ifdef WITH_WEBSOCKETS
-			if(context->sock != INVALID_SOCKET || context->wsi){
-#else
 			if(context->sock != INVALID_SOCKET){
-#endif
 #ifdef WITH_BRIDGE
 				if(context->bridge){
 					_mosquitto_check_keepalive(db, context);

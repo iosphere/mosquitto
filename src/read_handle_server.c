@@ -117,7 +117,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		return 3;
 	}
 	if(_mosquitto_read_byte(&context->in_packet, &protocol_version)){
-		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(context), context);
+		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
 		rc = 1;
 		goto handle_connect_error;
 		return 1;
@@ -409,7 +409,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			found_context->address = NULL;
 		}
 		found_context->disconnect_t = 0;
-		if(context->sock != INVALID_SOCKET){
+		if(context->sock >= 0){
 			HASH_DELETE(hh_sock, db->contexts_by_sock, context);
 		}
 		found_context->sock = context->sock;
@@ -430,7 +430,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		context->ssl = NULL;
 #endif
 		context->state = mosq_cs_disconnecting;
-		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(context), context);
+		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
 		context = found_context;
 		HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
 		if(context->msgs){
@@ -544,7 +544,7 @@ handle_connect_error:
 	if(will_struct) _mosquitto_free(will_struct);
 	if(context){
 		mqtt3_context_disconnect(db, context);
-		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(context), context);
+		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
 	}
 	return rc;
 }

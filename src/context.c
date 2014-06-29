@@ -57,7 +57,7 @@ struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, int sock)
 	context->current_out_packet = NULL;
 
 	context->address = NULL;
-	if(sock != -1){
+	if(sock >= 0){
 		if(!_mosquitto_socket_get_address(sock, address, 1024)){
 			context->address = _mosquitto_strdup(address);
 		}
@@ -76,7 +76,7 @@ struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, int sock)
 	context->ssl = NULL;
 #endif
 
-	if(context->sock != INVALID_SOCKET){
+	if(context->sock >= 0){
 		HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
 	}
 	return context;
@@ -113,6 +113,8 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 			if(ctx_tmp){
 				HASH_DELETE(hh_bridge, db->contexts_bridge, context);
 			}
+			_mosquitto_free(context->bridge->local_clientid);
+			context->bridge->local_clientid = NULL;
 		}
 		if(context->bridge->username){
 			context->bridge->username = NULL;
@@ -140,6 +142,12 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		_mosquitto_free(context->address);
 		context->address = NULL;
 	}
+
+	HASH_FIND(hh_for_free, db->contexts_for_free, context, sizeof(void *), ctx_tmp);
+	if(ctx_tmp){
+		HASH_DELETE(hh_for_free, db->contexts_for_free, context);
+	}
+
 	if(context->id){
 		assert(db); /* db can only be NULL here if the client hasn't sent a
 					   CONNECT and hence wouldn't have an id. */

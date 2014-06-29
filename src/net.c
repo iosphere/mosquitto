@@ -119,13 +119,13 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 		}
 	}
 	if(!new_context->listener){
-		mqtt3_context_cleanup(NULL, new_context, true);
+		mqtt3_context_cleanup(db, new_context, true);
 		return -1;
 	}
 
 	if(new_context->listener->max_connections > 0 && new_context->listener->client_count > new_context->listener->max_connections){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
-		mqtt3_context_cleanup(NULL, new_context, true);
+		mqtt3_context_cleanup(db, new_context, true);
 		return -1;
 	}
 
@@ -137,7 +137,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 				if(db->config->listeners[i].ssl_ctx){
 					new_context->ssl = SSL_new(db->config->listeners[i].ssl_ctx);
 					if(!new_context->ssl){
-						mqtt3_context_cleanup(NULL, new_context, true);
+						mqtt3_context_cleanup(db, new_context, true);
 						return -1;
 					}
 					SSL_set_ex_data(new_context->ssl, tls_ex_index_context, new_context);
@@ -160,7 +160,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 										new_context->address, ERR_error_string(e, ebuf));
 								e = ERR_get_error();
 							}
-							mqtt3_context_cleanup(NULL, new_context, true);
+							mqtt3_context_cleanup(db, new_context, true);
 							return -1;
 						}
 					}
@@ -229,6 +229,7 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 		}
 	}
 
+	_mosquitto_free(psk_key);
 	return len;
 }
 #endif
