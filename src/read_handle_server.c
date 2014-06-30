@@ -90,7 +90,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	struct mosquitto *found_context;
 	int slen;
 #ifdef WITH_TLS
-	X509 *client_cert;
+	X509 *client_cert = NULL;
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
 #endif
@@ -349,6 +349,8 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 				rc = MOSQ_ERR_SUCCESS;
 				goto handle_connect_error;
 			}
+			X509_free(client_cert);
+			client_cert = NULL;
 #ifdef REAL_WITH_TLS_PSK
 		}
 #endif /* REAL_WITH_TLS_PSK */
@@ -542,6 +544,9 @@ handle_connect_error:
 	if(will_payload) _mosquitto_free(will_payload);
 	if(will_topic) _mosquitto_free(will_topic);
 	if(will_struct) _mosquitto_free(will_struct);
+#ifdef WITH_TLS
+	if(client_cert) X509_free(client_cert);
+#endif
 	if(context){
 		mqtt3_context_disconnect(db, context);
 		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
