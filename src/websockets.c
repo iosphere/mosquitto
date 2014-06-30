@@ -64,10 +64,6 @@ enum mosq_ws_protocols {
 	DEMO_PROTOCOL_COUNT
 };
 
-struct libws_mqtt_data {
-	struct mosquitto *mosq;
-};
-
 struct libws_http_data {
 	char blank;
 };
@@ -110,12 +106,33 @@ static int callback_mqtt(struct libwebsocket_context *context,
 	struct _mosquitto_packet *packet;
 	int count;
 	struct libws_mqtt_data *u = (struct libws_mqtt_data *)user;
+	struct libws_mqtt_hack *hack_head, *hack, *hack_prev = NULL;
 	size_t pos;
 	uint8_t *buf;
 	int rc;
 	uint8_t byte;
 
 	db = &int_db;
+
+	/* Update wsi->user, in case of reconnecting client */
+	hack_head = (struct libws_mqtt_hack *)libwebsocket_context_user(context);
+	if(hack_head && u && u->mosq){
+		hack = hack_head->next;
+		while(hack){
+			if(hack->old_mosq == u->mosq){
+				u->mosq = hack->new_mosq;
+				if(hack_prev){
+					hack_prev->next = hack->next;
+				}else{
+					hack_head->next = hack->next;
+				}
+				_mosquitto_free(hack);
+				break;
+			}
+			hack_prev = hack;
+			hack = hack->next;
+		}
+	}
 
 	switch (reason) {
 		case LWS_CALLBACK_ESTABLISHED:
@@ -129,16 +146,19 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 		case LWS_CALLBACK_CLOSED:
 			mosq = u->mosq;
-			mqtt3_context_disconnect(db, mosq);
-			mosq->wsi = NULL;
-			if(mosq->clean_session){
-				mqtt3_context_cleanup(db, mosq, true);
+			if(mosq){
+				mosq->wsi = NULL;
+				if(mosq->clean_session){
+					mqtt3_context_cleanup(db, mosq, true);
+				}else{
+					mqtt3_context_disconnect(db, mosq);
+				}
 			}
 			break;
 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			mosq = u->mosq;
-			if(mosq->state == mosq_cs_disconnect_ws || mosq->state == mosq_cs_disconnecting){
+			if(!mosq || mosq->state == mosq_cs_disconnect_ws || mosq->state == mosq_cs_disconnecting){
 				return -1;
 			}
 
@@ -227,7 +247,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 					if(mosq->in_packet.remaining_length > 0){
 						mosq->in_packet.payload = _mosquitto_malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
-						if(!mosq->in_packet.payload) return -1;
+						if(!mosq->in_packet.payload){
+							return -1;
+						}
 						mosq->in_packet.to_process = mosq->in_packet.remaining_length;
 					}
 					mosq->in_packet.have_remaining = 1;
@@ -312,6 +334,10 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 		info.options |= LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
 	}
 #endif
+	info.user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
+	if(!info.user){
+		return NULL;
+	}
 
 	lws_set_log_level(0, NULL);
 

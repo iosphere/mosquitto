@@ -326,14 +326,6 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 #endif
 	}
 
-#ifdef WITH_WEBSOCKETS
-	for(i=0; i<db->config->listener_count; i++){
-		if(db->config->listeners[i].ws_context){
-			libwebsocket_context_destroy(db->config->listeners[i].ws_context);
-		}
-	}
-#endif
-
 	if(pollfds) _mosquitto_free(pollfds);
 	return MOSQ_ERR_SUCCESS;
 }

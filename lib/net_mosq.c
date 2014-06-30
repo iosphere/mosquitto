@@ -231,7 +231,9 @@ int _mosquitto_socket_close(struct mosquitto *mosq)
 		if(mosq->state != mosq_cs_disconnecting){
 			mosq->state = mosq_cs_disconnect_ws;
 		}
-		libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
+		if(mosq->wsi){
+			libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
+		}
 		mosq->sock = INVALID_SOCKET;
 #endif
 	}

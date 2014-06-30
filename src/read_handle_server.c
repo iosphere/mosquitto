@@ -98,6 +98,9 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
 #endif
+#ifdef WITH_WEBSOCKETS
+	struct libws_mqtt_hack *ws_ctxt_user, *ws_ctxt_user_head;
+#endif
 
 #ifdef WITH_SYS_TREE
 	g_connection_count++;
@@ -387,10 +390,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	/* Find if this client already has an entry. This must be done *after* any security checks. */
 	HASH_FIND(hh_id, db->contexts_by_id, client_id, strlen(client_id), found_context);
 	if(found_context){
-		HASH_DELETE(hh_id, db->contexts_by_id, found_context);
-		_mosquitto_free(found_context->id);
-		found_context->id = NULL;
-
 		/* Found a matching client */
 		if(found_context->sock == INVALID_SOCKET){
 			/* Client is reconnecting after a disconnect */
@@ -398,16 +397,12 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 #ifdef WITH_SYS_TREE
 			db->disconnected_count--;
 #endif
-			HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, found_context, sizeof(void *), found_context);
 		}else{
-			/* Client is already connected, disconnect old version */
+			/* Client is already connected, disconnect old version. This is
+			 * done in mqtt3_context_cleanup() below. */
 			if(db->config->connection_messages == true){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Client %s already connected, closing old connection.", client_id);
 			}
-			if(found_context->sock >= 0){
-				HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, found_context, sizeof(void *), found_context);
-			}
-			mqtt3_context_disconnect(db, found_context);
 		}
 
 		if(context->protocol == mosq_p_mqtt311){
@@ -416,16 +411,105 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 
-		if(found_context->msgs){
-			if(context->last_msg){
-				context->last_msg->next = found_context->msgs;
-				context->last_msg = context->last_msg->next;
-			}else{
-				context->msgs = found_context->msgs;
-				context->last_msg = found_context->msgs;
+		found_context->clean_session = clean_session;
+		mqtt3_context_cleanup(db, found_context, false);
+		found_context->state = mosq_cs_connected;
+		if(context->address){
+			found_context->address = context->address;
+			context->address = NULL;
+		}else{
+			found_context->address = NULL;
+		}
+		found_context->disconnect_t = 0;
+		found_context->sock = context->sock;
+		found_context->listener = context->listener;
+		context->listener = NULL;
+		found_context->last_msg_in = mosquitto_time();
+		found_context->last_msg_out = mosquitto_time();
+		found_context->keepalive = context->keepalive;
+		found_context->pollfd_index = context->pollfd_index;
+#ifdef WITH_TLS
+		found_context->ssl = context->ssl;
+#endif
+		if(context->username){
+			found_context->username = context->username;
+			context->username = NULL;
+		}
+		if(context->password){
+			found_context->password = context->password;
+			context->password = NULL;
+		}
+
+#ifdef WITH_TLS
+		context->ssl = NULL;
+#endif
+		context->state = mosq_cs_disconnecting;
+
+#ifdef WITH_WEBSOCKETS
+		if(found_context->wsi){
+			/* This is a hack to allow us to update the wsi->user_space
+			 * structure. If libwebsockets let us access that variable itself,
+			 * this wouldn't be necessary. */
+			ws_ctxt_user_head = (struct libws_mqtt_hack *)libwebsocket_context_user(found_context->ws_context);
+			ws_ctxt_user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
+			if(!ws_ctxt_user){
+				goto handle_connect_error;
 			}
+			ws_ctxt_user->old_mosq = found_context;
+			ws_ctxt_user->new_mosq = NULL;
+
+			ws_ctxt_user->next = ws_ctxt_user_head->next;
+			ws_ctxt_user_head->next = ws_ctxt_user;
+
+			found_context->sock = INVALID_SOCKET;
+			found_context->wsi = NULL;
+		}
+		if(context->wsi){
+			found_context->wsi = context->wsi;
+			found_context->sock = WEBSOCKET_CLIENT;
+			context->wsi = NULL;
+			context->sock = INVALID_SOCKET;
+
+			/* This is a hack to allow us to update the wsi->user_space
+			 * structure. If libwebsockets let us access that variable itself,
+			 * this wouldn't be necessary. */
+			ws_ctxt_user_head = (struct libws_mqtt_hack *)libwebsocket_context_user(found_context->ws_context);
+			ws_ctxt_user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
+			if(!ws_ctxt_user){
+				goto handle_connect_error;
+			}
+			ws_ctxt_user->old_mosq = context;
+			ws_ctxt_user->new_mosq = found_context;
+
+			if(ws_ctxt_user_head){
+				while(ws_ctxt_user_head->next){
+					ws_ctxt_user_head = ws_ctxt_user_head->next;
+				}
+				ws_ctxt_user_head->next = ws_ctxt_user;
+			}else{
+				ws_ctxt_user->next = ws_ctxt_user_head->next;
+				ws_ctxt_user_head->next = ws_ctxt_user;
+			}
+			HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
+		}else{
+			HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
+
+			HASH_DELETE(hh_sock, db->contexts_by_sock, context);
+			context->sock = INVALID_SOCKET;
+			HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(found_context->sock), found_context);
+		}
+#else
+		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
+
+		HASH_DELETE(hh_sock, db->contexts_by_sock, context);
+		context->sock = INVALID_SOCKET;
+		HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(found_context->sock), found_context);
+#endif
+
+		context = found_context;
+
+		if(context->msgs){
 			mqtt3_db_message_reconnect_reset(context);
-			found_context->msgs = NULL;
 		}
 	}
 

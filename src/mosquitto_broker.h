@@ -294,6 +294,18 @@ struct _mqtt3_bridge{
 #endif
 };
 
+#ifdef WITH_WEBSOCKETS
+struct libws_mqtt_hack {
+	struct mosquitto *old_mosq;
+	struct mosquitto *new_mosq;
+	struct libws_mqtt_hack *next;
+};
+
+struct libws_mqtt_data {
+	struct mosquitto *mosq;
+};
+#endif
+
 #include <net_mosq.h>
 
 /* ============================================================
