@@ -92,9 +92,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 {
 	struct _mosquitto_packet *packet;
 	struct mosquitto_client_msg *msg, *next;
-#ifdef WITH_BRIDGE
 	struct mosquitto *ctx_tmp;
-#endif
 
 	if(!context) return;
 

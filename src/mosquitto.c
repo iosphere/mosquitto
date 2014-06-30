@@ -348,9 +348,11 @@ int main(int argc, char *argv[])
 	HASH_ITER(hh_sock, int_db.contexts_by_sock, ctxt, ctxt_tmp){
 		mqtt3_context_cleanup(&int_db, ctxt, true);
 	}
+#ifdef WITH_BRIDGE
 	HASH_ITER(hh_bridge, int_db.contexts_bridge, ctxt, ctxt_tmp){
 		mqtt3_context_cleanup(&int_db, ctxt, true);
 	}
+#endif
 	HASH_ITER(hh_for_free, int_db.contexts_for_free, ctxt, ctxt_tmp){
 		HASH_DELETE(hh_for_free, int_db.contexts_for_free, ctxt);
 		mqtt3_context_cleanup(&int_db, ctxt, true);
