@@ -11,7 +11,7 @@ def start_broker(filename, cmd=None, port=1888):
         cmd = ['../../src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
     if os.environ.get('MOSQ_USE_VALGRIND') is not None:
         cmd = ['valgrind', '-q', '--log-file='+filename+'.vglog'] + cmd
-        delay = 0.5
+        delay = 1
 
     broker = subprocess.Popen(cmd, stderr=subprocess.PIPE)
     for i in range(0, 20):
