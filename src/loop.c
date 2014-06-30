@@ -59,7 +59,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	time_t start_time = mosquitto_time();
 	time_t last_backup = mosquitto_time();
 	time_t last_store_clean = mosquitto_time();
-	time_t now;
+	time_t now = 0;
 	time_t now_time;
 	int time_count;
 	int fdcount;
