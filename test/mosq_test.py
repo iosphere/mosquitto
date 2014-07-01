@@ -28,6 +28,14 @@ def start_broker(filename, cmd=None, port=1888):
             return broker
     raise IOError
 
+def start_client(filename, cmd, env):
+    if cmd is None:
+        raise ValueError
+    if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+        cmd = ['valgrind', '-q', '--log-file='+filename+'.vglog'] + cmd
+
+    return subprocess.Popen(cmd, env=env)
+
 def expect_packet(sock, name, expected):
     if len(expected) > 0:
         rlen = len(expected)
