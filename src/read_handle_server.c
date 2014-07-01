@@ -387,6 +387,21 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 #endif
 
+	if(context->listener && context->listener->use_username_as_clientid){
+		if(context->username){
+			_mosquitto_free(client_id);
+			client_id = _mosquitto_strdup(context->username);
+			if(!client_id){
+				rc = MOSQ_ERR_NOMEM;
+				goto handle_connect_error;
+			}
+		}else{
+			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
+			rc = MOSQ_ERR_SUCCESS;
+			goto handle_connect_error;
+		}
+	}
+
 	/* Find if this client already has an entry. This must be done *after* any security checks. */
 	HASH_FIND(hh_id, db->contexts_by_id, client_id, strlen(client_id), found_context);
 	if(found_context){

@@ -178,6 +178,7 @@ void mqtt3_config_init(struct mqtt3_config *config)
 	config->default_listener.sock_count = 0;
 	config->default_listener.client_count = 0;
 	config->default_listener.protocol = mp_mqtt;
+	config->default_listener.use_username_as_clientid = false;
 #ifdef WITH_TLS
 	config->default_listener.tls_version = NULL;
 	config->default_listener.cafile = NULL;
@@ -378,6 +379,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 			|| config->default_listener.crlfile
 			|| config->default_listener.use_identity_as_username
 #endif
+			|| config->default_listener.use_username_as_clientid
 			|| config->default_listener.host
 			|| config->default_listener.port
 			|| config->default_listener.max_connections != -1
@@ -412,6 +414,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].socks = NULL;
 		config->listeners[config->listener_count-1].sock_count = 0;
 		config->listeners[config->listener_count-1].client_count = 0;
+		config->listeners[config->listener_count-1].use_username_as_clientid = config->default_listener.use_username_as_clientid;
 #ifdef WITH_TLS
 		config->listeners[config->listener_count-1].tls_version = config->default_listener.tls_version;
 		config->listeners[config->listener_count-1].cafile = config->default_listener.cafile;
@@ -1763,6 +1766,12 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
+				}else if(!strcmp(token, "user")){
+					if(reload) continue; // Drop privileges user not valid for reloading.
+					if(_conf_parse_string(&token, "user", &config->user, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "use_username_as_clientid")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(_conf_parse_bool(&token, "use_username_as_clientid", &cur_listener->use_username_as_clientid, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "user")){
 					if(reload) continue; // Drop privileges user not valid for reloading.
 					if(_conf_parse_string(&token, "user", &config->user, saveptr)) return MOSQ_ERR_INVAL;

@@ -59,6 +59,7 @@ struct _mqtt3_listener {
 	int sock_count;
 	int client_count;
 	enum mosquitto_protocol protocol;
+	bool use_username_as_clientid;
 #ifdef WITH_TLS
 	char *cafile;
 	char *capath;

@@ -667,6 +667,25 @@
 						<para>Not reloaded on reload signal.</para>
 					</listitem>
 				</varlistentry>
+				<varlistentry>
+					<term><option>use_username_as_clientid</option> [ true | false ]</term>
+					<listitem>
+						<para>Set <option>use_username_as_clientid</option> to
+							true to replace the clientid that a client
+							connected with with its username. This allows
+							authentication to be tied to the clientid, which
+							means that it is possible to prevent one client
+							disconnecting another by using the same
+							clientid. Defaults to false.</para>
+						<para>If a client connects with no username it will be
+							disconnected as not authorised when this option is
+							set to true. Do not use in conjunction with
+							<option>clientid_prefixes</option>.</para>
+						<para>See also
+							<option>use_identity_as_username</option>.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
 			</variablelist>
 		</refsect2>
 		<refsect2>

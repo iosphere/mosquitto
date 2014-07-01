@@ -13,6 +13,8 @@ Important changes:
 - When a durable client reconnects, its queued messages are now checked
   against ACLs in case of a change in username/ACL state since it last
   connected.
+- New use_username_as_clientid option on the broker, for preventing hijacking
+  of a client id.
 
 
 Broker:
@@ -37,6 +39,9 @@ Broker:
   provided at the command line.
 - Removed $SYS/broker/changeset. This was intended for use with debugging, but
   in practice is of no use.
+- Add support for use_username_as_clientid which can be used with
+  authentication to restrict ownership of client ids and hence prevent one
+  client disconnecting another by using the same client id.
 
 Clients:
 - Both clients can now load default configuration options from a file.
