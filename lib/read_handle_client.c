@@ -43,7 +43,9 @@ int _mosquitto_handle_connack(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->callback_mutex);
 	switch(result){
 		case 0:
-			mosq->state = mosq_cs_connected;
+			if(mosq->state != mosq_cs_disconnecting){
+				mosq->state = mosq_cs_connected;
+			}
 			return MOSQ_ERR_SUCCESS;
 		case 1:
 		case 2:

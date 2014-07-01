@@ -936,7 +936,7 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			if (reconnects !=0 && rc == MOSQ_ERR_SUCCESS){
 				reconnects = 0;
 			}
-		}while(rc == MOSQ_ERR_SUCCESS);
+		}while(run && rc == MOSQ_ERR_SUCCESS);
 		if(errno == EPROTO){
 			return rc;
 		}
