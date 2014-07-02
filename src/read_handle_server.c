@@ -175,6 +175,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		goto handle_connect_error;
 	}
 	clean_session = (connect_flags & 0x02) >> 1;
+	context->clean_session = clean_session;
 	will = connect_flags & 0x04;
 	will_qos = (connect_flags & 0x18) >> 3;
 	if(will_qos == 3){
