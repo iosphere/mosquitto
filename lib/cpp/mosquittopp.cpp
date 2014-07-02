@@ -264,6 +264,11 @@ bool mosquittopp::want_write()
 	return mosquitto_want_write(m_mosq);
 }
 
+int mosquittopp::threaded_set(bool threaded)
+{
+	return mosquitto_threaded_set(m_mosq, threaded);
+}
+
 void mosquittopp::user_data_set(void *userdata)
 {
 	mosquitto_user_data_set(m_mosq, userdata);

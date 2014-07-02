@@ -896,6 +896,23 @@ libmosq_EXPORT int mosquitto_loop_misc(struct mosquitto *mosq);
 libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
 
 /*
+ * Function: mosquitto_threaded_set
+ *
+ * Used to tell the library that your application is using threads, but not
+ * using <mosquitto_loop_start>. The library operates slightly differently when
+ * not in threaded mode in order to simplify its operation. If you are managing
+ * your own threads and do not use this function you will experience crashes
+ * due to race conditions.
+ *
+ * When using <mosquitto_loop_start>, this is set automatically.
+ *
+ * Parameters:
+ *  mosq -     a valid mosquitto instance.
+ *  threaded - true if your application is using threads, false otherwise.
+ */
+libmosq_EXPORT int mosquitto_threaded_set(struct mosquitto *mosq, bool threaded);
+
+/*
  * Function: mosquitto_tls_set
  *
  * Configure the client for certificate based SSL/TLS support. Must be called

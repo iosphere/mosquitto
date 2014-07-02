@@ -99,3 +99,11 @@ void *_mosquitto_thread_main(void *obj)
 }
 #endif
 
+int mosquitto_threaded_set(struct mosquitto *mosq, bool threaded)
+{
+	if(!mosq) return MOSQ_ERR_INVAL;
+
+	mosq->threaded = threaded;
+
+	return MOSQ_ERR_SUCCESS;
+}

@@ -85,6 +85,7 @@ Client library:
 - Fix compilation for WITH_THREADING=no.
 - Break out of select() when calling mosquitto_loop_stop().
 - Reject invalid un/subscriptions e.g. foo/+bar #/bar.
+- Add mosquitto_threaded_set().
 
 Clients:
 - Fix keepalive value on mosquitto_pub.

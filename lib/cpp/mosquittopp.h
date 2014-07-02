@@ -87,6 +87,7 @@ class mosqpp_EXPORT mosquittopp {
 		int loop_start();
 		int loop_stop(bool force=false);
 		bool want_write();
+		int threaded_set(bool threaded=true);
 		
 		virtual void on_connect(int rc) {return;};
 		virtual void on_disconnect(int rc) {return;};

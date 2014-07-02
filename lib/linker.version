@@ -69,3 +69,8 @@ MOSQ_1.3 {
 	global:
 		mosquitto_connect_srv;
 } MOSQ_1.2;
+
+MOSQ_1.4 {
+	global:
+		mosquitto_threaded_set;
+} MOSQ_1.3;
