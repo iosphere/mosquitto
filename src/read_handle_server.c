@@ -638,7 +638,6 @@ handle_connect_error:
 #endif
 	if(context){
 		mqtt3_context_disconnect(db, context);
-		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
 	}
 	return rc;
 }
