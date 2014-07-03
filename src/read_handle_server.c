@@ -481,6 +481,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 		if(context->wsi){
 			found_context->wsi = context->wsi;
+			found_context->ws_context = context->ws_context;
 			found_context->sock = WEBSOCKET_CLIENT;
 			context->wsi = NULL;
 			context->sock = INVALID_SOCKET;
