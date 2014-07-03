@@ -256,8 +256,10 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
 	int ssl_options = 0;
 	char buf[256];
 	int rc;
+#ifdef WITH_EC
 #if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10002000L
 	EC_KEY *ecdh = NULL;
+#endif
 #endif
 
 #if OPENSSL_VERSION_NUMBER >= 0x10001000L
@@ -295,6 +297,7 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
 	SSL_CTX_set_mode(listener->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
 #endif
 
+#ifdef WITH_EC
 #if OPENSSL_VERSION_NUMBER >= 0x10002000L
 	SSL_CTX_set_ecdh_auto(listener->ssl_ctx, 1);
 #elif OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10002000L
@@ -305,6 +308,7 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
 	}
 	SSL_CTX_set_tmp_ecdh(listener->ssl_ctx, ecdh);
 	EC_KEY_free(ecdh);
+#endif
 #endif
 
 	snprintf(buf, 256, "mosquitto-%d", listener->port);

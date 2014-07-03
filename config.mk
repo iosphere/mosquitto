@@ -70,6 +70,9 @@ WITH_PYTHON:=yes
 # Build with SRV lookup support.
 WITH_SRV:=yes
 
+# Use elliptic keys in broker
+WITH_EC:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -211,6 +214,9 @@ ifeq ($(UNAME),SunOS)
 	LIB_LIBS:=$(LIB_LIBS) -lsocket -lnsl
 endif
 
+ifeq ($(WITH_EC),yes)
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_EC
+endif
 
 INSTALL?=install
 prefix=/usr/local
