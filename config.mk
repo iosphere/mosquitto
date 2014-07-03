@@ -73,6 +73,9 @@ WITH_SRV:=yes
 # Use elliptic keys in broker
 WITH_EC:=yes
 
+# Build man page documentation by default.
+WITH_DOCS:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -216,6 +219,11 @@ endif
 
 ifeq ($(WITH_EC),yes)
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_EC
+endif
+
+MAKE_ALL:=mosquitto
+ifeq ($(WITH_DOCS),yes)
+	MAKE_ALL:=$(MAKE_ALL) docs
 endif
 
 INSTALL?=install

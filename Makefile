@@ -6,7 +6,7 @@ DISTDIRS=man
 
 .PHONY : all mosquitto docs binary clean reallyclean test install uninstall dist sign copy
 
-all : mosquitto docs
+all : $(MAKE_ALL)
 
 docs :
 	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d}; done
