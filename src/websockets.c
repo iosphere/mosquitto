@@ -337,6 +337,7 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 
 	lws_set_log_level(0, NULL);
 
+	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
 	return libwebsocket_create_context(&info);
 }
 
