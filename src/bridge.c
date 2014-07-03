@@ -80,13 +80,14 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	HASH_FIND(hh_id, db->contexts_by_id, local_id, strlen(local_id), new_context);
 	if(new_context){
 		/* (possible from persistent db) */
+		_mosquitto_free(local_id);
 	}else{
 		/* id wasn't found, so generate a new context */
 		new_context = mqtt3_context_init(db, -1);
 		if(!new_context){
 			return MOSQ_ERR_NOMEM;
 		}
-		new_context->id = _mosquitto_strdup(local_id);
+		new_context->id = local_id;
 		HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, new_context->id, strlen(new_context->id), new_context);
 	}
 	new_context->bridge = bridge;

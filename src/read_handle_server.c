@@ -468,6 +468,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			ws_ctxt_user_head = (struct libws_mqtt_hack *)libwebsocket_context_user(found_context->ws_context);
 			ws_ctxt_user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
 			if(!ws_ctxt_user){
+				rc = MOSQ_ERR_NOMEM;
 				goto handle_connect_error;
 			}
 			ws_ctxt_user->old_mosq = found_context;
@@ -492,20 +493,16 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			ws_ctxt_user_head = (struct libws_mqtt_hack *)libwebsocket_context_user(found_context->ws_context);
 			ws_ctxt_user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
 			if(!ws_ctxt_user){
+				rc = MOSQ_ERR_NOMEM;
 				goto handle_connect_error;
 			}
 			ws_ctxt_user->old_mosq = context;
 			ws_ctxt_user->new_mosq = found_context;
 
-			if(ws_ctxt_user_head){
-				while(ws_ctxt_user_head->next){
-					ws_ctxt_user_head = ws_ctxt_user_head->next;
-				}
-				ws_ctxt_user_head->next = ws_ctxt_user;
-			}else{
-				ws_ctxt_user->next = ws_ctxt_user_head->next;
-				ws_ctxt_user_head->next = ws_ctxt_user;
+			while(ws_ctxt_user_head->next){
+				ws_ctxt_user_head = ws_ctxt_user_head->next;
 			}
+			ws_ctxt_user_head->next = ws_ctxt_user;
 			HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
 		}else{
 			HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);

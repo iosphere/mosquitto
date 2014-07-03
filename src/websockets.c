@@ -141,10 +141,15 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				mosq->ws_context = context;
 				mosq->wsi = wsi;
 				u->mosq = mosq;
+			}else{
+				return -1;
 			}
 			break;
 
 		case LWS_CALLBACK_CLOSED:
+			if(!u){
+				return -1;
+			}
 			mosq = u->mosq;
 			if(mosq){
 				mosq->wsi = NULL;
@@ -153,6 +158,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			break;
 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
+			if(!u){
+				return -1;
+			}
 			mosq = u->mosq;
 			if(!mosq || mosq->state == mosq_cs_disconnect_ws || mosq->state == mosq_cs_disconnecting){
 				return -1;
@@ -209,6 +217,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			break;
 
 		case LWS_CALLBACK_RECEIVE:
+			if(!u){
+				return -1;
+			}
 			mosq = u->mosq;
 			pos = 0;
 			buf = (uint8_t *)in;
