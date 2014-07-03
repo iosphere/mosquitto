@@ -62,8 +62,10 @@ try:
             rc = 0
     sock.close()
 finally:
+    time.sleep(1)
     broker.terminate()
     broker.wait()
+    time.sleep(1)
     bridge.terminate()
     bridge.wait()
     if rc:

@@ -25,6 +25,7 @@ def start_broker(filename, cmd=None, port=1888):
 
         if c is not None:
             c.close()
+            time.sleep(delay)
             return broker
     raise IOError
 

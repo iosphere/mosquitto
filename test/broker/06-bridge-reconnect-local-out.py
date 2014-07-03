@@ -69,6 +69,7 @@ try:
                 rc = 0
     sock.close()
 finally:
+    time.sleep(1)
     broker.terminate()
     broker.wait()
     if rc:

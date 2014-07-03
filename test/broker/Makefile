@@ -4,6 +4,7 @@
 all :
 
 clean : 
+	-rm -f *.vglog
 	$(MAKE) -C c clean
 
 test-compile : 

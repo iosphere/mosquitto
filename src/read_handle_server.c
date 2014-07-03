@@ -636,9 +636,7 @@ handle_connect_error:
 #ifdef WITH_TLS
 	if(client_cert) X509_free(client_cert);
 #endif
-	if(context){
-		mqtt3_context_disconnect(db, context);
-	}
+	/* We return an error here which means the client is freed later on. */
 	return rc;
 }
 

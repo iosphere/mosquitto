@@ -38,6 +38,7 @@ try:
 
     ssock.close()
 finally:
+    time.sleep(2)
     broker.terminate()
     broker.wait()
     if rc:
