@@ -330,19 +330,38 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	return MOSQ_ERR_SUCCESS;
 }
 
-static void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
+void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
-	if(db->config->connection_messages == true){
+#ifdef WITH_WEBSOCKETS
+	if(context->wsi){
 		if(context->state != mosq_cs_disconnecting){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", context->id);
-		}else{
-			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", context->id);
+			context->state = mosq_cs_disconnect_ws;
 		}
+		if(context->wsi){
+			libwebsocket_callback_on_writable(context->ws_context, context->wsi);
+		}
+		context->sock = INVALID_SOCKET;
+	}else{
+#endif
+		if(db->config->connection_messages == true){
+			if(context->state != mosq_cs_disconnecting){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", context->id);
+			}else{
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", context->id);
+			}
+		}
+		mqtt3_context_disconnect(db, context);
+		if(context->clean_session){
+			HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
+			if(context->id){
+				HASH_DELETE(hh_id, db->contexts_by_id, context);
+				_mosquitto_free(context->id);
+				context->id = NULL;
+			}
+		}
+#ifdef WITH_WEBSOCKETS
 	}
-	mqtt3_context_disconnect(db, context);
-	if(context->clean_session){
-		mqtt3_context_cleanup(db, context, true);
-	}
+#endif
 }
 
 /* Error ocurred, probably an fd has been closed. 

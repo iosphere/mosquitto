@@ -124,7 +124,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		return 3;
 	}
 	if(_mosquitto_read_byte(&context->in_packet, &protocol_version)){
-		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
 		rc = 1;
 		goto handle_connect_error;
 		return 1;
@@ -175,7 +174,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		goto handle_connect_error;
 	}
 	clean_session = (connect_flags & 0x02) >> 1;
-	context->clean_session = clean_session;
 	will = connect_flags & 0x04;
 	will_qos = (connect_flags & 0x18) >> 3;
 	if(will_qos == 3){
@@ -427,6 +425,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 
+		context->clean_session = clean_session;
 		found_context->clean_session = clean_session;
 		mqtt3_context_cleanup(db, found_context, false);
 		found_context->state = mosq_cs_connected;
@@ -658,7 +657,7 @@ int mqtt3_handle_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 	context->state = mosq_cs_disconnecting;
-	mqtt3_context_disconnect(db, context);
+	do_disconnect(db, context);
 	return MOSQ_ERR_SUCCESS;
 }
 

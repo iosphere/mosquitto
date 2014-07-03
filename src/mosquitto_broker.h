@@ -451,5 +451,6 @@ void service_run(void);
 #ifdef WITH_WEBSOCKETS
 struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener);
 #endif
+void do_disconnect(struct mosquitto_db *db, struct mosquitto *context);
 
 #endif

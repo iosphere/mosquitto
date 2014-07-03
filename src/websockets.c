@@ -148,11 +148,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			mosq = u->mosq;
 			if(mosq){
 				mosq->wsi = NULL;
-				if(mosq->clean_session){
-					mqtt3_context_cleanup(db, mosq, true);
-				}else{
-					mqtt3_context_disconnect(db, mosq);
-				}
+				do_disconnect(db, mosq);
 			}
 			break;
 

@@ -238,14 +238,6 @@ int _mosquitto_socket_close(struct mosquitto *mosq)
 #endif
 	}
 
-#ifdef WITH_WEBSOCKETS
-	if(!mosq->wsi){
-#endif
-		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, mosq, sizeof(void *), mosq);
-#ifdef WITH_WEBSOCKETS
-	}
-#endif
-
 #ifdef WITH_BROKER
 	if(mosq->listener){
 		mosq->listener->client_count--;
