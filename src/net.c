@@ -256,6 +256,9 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
 	int ssl_options = 0;
 	char buf[256];
 	int rc;
+#if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10002000L
+	EC_KEY *ecdh = NULL;
+#endif
 
 #if OPENSSL_VERSION_NUMBER >= 0x10001000L
 	if(listener->tls_version == NULL){
@@ -291,6 +294,19 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
 	/* Use even less memory per SSL connection. */
 	SSL_CTX_set_mode(listener->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
 #endif
+
+#if OPENSSL_VERSION_NUMBER >= 0x10002000L
+	SSL_CTX_set_ecdh_auto(listener->ssl_ctx, 1);
+#elif OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10002000L
+	ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+	if(!ecdh){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS ECDH curve.");
+		return 1;
+	}
+	SSL_CTX_set_tmp_ecdh(listener->ssl_ctx, ecdh);
+	EC_KEY_free(ecdh);
+#endif
+
 	snprintf(buf, 256, "mosquitto-%d", listener->port);
 	SSL_CTX_set_session_id_context(listener->ssl_ctx, (unsigned char *)buf, strlen(buf));
 
