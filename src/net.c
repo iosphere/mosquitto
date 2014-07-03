@@ -250,6 +250,67 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 }
 #endif
 
+#ifdef WITH_TLS
+static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
+{
+	int ssl_options = 0;
+	char buf[256];
+	int rc;
+
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+	if(listener->tls_version == NULL){
+		listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
+	}else if(!strcmp(listener->tls_version, "tlsv1.2")){
+		listener->ssl_ctx = SSL_CTX_new(TLSv1_2_server_method());
+	}else if(!strcmp(listener->tls_version, "tlsv1.1")){
+		listener->ssl_ctx = SSL_CTX_new(TLSv1_1_server_method());
+	}else if(!strcmp(listener->tls_version, "tlsv1")){
+		listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
+	}
+#else
+	listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
+#endif
+	if(!listener->ssl_ctx){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
+		return 1;
+	}
+
+	/* Don't accept SSLv2 or SSLv3 */
+	ssl_options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
+#ifdef SSL_OP_NO_COMPRESSION
+	/* Disable compression */
+	ssl_options |= SSL_OP_NO_COMPRESSION;
+#endif
+#ifdef SSL_OP_CIPHER_SERVER_PREFERENCE
+	/* Server chooses cipher */
+	ssl_options |= SSL_OP_CIPHER_SERVER_PREFERENCE;
+#endif
+	SSL_CTX_set_options(listener->ssl_ctx, ssl_options);
+
+#ifdef SSL_MODE_RELEASE_BUFFERS
+	/* Use even less memory per SSL connection. */
+	SSL_CTX_set_mode(listener->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
+#endif
+	snprintf(buf, 256, "mosquitto-%d", listener->port);
+	SSL_CTX_set_session_id_context(listener->ssl_ctx, (unsigned char *)buf, strlen(buf));
+
+	if(listener->ciphers){
+		rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
+		if(rc == 0){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
+			return 1;
+		}
+	}else{
+		rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, "DEFAULT:!aNULL:!eNULL:!LOW:!EXPORT:!SSLv2:@STRENGTH");
+		if(rc == 0){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
+			return 1;
+		}
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+#endif
+
 /* Creates a socket and listens on port 'port'.
  * Returns 1 on failure
  * Returns 0 on success.
@@ -269,7 +330,6 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	int rc;
 	X509_STORE *store;
 	X509_LOOKUP *lookup;
-	int ssl_options = 0;
 #endif
 	char buf[256];
 
@@ -340,59 +400,11 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	if(listener->sock_count > 0){
 #ifdef WITH_TLS
 		if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
-#if OPENSSL_VERSION_NUMBER >= 0x10001000L
-			if(listener->tls_version == NULL){
-				listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
-			}else if(!strcmp(listener->tls_version, "tlsv1.2")){
-				listener->ssl_ctx = SSL_CTX_new(TLSv1_2_server_method());
-			}else if(!strcmp(listener->tls_version, "tlsv1.1")){
-				listener->ssl_ctx = SSL_CTX_new(TLSv1_1_server_method());
-			}else if(!strcmp(listener->tls_version, "tlsv1")){
-				listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
-			}
-#else
-			listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
-#endif
-			if(!listener->ssl_ctx){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
+			if(_mosquitto_tls_server_ctx(listener)){
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
 
-			/* Don't accept SSLv2 or SSLv3 */
-			ssl_options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
-#ifdef SSL_OP_NO_COMPRESSION
-			/* Disable compression */
-			ssl_options |= SSL_OP_NO_COMPRESSION;
-#endif
-#ifdef SSL_OP_CIPHER_SERVER_PREFERENCE
-			/* Server chooses cipher */
-			ssl_options |= SSL_OP_CIPHER_SERVER_PREFERENCE;
-#endif
-			SSL_CTX_set_options(listener->ssl_ctx, ssl_options);
-
-#ifdef SSL_MODE_RELEASE_BUFFERS
-			/* Use even less memory per SSL connection. */
-			SSL_CTX_set_mode(listener->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
-#endif
-			snprintf(buf, 256, "mosquitto-%d", listener->port);
-			SSL_CTX_set_session_id_context(listener->ssl_ctx, (unsigned char *)buf, strlen(buf));
-
-			if(listener->ciphers){
-				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
-				if(rc == 0){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
-					COMPAT_CLOSE(sock);
-					return 1;
-				}
-			}else{
-				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, "DEFAULT:!aNULL:!eNULL:!LOW:!EXPORT:!SSLv2:@STRENGTH");
-				if(rc == 0){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
-					COMPAT_CLOSE(sock);
-					return 1;
-				}
-			}
 			rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
 			if(rc == 0){
 				if(listener->cafile && listener->capath){
@@ -456,21 +468,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				tls_ex_index_listener = SSL_get_ex_new_index(0, "listener", NULL, NULL, NULL);
 			}
 
-#if OPENSSL_VERSION_NUMBER >= 0x10001000L
-			if(listener->tls_version == NULL){
-				listener->ssl_ctx = SSL_CTX_new(TLSv1_2_server_method());
-			}else if(!strcmp(listener->tls_version, "tlsv1.2")){
-				listener->ssl_ctx = SSL_CTX_new(TLSv1_2_server_method());
-			}else if(!strcmp(listener->tls_version, "tlsv1.1")){
-				listener->ssl_ctx = SSL_CTX_new(TLSv1_1_server_method());
-			}else if(!strcmp(listener->tls_version, "tlsv1")){
-				listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
-			}
-#else
-			listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
-#endif
-			if(!listener->ssl_ctx){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
+			if(_mosquitto_tls_server_ctx(listener)){
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -479,14 +477,6 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				rc = SSL_CTX_use_psk_identity_hint(listener->ssl_ctx, listener->psk_hint);
 				if(rc == 0){
 					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS PSK hint.");
-					COMPAT_CLOSE(sock);
-					return 1;
-				}
-			}
-			if(listener->ciphers){
-				rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
-				if(rc == 0){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
