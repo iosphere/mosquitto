@@ -166,7 +166,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				}
 			}
 
-			while(mosq->current_out_packet){
+			while(mosq->current_out_packet && !lws_send_pipe_choked(mosq->wsi)){
 				packet = mosq->current_out_packet;
 
 				if(packet->pos == 0 && packet->to_process == packet->packet_length){
@@ -202,6 +202,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				_mosquitto_free(packet);
 
 				mosq->last_msg_out = mosquitto_time();
+			}
+			if(mosq->current_out_packet){
+				libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
 			}
 			break;
 
