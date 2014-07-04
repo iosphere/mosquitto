@@ -67,6 +67,9 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	}
 	if(bridge->local_clientid){
 		local_id = _mosquitto_strdup(bridge->local_clientid);
+		if(!local_id){
+			return MOSQ_ERR_NOMEM;
+		}
 	}else{
 		len = strlen(bridge->clientid) + strlen("local.") + 2;
 		local_id = _mosquitto_malloc(len);
@@ -74,7 +77,11 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 			return MOSQ_ERR_NOMEM;
 		}
 		snprintf(local_id, len, "local.%s", bridge->clientid);
-		bridge->local_clientid = local_id;
+		bridge->local_clientid = _mosquitto_strdup(local_id);
+		if(!bridge->local_clientid){
+			_mosquitto_free(local_id);
+			return MOSQ_ERR_NOMEM;
+		}
 	}
 
 	HASH_FIND(hh_id, db->contexts_by_id, local_id, strlen(local_id), new_context);
