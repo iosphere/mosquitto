@@ -294,14 +294,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				mosq->last_msg_in = mosquitto_time();
 
 				if(rc){
-					if(db->config->connection_messages == true){
-						if(mosq->state != mosq_cs_disconnecting){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", mosq->id);
-						}else{
-							_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", mosq->id);
-						}
-					}
-					mqtt3_context_disconnect(db, mosq);
+					do_disconnect(db, mosq);
 					return -1;
 				}
 			}
