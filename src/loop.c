@@ -414,11 +414,6 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 				continue;
 			}
 		}
-
-		if(pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL)){
-			do_disconnect(db, context);
-			continue;
-		}
 	}
 }
 
