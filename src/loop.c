@@ -98,7 +98,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 		}
 #endif
 
-		context_count = HASH_CNT(hh_sock, db->contexts_by_sock);
+		context_count = HASH_CNT(hh_sock, db->contexts_by_sock) + HASH_CNT(hh_bridge, db->contexts_bridge);
 		if(listensock_count + context_count > pollfd_count || !pollfds){
 			pollfd_count = listensock_count + context_count;
 			pollfds = _mosquitto_realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
