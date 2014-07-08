@@ -332,6 +332,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 
 void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
+	if(context->state == mosq_cs_disconnected){
+		return;
+	}
 #ifdef WITH_WEBSOCKETS
 	if(context->wsi){
 		if(context->state != mosq_cs_disconnecting){
@@ -362,6 +365,7 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 #ifdef WITH_WEBSOCKETS
 	}
 #endif
+	context->state = mosq_cs_disconnected;
 }
 
 /* Error ocurred, probably an fd has been closed. 
