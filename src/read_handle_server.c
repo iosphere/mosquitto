@@ -648,7 +648,7 @@ int mqtt3_handle_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received DISCONNECT from %s", context->id);
 	if(context->protocol == mosq_p_mqtt311){
 		if((context->in_packet.command&0x0F) != 0x00){
-			mqtt3_context_disconnect(db, context);
+			do_disconnect(db, context);
 			return MOSQ_ERR_PROTOCOL;
 		}
 	}

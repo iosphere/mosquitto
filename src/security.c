@@ -194,6 +194,9 @@ int mosquitto_security_cleanup(struct mosquitto_db *db, bool reload)
 
 int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
 {
+	if(!context->id){
+		return MOSQ_ERR_ACL_DENIED;
+	}
 	if(!db->auth_plugin.lib){
 		return mosquitto_acl_check_default(db, context, topic, access);
 	}else{

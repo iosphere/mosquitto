@@ -163,14 +163,14 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						context->pollfd_index = pollfd_index;
 						pollfd_index++;
 					}else{
-						mqtt3_context_disconnect(db, context);
+						do_disconnect(db, context);
 					}
 				}else{
 					if(db->config->connection_messages == true){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", context->id);
 					}
 					/* Client has exceeded keepalive*1.5 */
-					mqtt3_context_disconnect(db, context);
+					do_disconnect(db, context);
 				}
 			}
 		}
