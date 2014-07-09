@@ -986,9 +986,8 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
-	now = mosquitto_time();
-
 	_mosquitto_check_keepalive(mosq);
+	now = mosquitto_time();
 	if(mosq->last_retry_check+1 < now){
 		_mosquitto_message_retry_check(mosq);
 		mosq->last_retry_check = now;
