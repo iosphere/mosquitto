@@ -230,3 +230,4 @@ INSTALL?=install
 prefix=/usr/local
 mandir=${prefix}/share/man
 localedir=${prefix}/share/locale
+STRIP?=strip
