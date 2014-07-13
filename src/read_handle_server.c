@@ -344,13 +344,20 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 #endif /* WITH_TLS */
 		if(username_flag){
 			rc = mosquitto_unpwd_check(db, username, password);
-			if(rc == MOSQ_ERR_AUTH){
-				_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				mqtt3_context_disconnect(db, context);
-				rc = MOSQ_ERR_SUCCESS;
-				goto handle_connect_error;
-			}else if(rc == MOSQ_ERR_INVAL){
-				goto handle_connect_error;
+			switch(rc){
+				case MOSQ_ERR_SUCCESS:
+					break;
+				case MOSQ_ERR_AUTH:
+					_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
+					mqtt3_context_disconnect(db, context);
+					rc = MOSQ_ERR_SUCCESS;
+					goto handle_connect_error;
+					break;
+				default:
+					mqtt3_context_disconnect(db, context);
+					rc = MOSQ_ERR_SUCCESS;
+					goto handle_connect_error;
+					break;
 			}
 			context->username = username;
 			context->password = password;
@@ -629,8 +636,15 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 
 			if(context->protocol == mosq_p_mqtt311){
 				rc = mosquitto_acl_check(db, context, sub, MOSQ_ACL_READ);
-				if(rc == MOSQ_ERR_ACL_DENIED){
-					qos = 0x80;
+				switch(rc){
+					case MOSQ_ERR_SUCCESS:
+						break;
+					case MOSQ_ERR_ACL_DENIED:
+						qos = 0x80;
+						break;
+					default:
+						_mosquitto_free(sub);
+						return rc;
 				}
 			}
 
