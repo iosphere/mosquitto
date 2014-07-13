@@ -10,6 +10,8 @@ Clients:
 ================
 
 Broker:
+- Don't allow access to clients when authenticating if a security plugin
+  returns an application error. Fixes bug #1340782.
 - Ensure that bridges verify certificates by default when using TLS.
 - Fix possible crash when using pattern ACLs that do not include a %u and
   clients that connect without a username.
