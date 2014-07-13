@@ -972,7 +972,7 @@ int _mosquitto_socket_nonblock(int sock)
 		return 1;
 	}
 #else
-	opt = 1;
+	unsigned long opt = 1;
 	if(ioctlsocket(sock, FIONBIO, &opt)){
 		COMPAT_CLOSE(sock);
 		return 1;
