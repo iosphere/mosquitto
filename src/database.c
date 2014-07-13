@@ -621,7 +621,7 @@ int mqtt3_db_message_timeout_check(struct mosquitto_db *db, unsigned int timeout
 {
 	int i;
 	time_t threshold;
-	enum mosquitto_msg_state new_state = mosq_ms_invalid;
+	enum mosquitto_msg_state new_state;
 	struct mosquitto *context;
 	struct mosquitto_client_msg *msg;
 
@@ -633,6 +633,7 @@ int mqtt3_db_message_timeout_check(struct mosquitto_db *db, unsigned int timeout
 
 		msg = context->msgs;
 		while(msg){
+			new_state = mosq_ms_invalid;
 			if(msg->timestamp < threshold && msg->state != mosq_ms_queued){
 				switch(msg->state){
 					case mosq_ms_wait_for_puback:
