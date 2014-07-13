@@ -1,12 +1,4 @@
-Broker:
-- Default TLS mode now accepts TLS v1.2, v1.1 and v1.0.
-- Support for ECDHE-ECDSA family ciphers.
-
-Clients:
-- Both clients can now load default configuration options from a file.
-- Add -1 (oneshot) option to mosquitto_sub.
-
-1.3.2 - 2014xxxx
+1.3.2 - 20140713
 ================
 
 Broker:
