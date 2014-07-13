@@ -15,6 +15,8 @@ Broker:
   clients that connect without a username.
 - Fix subscriptions being deleted when clients subscribed to a topic beginning
   with a $ but that is not $SYS.
+- Anonymous clients are no longer accidently disconnected from the broker
+  after a SIGHUP.
 
 Client library:
 - Fix topic matching edge case.
