@@ -46,6 +46,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	int i;
 	int rc;
 	struct _mosquitto_acl_user *acl_tail;
+	struct mosquitto_client_msg *msg_tail, *msg_prev;
 	int slen;
 #ifdef WITH_TLS
 	X509 *client_cert;
@@ -415,6 +416,34 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	context->is_dropping = false;
 	if((protocol_version&0x80) == 0x80){
 		context->is_bridge = true;
+	}
+
+	/* Remove any queued messages that are no longer allowed through ACL,
+	 * assuming a possible change of username. */
+
+	msg_tail = context->msgs;
+	msg_prev = NULL;
+	while(msg_tail){
+		if(msg_tail->direction == mosq_md_out){
+			if(mosquitto_acl_check(db, context, msg_tail->store->msg.topic, MOSQ_ACL_READ) == MOSQ_ERR_ACL_DENIED){
+				msg_tail->store->ref_count--;
+				if(msg_prev){
+					msg_prev->next = msg_tail->next;
+					_mosquitto_free(msg_tail);
+					msg_tail = msg_prev->next;
+				}else{
+					context->msgs = context->msgs->next;
+					_mosquitto_free(msg_tail);
+					msg_tail = context->msgs;
+				}
+			}else{
+				msg_prev = msg_tail;
+				msg_tail = msg_tail->next;
+			}
+		}else{
+			msg_prev = msg_tail;
+			msg_tail = msg_tail->next;
+		}
 	}
 
 	// Add the client ID to the DB hash table here
