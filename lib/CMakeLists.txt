@@ -51,8 +51,14 @@ if (WIN32)
 endif (WIN32)
 
 if (${WITH_SRV} STREQUAL ON)
-	add_definitions("-DWITH_SRV")
-	set (LIBRARIES ${LIBRARIES} cares)
+	# Simple detect c-ares
+	find_path(ARES_HEADER ares.h)
+	if (ARES_HEADER)
+		add_definitions("-DWITH_SRV")
+		set (LIBRARIES ${LIBRARIES} cares)
+	else (ARES_HEADER)
+		message(WARNING "c-ares library not found.")
+	endif (ARES_HEADER)
 endif (${WITH_SRV} STREQUAL ON)
 
 target_link_libraries(libmosquitto ${LIBRARIES})
