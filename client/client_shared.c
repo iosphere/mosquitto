@@ -54,9 +54,9 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	char *loc = NULL;
 	int len;
 	char *args[3];
-#endif
 
 	args[0] = NULL;
+#endif
 
 	init_config(cfg);
 
@@ -120,7 +120,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		free(loc);
 	}
 #else
-#warn FIXME - config file support
+// FIXME - config file support
 #endif
 
 	/* Deal with real argc/argv */
