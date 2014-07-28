@@ -75,6 +75,9 @@ static struct libwebsocket_protocols protocols[] = {
 		callback_http,
 		sizeof (struct libws_http_data),
 		0,
+		0,
+		NULL,
+		0
 	},
 	{
 		"mqtt",
@@ -82,6 +85,8 @@ static struct libwebsocket_protocols protocols[] = {
 		sizeof(struct libws_mqtt_data),
 		0,
 		1,
+		NULL,
+		0
 	},
 	{
 		"mqttv3.1",
@@ -89,10 +94,11 @@ static struct libwebsocket_protocols protocols[] = {
 		sizeof(struct libws_mqtt_data),
 		0,
 		1,
+		NULL,
+		0
 	},
-	{ NULL, NULL, 0, 0 }
+	{ NULL, NULL, 0, 0, 0, NULL, 0}
 };
-
 
 static int callback_mqtt(struct libwebsocket_context *context,
 		struct libwebsocket *wsi,
@@ -322,10 +328,29 @@ static int callback_http(struct libwebsocket_context *context,
 struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener)
 {
 	struct lws_context_creation_info info;
+	struct libwebsocket_protocols *p;
+	int protocol_count;
+	int i;
+
+	/* Count valid protocols */
+	for(protocol_count=0; protocols[protocol_count].name; protocol_count++);
+
+	p = _mosquitto_calloc(protocol_count+1, sizeof(struct libwebsocket_protocols));
+	if(!p){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Out of memory.");
+		return NULL;
+	}
+	for(i=0; protocols[i].name; i++){
+		p[i].name = protocols[i].name;
+		p[i].callback = protocols[i].callback;
+		p[i].per_session_data_size = protocols[i].per_session_data_size;
+		p[i].rx_buffer_size = protocols[i].rx_buffer_size;
+		p[i].no_buffer_all_partial_tx = protocols[i].no_buffer_all_partial_tx;
+	}
 
 	memset(&info, 0, sizeof(info));
 	info.port = listener->port;
-	info.protocols = protocols;
+	info.protocols = p;
 	info.gid = -1;
 	info.uid = -1;
 #ifdef WITH_TLS
