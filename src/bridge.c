@@ -162,26 +162,6 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 		mqtt3_db_messages_delete(context);
 	}
 
-	if(context->bridge->local_username){
-		rc = mosquitto_unpwd_check(db, context->bridge->local_username, context->bridge->local_password);
-		switch(rc){
-			case MOSQ_ERR_SUCCESS:
-				break;
-			case MOSQ_ERR_AUTH:
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Bridge %s failed authentication on local broker.", context->id);
-				return rc;
-			case MOSQ_ERR_UNKNOWN:
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Bridge %s returned application error in authorisation.", context->id);
-				return rc;
-			default:
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Unknown error in authentication for bridge %s.", context->id);
-				return rc;
-		}
-	}else if(!db->config->allow_anonymous){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Bridge %s requires a username on local broker.", context->id);
-		return MOSQ_ERR_AUTH;
-	}
-
 	/* Delete all local subscriptions even for clean_session==false. We don't
 	 * remove any messages and the next loop carries out the resubscription
 	 * anyway. This means any unwanted subs will be removed.
