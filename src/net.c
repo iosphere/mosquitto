@@ -441,7 +441,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			if(listener->require_certificate){
 				SSL_CTX_set_verify(listener->ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, client_certificate_verify);
 			}else{
-				SSL_CTX_set_verify(listener->ssl_ctx, SSL_VERIFY_PEER, client_certificate_verify);
+				SSL_CTX_set_verify(listener->ssl_ctx, SSL_VERIFY_NONE, client_certificate_verify);
 			}
 			rc = SSL_CTX_use_certificate_chain_file(listener->ssl_ctx, listener->certfile);
 			if(rc != 1){
