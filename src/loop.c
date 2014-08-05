@@ -354,7 +354,11 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 		mqtt3_context_disconnect(db, context);
+#ifdef WITH_BRIDGE
+		if(context->clean_session && !context->bridge){
+#else
 		if(context->clean_session){
+#endif
 			HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
 			if(context->id){
 				HASH_DELETE(hh_id, db->contexts_by_id, context);
