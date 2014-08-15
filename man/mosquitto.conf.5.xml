@@ -938,7 +938,7 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>local_clientid</option> <replaceable>password</replaceable></term>
+				<term><option>local_clientid</option> <replaceable>id</replaceable></term>
 				<listitem>
 					<para>Set the clientid to use on the local broker. If not
 						defined, this defaults to
