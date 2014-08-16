@@ -249,9 +249,9 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
 				}
 				_mosquitto_free(config->bridges[i].addresses);
 			}
-			if(config->bridges[i].clientid) _mosquitto_free(config->bridges[i].clientid);
-			if(config->bridges[i].username) _mosquitto_free(config->bridges[i].username);
-			if(config->bridges[i].password) _mosquitto_free(config->bridges[i].password);
+			if(config->bridges[i].remote_clientid) _mosquitto_free(config->bridges[i].remote_clientid);
+			if(config->bridges[i].remote_username) _mosquitto_free(config->bridges[i].remote_username);
+			if(config->bridges[i].remote_password) _mosquitto_free(config->bridges[i].remote_password);
 			if(config->bridges[i].local_clientid) _mosquitto_free(config->bridges[i].local_clientid);
 			if(config->bridges[i].local_username) _mosquitto_free(config->bridges[i].local_username);
 			if(config->bridges[i].local_password) _mosquitto_free(config->bridges[i].local_password);
@@ -931,7 +931,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
-				}else if(!strcmp(token, "clientid")){
+				}else if(!strcmp(token, "clientid") || !strcmp(token, "remote_clientid")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
@@ -940,12 +940,12 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
-						if(cur_bridge->clientid){
+						if(cur_bridge->remote_clientid){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate clientid value in bridge configuration.");
 							return MOSQ_ERR_INVAL;
 						}
-						cur_bridge->clientid = _mosquitto_strdup(token);
-						if(!cur_bridge->clientid){
+						cur_bridge->remote_clientid = _mosquitto_strdup(token);
+						if(!cur_bridge->remote_clientid){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 							return MOSQ_ERR_NOMEM;
 						}
@@ -1373,7 +1373,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
-				}else if(!strcmp(token, "password")){
+				}else if(!strcmp(token, "password") || !strcmp(token, "remote_password")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
@@ -1382,12 +1382,12 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
-						if(cur_bridge->password){
+						if(cur_bridge->remote_password){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate password value in bridge configuration.");
 							return MOSQ_ERR_INVAL;
 						}
-						cur_bridge->password = _mosquitto_strdup(token);
-						if(!cur_bridge->password){
+						cur_bridge->remote_password = _mosquitto_strdup(token);
+						if(!cur_bridge->remote_password){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 							return MOSQ_ERR_NOMEM;
 						}
@@ -1775,7 +1775,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 				}else if(!strcmp(token, "user")){
 					if(reload) continue; // Drop privileges user not valid for reloading.
 					if(_conf_parse_string(&token, "user", &config->user, saveptr)) return MOSQ_ERR_INVAL;
-				}else if(!strcmp(token, "username")){
+				}else if(!strcmp(token, "username") || !strcmp(token, "remote_username")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
@@ -1784,12 +1784,12 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
-						if(cur_bridge->username){
+						if(cur_bridge->remote_username){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate username value in bridge configuration.");
 							return MOSQ_ERR_INVAL;
 						}
-						cur_bridge->username = _mosquitto_strdup(token);
-						if(!cur_bridge->username){
+						cur_bridge->remote_username = _mosquitto_strdup(token);
+						if(!cur_bridge->remote_username){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 							return MOSQ_ERR_NOMEM;
 						}

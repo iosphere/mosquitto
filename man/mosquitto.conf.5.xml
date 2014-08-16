@@ -903,15 +903,6 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>clientid</option> <replaceable>id</replaceable></term>
-				<listitem>
-					<para>Set the client id for this bridge connection. If not
-						defined, this defaults to 'name.hostname', where name
-						is the connection name and hostname is the hostname of
-						this computer.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>connection</option> <replaceable>name</replaceable></term>
 				<listitem>
 					<para>This variable marks the start of a new bridge
@@ -988,13 +979,41 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>password</option> <replaceable>value</replaceable></term>
+				<term><option>remote_clientid</option> <replaceable>id</replaceable></term>
+				<listitem>
+					<para>Set the client id for this bridge connection. If not
+						defined, this defaults to 'name.hostname', where name
+						is the connection name and hostname is the hostname of
+						this computer.</para>
+					<para>This replaces the old "clientid" option to avoid
+						confusion with local/remote sides of the bridge.
+						"clientid" remains valid for the time being.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>remote_password</option> <replaceable>value</replaceable></term>
 				<listitem>
 					<para>Configure a password for the bridge. This is used for
 						authentication purposes when connecting to a broker
-						that support MQTT v3.1 and requires a username and/or
-						password to connect. This option is only valid if a
-						username is also supplied.</para>
+						that supports MQTT v3.1 and up and requires a username
+						and/or password to connect. This option is only valid
+						if a remote_username is also supplied.</para>
+					<para>This replaces the old "password" option to avoid
+						confusion with local/remote sides of the bridge.
+						"password" remains valid for the time being.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>remote_username</option> <replaceable>name</replaceable></term>
+				<listitem>
+					<para>Configure a username for the bridge. This is used for
+						authentication purposes when connecting to a broker
+						that supports MQTT v3.1 and up and requires a username
+						and/or password to connect. See also the
+						<option>remote_password</option> option.</para>
+					<para>This replaces the old "username" option to avoid
+						confusion with local/remote sides of the bridge.
+						"username" remains valid for the time being.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -1170,16 +1189,6 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 						<replaceable>false</replaceable> if your bridge does
 						not connect properly.</para>
 					<para>Defaults to <replaceable>true</replaceable>.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>username</option> <replaceable>name</replaceable></term>
-				<listitem>
-					<para>Configure a <option>username</option> for the bridge.
-						This is used for authentication purposes when
-						connecting to a broker that support MQTT v3.1 and
-						requires a username and/or password to connect. See
-						also the <option>password</option> option.</para>
 				</listitem>
 			</varlistentry>
 		</variablelist>

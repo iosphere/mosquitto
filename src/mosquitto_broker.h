@@ -260,15 +260,15 @@ struct _mqtt3_bridge{
 	int address_count;
 	time_t primary_retry;
 	bool round_robin;
-	char *clientid;
 	int keepalive;
 	bool clean_session;
 	struct _mqtt3_bridge_topic *topics;
 	int topic_count;
 	bool topic_remapping;
 	time_t restart_t;
-	char *username;
-	char *password;
+	char *remote_clientid;
+	char *remote_username;
+	char *remote_password;
 	char *local_clientid;
 	char *local_username;
 	char *local_password;

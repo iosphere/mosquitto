@@ -52,7 +52,7 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	assert(db);
 	assert(bridge);
 
-	if(!bridge->clientid){
+	if(!bridge->remote_clientid){
 		if(!gethostname(hostname, 256)){
 			len = strlen(hostname) + strlen(bridge->name) + 2;
 			id = _mosquitto_malloc(len);
@@ -63,7 +63,7 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 		}else{
 			return 1;
 		}
-		bridge->clientid = id;
+		bridge->remote_clientid = id;
 	}
 	if(bridge->local_clientid){
 		local_id = _mosquitto_strdup(bridge->local_clientid);
@@ -71,12 +71,12 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 			return MOSQ_ERR_NOMEM;
 		}
 	}else{
-		len = strlen(bridge->clientid) + strlen("local.") + 2;
+		len = strlen(bridge->remote_clientid) + strlen("local.") + 2;
 		local_id = _mosquitto_malloc(len);
 		if(!local_id){
 			return MOSQ_ERR_NOMEM;
 		}
-		snprintf(local_id, len, "local.%s", bridge->clientid);
+		snprintf(local_id, len, "local.%s", bridge->remote_clientid);
 		bridge->local_clientid = _mosquitto_strdup(local_id);
 		if(!bridge->local_clientid){
 			_mosquitto_free(local_id);
@@ -100,8 +100,8 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	new_context->bridge = bridge;
 	new_context->is_bridge = true;
 
-	new_context->username = new_context->bridge->username;
-	new_context->password = new_context->bridge->password;
+	new_context->username = new_context->bridge->remote_username;
+	new_context->password = new_context->bridge->remote_password;
 
 #ifdef WITH_TLS
 	new_context->tls_cafile = new_context->bridge->tls_cafile;
