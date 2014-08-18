@@ -246,8 +246,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						g_clients_expired++;
 #endif
 						context->clean_session = true;
-						mqtt3_context_cleanup(db, context, true);
-						context = NULL;
+						do_disconnect(db, context);
 					}
 				}
 			}
