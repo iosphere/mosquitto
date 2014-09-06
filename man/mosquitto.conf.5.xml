@@ -917,7 +917,7 @@
 					<para>Set the number of seconds after which the bridge
 						should send a ping if no other traffic has occurred.
 						Defaults to 60. A minimum value of 5 seconds
-						isallowed.</para>
+						is allowed.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
