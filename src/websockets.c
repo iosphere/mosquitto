@@ -331,6 +331,7 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 	struct libwebsocket_protocols *p;
 	int protocol_count;
 	int i;
+	struct libws_mqtt_hack *user;
 
 	/* Count valid protocols */
 	for(protocol_count=0; protocols[protocol_count].name; protocol_count++);
@@ -362,10 +363,12 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 		info.options |= LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
 	}
 #endif
-	info.user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
-	if(!info.user){
+	user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
+	if(!user){
 		return NULL;
 	}
+	user->http_dir = listener->http_dir;
+	info.user = user;
 
 	lws_set_log_level(0, NULL);
 

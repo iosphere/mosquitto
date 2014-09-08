@@ -601,6 +601,18 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>http_dir</option> <replaceable>directory</replaceable></term>
+					<listitem>
+						<para>When a listener is using the websockets protocol,
+							it is possible to serve http data as well. Set
+							<option>http_dir</option> to a directory which
+							contains the files you wish to serve. If this
+							option is not specified, then no normal http
+							connections will be possible.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>listener</option> <replaceable>port</replaceable></term>
 					<listitem>
 						<para>Listen for incoming network connection on the

@@ -1016,6 +1016,13 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
+				}else if(!strcmp(token, "http_dir")){
+#ifdef WITH_WEBSOCKETS
+					if(reload) continue; // Listeners not valid for reloading.
+					if(_conf_parse_string(&token, "http_dir", &cur_listener->http_dir, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Websockets support not available.");
+#endif
 				}else if(!strcmp(token, "idle_timeout")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
