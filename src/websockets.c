@@ -321,7 +321,53 @@ static int callback_http(struct libwebsocket_context *context,
 		void *in,
 		size_t len)
 {
+	struct libws_mqtt_hack *hack;
+	char *http_dir;
+
 	/* FIXME - ssl cert verification is done here. */
+
+	switch (reason) {
+		case LWS_CALLBACK_HTTP:
+			hack = (struct libws_mqtt_hack *)libwebsocket_context_user(context);
+			if(!hack){
+				return -1;
+			}
+			http_dir = hack->http_dir;
+
+			if(!http_dir){
+				/* http disabled */
+				return -1;
+			}
+
+			/* Forbid POST */
+			if(lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI)){
+				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
+				return -1;
+			}
+
+			/* FIXME - do transfer */
+			break;
+
+		case LWS_CALLBACK_HTTP_BODY:
+			/* For extra POST data? */
+			return -1;
+
+		case LWS_CALLBACK_HTTP_BODY_COMPLETION:
+			/* For end of extra POST data? */
+			return -1;
+
+		case LWS_CALLBACK_FILTER_HTTP_CONNECTION:
+			/* Access control here */
+			return 0;
+
+		case LWS_CALLBACK_HTTP_WRITEABLE:
+			/* Send our data here */
+			return -1;
+
+		default:
+			return 0;
+	}
+
 	return 0;
 }
 
