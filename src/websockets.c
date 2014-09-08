@@ -35,6 +35,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "mqtt3_protocol.h"
 #include "memory_mosq.h"
 
+#include <errno.h>
+#include <sys/stat.h>
+
 #ifdef WITH_SYS_TREE
 extern uint64_t g_bytes_received;
 extern uint64_t g_bytes_sent;
@@ -65,7 +68,7 @@ enum mosq_ws_protocols {
 };
 
 struct libws_http_data {
-	char blank;
+	FILE *fptr;
 };
 
 static struct libwebsocket_protocols protocols[] = {
@@ -321,8 +324,13 @@ static int callback_http(struct libwebsocket_context *context,
 		void *in,
 		size_t len)
 {
+	struct libws_http_data *u = (struct libws_http_data *)user;
 	struct libws_mqtt_hack *hack;
 	char *http_dir;
+	size_t buflen, slen, wlen;
+	char *filename, *filename_canonical;
+	unsigned char buf[4096];
+	struct stat filestat;
 
 	/* FIXME - ssl cert verification is done here. */
 
@@ -341,11 +349,82 @@ static int callback_http(struct libwebsocket_context *context,
 
 			/* Forbid POST */
 			if(lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI)){
+				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_METHOD_NOT_ALLOWED, NULL);
+				return -1;
+			}
+
+			if(!strcmp((char *)in, "/")){
+				slen = strlen(http_dir) + strlen("/index.html") + 2;
+			}else{
+				slen = strlen(http_dir) + strlen((char *)in) + 2;
+			}
+			filename = _mosquitto_malloc(slen);
+			if(!filename){
+				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
+				return -1;
+			}
+			if(!strcmp((char *)in, "/")){
+				snprintf(filename, slen, "%s/index.html", http_dir);
+			}else{
+				snprintf(filename, slen, "%s%s", http_dir, (char *)in);
+			}
+
+
+			/* Get canonical path and check it is within our http_dir */
+#ifdef WIN32
+#error FIXME
+			/* FIXME - implement for Windows */
+#else
+			filename_canonical = realpath(filename, NULL);
+			if(!filename_canonical){
+				_mosquitto_free(filename);
+				if(errno == EACCES){
+					libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
+				}else if(errno == EINVAL || errno == EIO || errno == ELOOP){
+					libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
+				}else if(errno == ENAMETOOLONG){
+					libwebsockets_return_http_status(context, wsi, HTTP_STATUS_REQ_URI_TOO_LONG, NULL);
+				}else if(errno == ENOENT || errno == ENOTDIR){
+					libwebsockets_return_http_status(context, wsi, HTTP_STATUS_NOT_FOUND, NULL);
+				}
+				return -1;
+			}
+			if(strncmp(http_dir, filename_canonical, strlen(http_dir))){
+				/* Requested file isn't within http_dir, deny access. */
+				free(filename_canonical);
+				_mosquitto_free(filename);
+				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
+				return -1;
+			}
+			free(filename_canonical);
+#endif
+
+			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename);
+			u->fptr = fopen(filename, "rb");
+			_mosquitto_free(filename);
+			if(!u->fptr){
+				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_NOT_FOUND, NULL);
+				return -1;
+			}
+			if(fstat(fileno(u->fptr), &filestat) < 0){
+				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
+				fclose(u->fptr);
+				return -1;
+			}
+			if(!S_ISREG(filestat.st_mode)){
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
 				return -1;
 			}
 
-			/* FIXME - do transfer */
+			buflen = snprintf((char *)buf, 4096, "HTTP/1.0 200 OK\r\n"
+												"Server: mosquitto\r\n"
+												"Content-Length: %u\r\n\r\n",
+												(unsigned int)filestat.st_size);
+            if(libwebsocket_write(wsi, buf, buflen, LWS_WRITE_HTTP) < 0){
+				fclose(u->fptr);
+				return -1;
+			}
+			libwebsocket_callback_on_writable(context, wsi);
 			break;
 
 		case LWS_CALLBACK_HTTP_BODY:
@@ -362,7 +441,31 @@ static int callback_http(struct libwebsocket_context *context,
 
 		case LWS_CALLBACK_HTTP_WRITEABLE:
 			/* Send our data here */
-			return -1;
+			if(u->fptr){
+				do{
+					buflen = fread(buf, 1, sizeof(buf), u->fptr);
+					if(buflen < 1){
+						fclose(u->fptr);
+						return -1;
+					}
+					wlen = libwebsocket_write(wsi, buf, buflen, LWS_WRITE_HTTP);
+					if(wlen < buflen){
+						fseek(u->fptr, buflen-wlen, SEEK_CUR);
+					}else{
+						if(buflen < sizeof(buf)){
+							fclose(u->fptr);
+							u->fptr = NULL;
+						}
+					}
+				}while(u->fptr && !lws_send_pipe_choked(wsi));
+				libwebsocket_callback_on_writable(context, wsi);
+			}else{
+				if(lws_partial_buffered(wsi)){
+					libwebsocket_callback_on_writable(context, wsi);
+				}else{
+					return -1;
+				}
+			}
 
 		default:
 			return 0;
@@ -412,7 +515,16 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 	if(!user){
 		return NULL;
 	}
-	user->http_dir = listener->http_dir;
+
+#ifdef WIN32
+#error FIXME
+#else
+	user->http_dir = realpath(listener->http_dir, NULL);
+	if(!user->http_dir){
+		_mosquitto_free(user);
+		return NULL;
+	}
+#endif
 	info.user = user;
 
 	lws_set_log_level(0, NULL);
