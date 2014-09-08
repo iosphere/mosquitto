@@ -346,7 +346,6 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 		p[i].callback = protocols[i].callback;
 		p[i].per_session_data_size = protocols[i].per_session_data_size;
 		p[i].rx_buffer_size = protocols[i].rx_buffer_size;
-		p[i].no_buffer_all_partial_tx = protocols[i].no_buffer_all_partial_tx;
 	}
 
 	memset(&info, 0, sizeof(info));
