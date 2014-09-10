@@ -202,8 +202,14 @@ int main(int argc, char *argv[])
 	struct mosquitto *mosq = NULL;
 	int rc;
 	
-	if(client_config_load(&cfg, CLIENT_SUB, argc, argv)){
-		print_usage();
+	rc = client_config_load(&cfg, CLIENT_SUB, argc, argv);
+	if(rc){
+		if(rc == 2){
+			/* --help */
+			print_usage();
+		}else{
+			fprintf(stderr, "\nUse 'mosquitto_sub --help' to see usage.\n");
+		}
 		return 1;
 	}
 

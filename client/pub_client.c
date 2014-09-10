@@ -279,8 +279,14 @@ int main(int argc, char *argv[])
 	int rc;
 	int rc2;
 
-	if(client_config_load(&cfg, CLIENT_PUB, argc, argv)){
-		print_usage();
+	rc = client_config_load(&cfg, CLIENT_PUB, argc, argv);
+	if(rc){
+		if(rc == 2){
+			/* --help */
+			print_usage();
+		}else{
+			fprintf(stderr, "\nUse 'mosquitto_pub --help' to see usage.\n");
+		}
 		return 1;
 	}
 
