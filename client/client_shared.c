@@ -256,7 +256,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--help")){
-			return 1;
+			return 2;
 		}else if(!strcmp(argv[i], "-h") || !strcmp(argv[i], "--host")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -h argument given but no host specified.\n\n");
@@ -416,8 +416,16 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				if(pub_or_sub == CLIENT_PUB){
+					if(mosquitto_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+						fprintf(stderr, "Error: Invalid publish topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
+						return 1;
+					}
 					cfg->topic = strdup(argv[i+1]);
 				}else{
+					if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+						fprintf(stderr, "Error: Invalid subscription topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
+						return 1;
+					}
 					cfg->topic_count++;
 					cfg->topics = realloc(cfg->topics, cfg->topic_count*sizeof(char *));
 					cfg->topics[cfg->topic_count-1] = strdup(argv[i+1]);
@@ -432,6 +440,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -T argument given but no topic filter specified.\n\n");
 				return 1;
 			}else{
+				if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+					fprintf(stderr, "Error: Invalid filter topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
+					return 1;
+				}
 				cfg->filter_out_count++;
 				cfg->filter_outs = realloc(cfg->filter_outs, cfg->filter_out_count*sizeof(char *));
 				cfg->filter_outs[cfg->filter_out_count-1] = strdup(argv[i+1]);
@@ -491,6 +503,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: --will-topic argument given but no will topic specified.\n\n");
 				return 1;
 			}else{
+				if(mosquitto_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+					fprintf(stderr, "Error: Invalid will topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
+					return 1;
+				}
 				cfg->will_topic = strdup(argv[i+1]);
 			}
 			i++;
