@@ -1352,7 +1352,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						return MOSQ_ERR_INVAL;
 					}
 					if(_conf_parse_string(&token, "mount_point", &cur_listener->mount_point, saveptr)) return MOSQ_ERR_INVAL;
-					if(_mosquitto_pub_topic_check(cur_listener->mount_point) != MOSQ_ERR_SUCCESS){
+					if(mosquitto_pub_topic_check(cur_listener->mount_point) != MOSQ_ERR_SUCCESS){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
 								"Error: Invalid mount_point '%s'. Does it contain a wildcard character?",
 								cur_listener->mount_point);
@@ -1667,7 +1667,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 								if(!strcmp(token, "\"\"")){
 									cur_topic->local_prefix = NULL;
 								}else{
-									if(_mosquitto_pub_topic_check(token) != MOSQ_ERR_SUCCESS){
+									if(mosquitto_pub_topic_check(token) != MOSQ_ERR_SUCCESS){
 										_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic local prefix '%s'.", token);
 										return MOSQ_ERR_INVAL;
 									}
@@ -1683,7 +1683,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 									if(!strcmp(token, "\"\"")){
 										cur_topic->remote_prefix = NULL;
 									}else{
-										if(_mosquitto_pub_topic_check(token) != MOSQ_ERR_SUCCESS){
+										if(mosquitto_pub_topic_check(token) != MOSQ_ERR_SUCCESS){
 											_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic remote prefix '%s'.", token);
 											return MOSQ_ERR_INVAL;
 										}

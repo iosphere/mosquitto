@@ -73,4 +73,6 @@ MOSQ_1.3 {
 MOSQ_1.4 {
 	global:
 		mosquitto_threaded_set;
+		mosquitto_pub_topic_check;
+		mosquitto_sub_topic_check;
 } MOSQ_1.3;

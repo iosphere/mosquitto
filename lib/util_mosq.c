@@ -160,7 +160,7 @@ uint16_t _mosquitto_mid_generate(struct mosquitto *mosq)
  * Also returns MOSQ_ERR_INVAL if the topic string is too long.
  * Returns MOSQ_ERR_SUCCESS if everything is fine.
  */
-int _mosquitto_pub_topic_check(const char *str)
+int mosquitto_pub_topic_check(const char *str)
 {
 	int len = 0;
 	while(str && str[0]){
@@ -182,7 +182,7 @@ int _mosquitto_pub_topic_check(const char *str)
  * Also returns MOSQ_ERR_INVAL if the topic string is too long.
  * Returns MOSQ_ERR_SUCCESS if everything is fine.
  */
-int _mosquitto_sub_topic_check(const char *str)
+int mosquitto_sub_topic_check(const char *str)
 {
 	char c = '\0';
 	int len = 0;

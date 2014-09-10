@@ -1424,6 +1424,57 @@ libmosq_EXPORT int mosquitto_sub_topic_tokens_free(char ***topics, int count);
  */
 libmosq_EXPORT int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result);
 
+/*
+ * Function: mosquitto_pub_topic_check
+ *
+ * Check whether a topic to be used for publishing is valid.
+ *
+ * This searches for + or # in a topic and checks its length.
+ *
+ * This check is already carried out in <mosquitto_publish> and
+ * <mosquitto_will_set>, there is no need to call it directly before them. It
+ * may be useful if you wish to check the validity of a topic in advance of
+ * making a connection for example.
+ *
+ * Parameters:
+ *   topic - the topic to check
+ *
+ * Returns:
+ *   MOSQ_ERR_SUCCESS - for a valid topic
+ *   MOSQ_ERR_INVAL - if the topic contains a + or a #, or if it is too long.
+ *
+ * See Also:
+ *   <mosquitto_sub_topic_check>
+ */
+libmosq_EXPORT int mosquitto_pub_topic_check(const char *topic);
+
+/*
+ * Function: mosquitto_sub_topic_check
+ *
+ * Check whether a topic to be used for subscribing is valid.
+ *
+ * This searches for + or # in a topic and checks that they aren't in invalid
+ * positions, such as with foo/#/bar, foo/+bar or foo/bar#, and checks its
+ * length.
+ *
+ * This check is already carried out in <mosquitto_subscribe> and
+ * <mosquitto_unsubscribe>, there is no need to call it directly before them.
+ * It may be useful if you wish to check the validity of a topic in advance of
+ * making a connection for example.
+ *
+ * Parameters:
+ *   topic - the topic to check
+ *
+ * Returns:
+ *   MOSQ_ERR_SUCCESS - for a valid topic
+ *   MOSQ_ERR_INVAL - if the topic contains a + or a # that is in an invalid
+ *                    position, or if it is too long.
+ *
+ * See Also:
+ *   <mosquitto_sub_topic_check>
+ */
+libmosq_EXPORT int mosquitto_sub_topic_check(const char *topic);
+
 #ifdef __cplusplus
 }
 #endif
