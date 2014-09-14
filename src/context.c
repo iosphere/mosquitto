@@ -15,6 +15,7 @@ Contributors:
 */
 
 #include <assert.h>
+#include <time.h>
 
 #include <config.h>
 

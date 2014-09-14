@@ -27,6 +27,7 @@ Contributors:
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
