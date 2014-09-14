@@ -87,13 +87,13 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	uint8_t will, will_retain, will_qos, clean_session;
 	uint8_t username_flag, password_flag;
 	char *username = NULL, *password = NULL;
-	int i;
 	int rc;
 	struct _mosquitto_acl_user *acl_tail;
 	struct mosquitto_client_msg *msg_tail, *msg_prev;
 	struct mosquitto *found_context;
 	int slen;
 #ifdef WITH_TLS
+	int i;
 	X509 *client_cert = NULL;
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
