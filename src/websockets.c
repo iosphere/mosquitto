@@ -519,10 +519,12 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 #ifdef WIN32
 #error FIXME
 #else
-	user->http_dir = realpath(listener->http_dir, NULL);
-	if(!user->http_dir){
-		_mosquitto_free(user);
-		return NULL;
+	if(listener->http_dir){
+		user->http_dir = realpath(listener->http_dir, NULL);
+		if(!user->http_dir){
+			_mosquitto_free(user);
+			return NULL;
+		}
 	}
 #endif
 	info.user = user;
