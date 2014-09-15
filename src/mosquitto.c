@@ -153,7 +153,9 @@ int main(int argc, char *argv[])
 	int listensock_count = 0;
 	int listensock_index = 0;
 	struct mqtt3_config config;
+#ifdef WITH_SYS_TREE
 	char buf[1024];
+#endif
 	int i, j;
 	FILE *pid;
 	int listener_max;

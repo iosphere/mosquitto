@@ -57,8 +57,12 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 
 int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock_count, int listener_max)
 {
+#ifdef WITH_SYS_TREE
 	time_t start_time = mosquitto_time();
+#endif
+#ifdef WITH_PERSISTENCE
 	time_t last_backup = mosquitto_time();
+#endif
 	time_t last_store_clean = mosquitto_time();
 	time_t now = 0;
 	time_t now_time;
@@ -99,7 +103,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 		}
 #endif
 
-		context_count = HASH_CNT(hh_sock, db->contexts_by_sock) + HASH_CNT(hh_bridge, db->contexts_bridge);
+		context_count = HASH_CNT(hh_sock, db->contexts_by_sock);
+#ifdef WITH_BRIDGE
+		context_count += HASH_CNT(hh_bridge, db->contexts_bridge);
+#endif
+
 		if(listensock_count + context_count > pollfd_count || !pollfds){
 			pollfd_count = listensock_count + context_count;
 			pollfds = _mosquitto_realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
