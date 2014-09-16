@@ -199,12 +199,6 @@ void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 		ctxt->will = NULL;
 	}
 	ctxt->disconnect_t = time(NULL);
-#ifdef WITH_SYS_TREE
-	db->connected_count--;
-	if(!ctxt->clean_session){
-		db->disconnected_count++;
-	}
-#endif
 	_mosquitto_socket_close(db, ctxt);
 }
 

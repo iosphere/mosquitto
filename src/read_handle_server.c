@@ -104,7 +104,6 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 #ifdef WITH_SYS_TREE
 	g_connection_count++;
-	db->connected_count++;
 #endif
 
 	/* Don't accept multiple CONNECT commands. */
@@ -407,10 +406,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		/* Found a matching client */
 		if(found_context->sock == INVALID_SOCKET){
 			/* Client is reconnecting after a disconnect */
-			/* FIXME - does anything else need to be done here? */
-#ifdef WITH_SYS_TREE
-			db->disconnected_count--;
-#endif
+			/* FIXME - does anything need to be done here? */
 		}else{
 			/* Client is already connected, disconnect old version. This is
 			 * done in mqtt3_context_cleanup() below. */

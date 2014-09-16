@@ -221,8 +221,6 @@ struct mosquitto_db{
 #ifdef WITH_SYS_TREE
 	int subscription_count;
 	int retained_count;
-	int connected_count;
-	int disconnected_count;
 #endif
 };
 
