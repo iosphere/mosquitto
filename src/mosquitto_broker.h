@@ -218,9 +218,9 @@ struct mosquitto_db{
 	struct mqtt3_config *config;
 	int persistence_changes;
 	struct _mosquitto_auth_plugin auth_plugin;
+#ifdef WITH_SYS_TREE
 	int subscription_count;
 	int retained_count;
-#ifdef WITH_SYS_TREE
 	int connected_count;
 	int disconnected_count;
 #endif

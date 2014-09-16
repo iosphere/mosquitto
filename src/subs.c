@@ -82,12 +82,16 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 		if(hier->retained){
 			hier->retained->ref_count--;
 			/* FIXME - it would be nice to be able to remove the message from the store at this point if ref_count == 0 */
+#ifdef WITH_SYS_TREE
 			db->retained_count--;
+#endif
 		}
 		if(stored->msg.payloadlen){
 			hier->retained = stored;
 			hier->retained->ref_count++;
+#ifdef WITH_SYS_TREE
 			db->retained_count++;
+#endif
 		}else{
 			hier->retained = NULL;
 		}
@@ -271,7 +275,9 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 				subhier->subs = leaf;
 				leaf->prev = NULL;
 			}
+#ifdef WITH_SYS_TREE
 			db->subscription_count++;
+#endif
 		}
 		return MOSQ_ERR_SUCCESS;
 	}
@@ -309,7 +315,9 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 		leaf = subhier->subs;
 		while(leaf){
 			if(leaf->context==context){
+#ifdef WITH_SYS_TREE
 				db->subscription_count--;
+#endif
 				if(leaf->prev){
 					leaf->prev->next = leaf->next;
 				}else{
@@ -496,7 +504,9 @@ static int _subs_clean_session(struct mosquitto_db *db, struct mosquitto *contex
 	leaf = root->subs;
 	while(leaf){
 		if(leaf->context == context){
+#ifdef WITH_SYS_TREE
 			db->subscription_count--;
+#endif
 			if(leaf->prev){
 				leaf->prev->next = leaf->next;
 			}else{
