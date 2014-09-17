@@ -511,6 +511,8 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 		info.options |= LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
 	}
 #endif
+	info.options |= LWS_SERVER_OPTION_DISABLE_IPV6;
+
 	user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
 	if(!user){
 		_mosquitto_free(p);
