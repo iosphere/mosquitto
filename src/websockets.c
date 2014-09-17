@@ -103,6 +103,15 @@ static struct libwebsocket_protocols protocols[] = {
 	{ NULL, NULL, 0, 0, 0, NULL, 0}
 };
 
+static void easy_address(int sock, struct mosquitto *mosq)
+{
+	char address[1024];
+
+	if(!_mosquitto_socket_get_address(sock, address, 1024)){
+		mosq->address = _mosquitto_strdup(address);
+	}
+}
+
 static int callback_mqtt(struct libwebsocket_context *context,
 		struct libwebsocket *wsi,
 		enum libwebsocket_callback_reasons reason,
@@ -151,6 +160,13 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				mosq->wsi = wsi;
 				u->mosq = mosq;
 			}else{
+				return -1;
+			}
+			easy_address(libwebsocket_get_socket_fd(wsi), mosq);
+			if(!mosq->address){
+				/* getpeername and inet_ntop failed and not a bridge */
+				_mosquitto_free(mosq);
+				u->mosq = NULL;
 				return -1;
 			}
 			break;
