@@ -476,11 +476,7 @@ static int callback_http(struct libwebsocket_context *context,
 				}while(u->fptr && !lws_send_pipe_choked(wsi));
 				libwebsocket_callback_on_writable(context, wsi);
 			}else{
-				if(lws_partial_buffered(wsi)){
-					libwebsocket_callback_on_writable(context, wsi);
-				}else{
-					return -1;
-				}
+				return -1;
 			}
 
 		default:
