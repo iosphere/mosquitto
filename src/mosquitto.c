@@ -342,6 +342,32 @@ int main(int argc, char *argv[])
 	}
 #endif
 
+#ifdef WITH_WEBSOCKETS
+	for(i=0; i<int_db.config->listener_count; i++){
+		if(int_db.config->listeners[i].ws_context){
+			hack_head = libwebsocket_context_user(int_db.config->listeners[i].ws_context);
+			libwebsocket_context_destroy(int_db.config->listeners[i].ws_context);
+			if(hack_head){
+				while(hack_head){
+#ifdef WIN32
+#error FIXME
+#else
+					if(hack_head->http_dir){
+						_mosquitto_free(hack_head->http_dir);
+					}
+#endif
+					hack = hack_head->next;
+					_mosquitto_free(hack_head);
+					hack_head = hack;
+				}
+			}
+		}
+		if(int_db.config->listeners[i].ws_protocol){
+			_mosquitto_free(int_db.config->listeners[i].ws_protocol);
+		}
+	}
+#endif
+
 	HASH_ITER(hh_id, int_db.contexts_by_id, ctxt, ctxt_tmp){
 #ifdef WITH_WEBSOCKETS
 		if(!ctxt->wsi){
@@ -363,21 +389,6 @@ int main(int argc, char *argv[])
 		HASH_DELETE(hh_for_free, int_db.contexts_for_free, ctxt);
 		mqtt3_context_cleanup(&int_db, ctxt, true);
 	}
-#ifdef WITH_WEBSOCKETS
-	for(i=0; i<int_db.config->listener_count; i++){
-		if(int_db.config->listeners[i].ws_context){
-			hack_head = libwebsocket_context_user(int_db.config->listeners[i].ws_context);
-			libwebsocket_context_destroy(int_db.config->listeners[i].ws_context);
-			if(hack_head){
-				while(hack_head){
-					hack = hack_head->next;
-					_mosquitto_free(hack_head);
-					hack_head = hack;
-				}
-			}
-		}
-	}
-#endif
 
 	mqtt3_db_close(&int_db);
 

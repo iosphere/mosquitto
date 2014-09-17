@@ -513,6 +513,7 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 #endif
 	user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
 	if(!user){
+		_mosquitto_free(p);
 		return NULL;
 	}
 
@@ -523,11 +524,13 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 		user->http_dir = realpath(listener->http_dir, NULL);
 		if(!user->http_dir){
 			_mosquitto_free(user);
+			_mosquitto_free(p);
 			return NULL;
 		}
 	}
 #endif
 	info.user = user;
+	listener->ws_protocol = p;
 
 	lws_set_log_level(0, NULL);
 

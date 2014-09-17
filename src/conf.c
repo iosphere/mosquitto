@@ -236,6 +236,9 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
 			if(config->listeners[i].tls_version) _mosquitto_free(config->listeners[i].tls_version);
 			if(config->listeners[i].ssl_ctx) SSL_CTX_free(config->listeners[i].ssl_ctx);
 #endif
+#ifdef WITH_WEBSOCKETS
+			if(config->listeners[i].http_dir) _mosquitto_free(config->listeners[i].http_dir);
+#endif
 		}
 		_mosquitto_free(config->listeners);
 	}

@@ -76,6 +76,7 @@ struct _mqtt3_listener {
 #ifdef WITH_WEBSOCKETS
 	struct libwebsocket_context *ws_context;
 	char *http_dir;
+	struct libwebsocket_protocols *ws_protocol;
 #endif
 };
 
