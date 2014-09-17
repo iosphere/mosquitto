@@ -35,6 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "mqtt3_protocol.h"
 #include "memory_mosq.h"
 
+#include <stdlib.h>
 #include <errno.h>
 #include <sys/stat.h>
 
@@ -388,8 +389,12 @@ static int callback_http(struct libwebsocket_context *context,
 
 			/* Get canonical path and check it is within our http_dir */
 #ifdef WIN32
-#error FIXME
-			/* FIXME - implement for Windows */
+			filename_canonical = _fullpath(NULL, filename, 0);
+			if(!filename_canonical){
+				_mosquitto_free(filename);
+				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
+				return -1;
+			}
 #else
 			filename_canonical = realpath(filename, NULL);
 			if(!filename_canonical){
@@ -405,6 +410,7 @@ static int callback_http(struct libwebsocket_context *context,
 				}
 				return -1;
 			}
+#endif
 			if(strncmp(http_dir, filename_canonical, strlen(http_dir))){
 				/* Requested file isn't within http_dir, deny access. */
 				free(filename_canonical);
@@ -413,7 +419,6 @@ static int callback_http(struct libwebsocket_context *context,
 				return -1;
 			}
 			free(filename_canonical);
-#endif
 
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename);
 			u->fptr = fopen(filename, "rb");
@@ -531,18 +536,19 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 		return NULL;
 	}
 
-#ifdef WIN32
-#error FIXME
-#else
 	if(listener->http_dir){
+#ifdef WIN32
+		user->http_dir = _fullpath(NULL, listener->http_dir, 0);
+#else
 		user->http_dir = realpath(listener->http_dir, NULL);
+#endif
 		if(!user->http_dir){
 			_mosquitto_free(user);
 			_mosquitto_free(p);
 			return NULL;
 		}
 	}
-#endif
+
 	info.user = user;
 	listener->ws_protocol = p;
 
