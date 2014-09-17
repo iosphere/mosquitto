@@ -97,7 +97,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 		}
 	}
 	while(source_id && leaf){
-		if(leaf->context->is_bridge && !strcmp(leaf->context->id, source_id)){
+		if(!leaf->context->id || (leaf->context->is_bridge && !strcmp(leaf->context->id, source_id))){
 			leaf = leaf->next;
 			continue;
 		}

@@ -481,6 +481,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			found_context->ws_context = context->ws_context;
 			found_context->sock = WEBSOCKET_CLIENT;
 			context->wsi = NULL;
+			context->ws_context = NULL;
 			context->sock = INVALID_SOCKET;
 
 			/* This is a hack to allow us to update the wsi->user_space
