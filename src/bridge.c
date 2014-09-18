@@ -92,6 +92,7 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 		/* id wasn't found, so generate a new context */
 		new_context = mqtt3_context_init(db, -1);
 		if(!new_context){
+			_mosquitto_free(local_id);
 			return MOSQ_ERR_NOMEM;
 		}
 		new_context->id = local_id;
