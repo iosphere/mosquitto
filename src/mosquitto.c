@@ -349,13 +349,9 @@ int main(int argc, char *argv[])
 			libwebsocket_context_destroy(int_db.config->listeners[i].ws_context);
 			if(hack_head){
 				while(hack_head){
-#ifdef WIN32
-#error FIXME
-#else
 					if(hack_head->http_dir){
 						_mosquitto_free(hack_head->http_dir);
 					}
-#endif
 					hack = hack_head->next;
 					_mosquitto_free(hack_head);
 					hack_head = hack;
