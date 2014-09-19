@@ -432,7 +432,11 @@ static int callback_http(struct libwebsocket_context *context,
 				fclose(u->fptr);
 				return -1;
 			}
+#ifdef WIN32
+			if((filestat.st_mode & S_IFREG) != S_IFREG){
+#else
 			if(!S_ISREG(filestat.st_mode)){
+#endif
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
 				return -1;
 			}
