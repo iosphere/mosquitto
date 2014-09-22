@@ -381,10 +381,7 @@ int main(int argc, char *argv[])
 		mqtt3_context_cleanup(&int_db, ctxt, true);
 	}
 #endif
-	HASH_ITER(hh_for_free, int_db.contexts_for_free, ctxt, ctxt_tmp){
-		HASH_DELETE(hh_for_free, int_db.contexts_for_free, ctxt);
-		mqtt3_context_cleanup(&int_db, ctxt, true);
-	}
+	mosquitto__free_disused_contexts(&int_db);
 
 	mqtt3_db_close(&int_db);
 

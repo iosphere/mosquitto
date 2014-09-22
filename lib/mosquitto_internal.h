@@ -235,7 +235,7 @@ struct mosquitto {
 #ifdef WITH_BROKER
 	UT_hash_handle hh_id;
 	UT_hash_handle hh_sock;
-	UT_hash_handle hh_for_free;
+	struct mosquitto *for_free_next;
 #  ifdef WITH_BRIDGE
 	UT_hash_handle hh_bridge;
 #  endif

@@ -500,16 +500,16 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 				ws_ctxt_user_head = ws_ctxt_user_head->next;
 			}
 			ws_ctxt_user_head->next = ws_ctxt_user;
-			HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
+			mosquitto__add_context_to_disused(db, context);
 		}else{
-			HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
+			mosquitto__add_context_to_disused(db, context);
 
 			HASH_DELETE(hh_sock, db->contexts_by_sock, context);
 			context->sock = INVALID_SOCKET;
 			HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(found_context->sock), found_context);
 		}
 #else
-		HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
+		mosquitto__add_context_to_disused(db, context);
 
 		HASH_DELETE(hh_sock, db->contexts_by_sock, context);
 		context->sock = INVALID_SOCKET;

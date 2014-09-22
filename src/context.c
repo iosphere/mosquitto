@@ -142,11 +142,6 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		context->address = NULL;
 	}
 
-	HASH_FIND(hh_for_free, db->contexts_for_free, context, sizeof(void *), ctx_tmp);
-	if(ctx_tmp){
-		HASH_DELETE(hh_for_free, db->contexts_for_free, context);
-	}
-
 	if(context->id){
 		assert(db); /* db can only be NULL here if the client hasn't sent a
 					   CONNECT and hence wouldn't have an id. */
@@ -200,5 +195,28 @@ void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 	}
 	ctxt->disconnect_t = time(NULL);
 	_mosquitto_socket_close(db, ctxt);
+}
+
+void mosquitto__add_context_to_disused(struct mosquitto_db *db, struct mosquitto *context)
+{
+	if(db->ll_for_free){
+		context->for_free_next = db->ll_for_free;
+		db->ll_for_free = context;
+	}else{
+		db->ll_for_free = context;
+	}
+}
+
+void mosquitto__free_disused_contexts(struct mosquitto_db *db)
+{
+	assert(db);
+	struct mosquitto *context, *next;
+
+	context = db->ll_for_free;
+	while(context){
+		next = context->for_free_next;
+		mqtt3_context_cleanup(db, context, true);
+		context = next;
+	}
 }
 

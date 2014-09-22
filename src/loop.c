@@ -93,10 +93,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	}
 
 	while(run){
-		HASH_ITER(hh_for_free, db->contexts_for_free, context, ctxt_tmp){
-			HASH_DELETE(hh_for_free, db->contexts_for_free, context);
-			mqtt3_context_cleanup(db, context, true);
-		}
+		mosquitto__free_disused_contexts(db);
 #ifdef WITH_SYS_TREE
 		if(db->config->sys_interval > 0){
 			mqtt3_db_sys_update(db, db->config->sys_interval, start_time);
@@ -367,7 +364,7 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 #else
 		if(context->clean_session){
 #endif
-			HASH_ADD_KEYPTR(hh_for_free, db->contexts_for_free, context, sizeof(void *), context);
+			mosquitto__add_context_to_disused(db, context);
 			if(context->id){
 				HASH_DELETE(hh_id, db->contexts_by_id, context);
 				_mosquitto_free(context->id);

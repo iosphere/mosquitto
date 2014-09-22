@@ -223,6 +223,7 @@ struct mosquitto_db{
 	int subscription_count;
 	int retained_count;
 #endif
+	struct mosquitto *ll_for_free;
 };
 
 enum mqtt3_bridge_direction{
@@ -400,6 +401,8 @@ int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context,
 struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, int sock);
 void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, bool do_free);
 void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *context);
+void mosquitto__add_context_to_disused(struct mosquitto_db *db, struct mosquitto *context);
+void mosquitto__free_disused_contexts(struct mosquitto_db *db);
 
 /* ============================================================
  * Logging functions
