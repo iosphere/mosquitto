@@ -218,5 +218,6 @@ void mosquitto__free_disused_contexts(struct mosquitto_db *db)
 		mqtt3_context_cleanup(db, context, true);
 		context = next;
 	}
+	db->ll_for_free = NULL;
 }
 
