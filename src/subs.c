@@ -142,38 +142,52 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 	return rc;
 }
 
+static struct _sub_token *_sub_topic_append(struct _sub_token **tail, struct _sub_token **topics, char *topic)
+{
+	struct _sub_token *new_topic;
+
+	if(!topic){
+		return NULL;
+	}
+	new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
+	if(!new_topic){
+		_mosquitto_free(topic);
+		return NULL;
+	}
+	new_topic->next = NULL;
+	new_topic->topic = topic;
+
+	if(*tail){
+		(*tail)->next = new_topic;
+		*tail = (*tail)->next;
+	}else{
+		*topics = new_topic;
+		*tail = new_topic;
+	}
+	return new_topic;
+}
+
 static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 {
 	struct _sub_token *new_topic, *tail = NULL;
 	int len;
 	int start, stop, tlen;
 	int i;
+	char *topic;
 
 	assert(subtopic);
 	assert(topics);
 
 	if(subtopic[0] != '$'){
-		new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
+		new_topic = _sub_topic_append(&tail, topics, _mosquitto_strdup(""));
 		if(!new_topic) goto cleanup;
-		new_topic->next = NULL;
-		new_topic->topic = _mosquitto_strdup("");
-		if(!new_topic->topic) goto cleanup;
-
-		*topics = new_topic;
-		tail = new_topic;
 	}
 
 	len = strlen(subtopic);
 
 	if(subtopic[0] == '/'){
-		new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
+		new_topic = _sub_topic_append(&tail, topics, _mosquitto_strdup(""));
 		if(!new_topic) goto cleanup;
-		new_topic->next = NULL;
-		new_topic->topic = _mosquitto_strdup("");
-		if(!new_topic->topic) goto cleanup;
-
-		*topics = new_topic;
-		tail = new_topic;
 
 		start = 1;
 	}else{
@@ -184,27 +198,19 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 	for(i=start; i<len+1; i++){
 		if(subtopic[i] == '/' || subtopic[i] == '\0'){
 			stop = i;
-			new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
-			if(!new_topic) goto cleanup;
-			new_topic->next = NULL;
 
 			if(start != stop){
 				tlen = stop-start + 1;
 
-				new_topic->topic = _mosquitto_calloc(tlen, sizeof(char));
-				if(!new_topic->topic) goto cleanup;
-				memcpy(new_topic->topic, &subtopic[start], tlen-1);
+				topic = _mosquitto_calloc(tlen, sizeof(char));
+				if(!topic) goto cleanup;
+				memcpy(topic, &subtopic[start], tlen-1);
 			}else{
-				new_topic->topic = _mosquitto_strdup("");
-				if(!new_topic->topic) goto cleanup;
+				topic = _mosquitto_strdup("");
+				if(!topic) goto cleanup;
 			}
-			if(tail){
-				tail->next = new_topic;
-				tail = tail->next;
-			}else{
-				tail = new_topic;
-				*topics = tail;
-			}
+			new_topic = _sub_topic_append(&tail, topics, topic);
+			if(!new_topic) goto cleanup;
 			start = i+1;
 		}
 	}
