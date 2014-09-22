@@ -243,7 +243,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			break;
 
 		case LWS_CALLBACK_RECEIVE:
-			if(!u){
+			if(!u || !u->mosq){
 				return -1;
 			}
 			mosq = u->mosq;
