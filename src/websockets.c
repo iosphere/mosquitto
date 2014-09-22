@@ -475,7 +475,11 @@ static int callback_http(struct libwebsocket_context *context,
 					}
 					wlen = libwebsocket_write(wsi, buf, buflen, LWS_WRITE_HTTP);
 					if(wlen < buflen){
-						fseek(u->fptr, buflen-wlen, SEEK_CUR);
+						if(fseek(u->fptr, buflen-wlen, SEEK_CUR) < 0){
+							fclose(u->fptr);
+							u->fptr = NULL;
+							return -1;
+						}
 					}else{
 						if(buflen < sizeof(buf)){
 							fclose(u->fptr);
