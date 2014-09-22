@@ -151,8 +151,11 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		context->id = NULL;
 	}
 	_mosquitto_packet_cleanup(&(context->in_packet));
-	_mosquitto_packet_cleanup(context->current_out_packet);
-	context->current_out_packet = NULL;
+	if(context->current_out_packet){
+		_mosquitto_packet_cleanup(context->current_out_packet);
+		_mosquitto_free(context->current_out_packet);
+		context->current_out_packet = NULL;
+	}
 	while(context->out_packet){
 		_mosquitto_packet_cleanup(context->out_packet);
 		packet = context->out_packet;

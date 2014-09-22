@@ -244,13 +244,19 @@ void mqtt3_bridge_packet_cleanup(struct mosquitto *context)
 	struct _mosquitto_packet *packet;
 	if(!context) return;
 
-	_mosquitto_packet_cleanup(context->current_out_packet);
+	if(context->current_out_packet){
+		_mosquitto_packet_cleanup(context->current_out_packet);
+		_mosquitto_free(context->current_out_packet);
+		context->current_out_packet = NULL;
+	}
     while(context->out_packet){
 		_mosquitto_packet_cleanup(context->out_packet);
 		packet = context->out_packet;
 		context->out_packet = context->out_packet->next;
 		_mosquitto_free(packet);
 	}
+	context->out_packet = NULL;
+	context->out_packet_last = NULL;
 
 	_mosquitto_packet_cleanup(&(context->in_packet));
 }
