@@ -65,6 +65,11 @@ else (${WITH_TLS} STREQUAL ON)
 	set (OPENSSL_INCLUDE_DIR "")
 endif (${WITH_TLS} STREQUAL ON)
 
+option(WITH_SOCKS "Include SOCKS5 support?" ON)
+if (${WITH_SOCKS} STREQUAL ON)
+	add_definitions("-DWITH_SOCKS")
+endif (${WITH_SOCKS} STREQUAL ON)
+
 option(WITH_SRV "Include SRV lookup support?" ON)
 
 # ========================================

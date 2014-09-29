@@ -75,4 +75,5 @@ MOSQ_1.4 {
 		mosquitto_threaded_set;
 		mosquitto_pub_topic_check;
 		mosquitto_sub_topic_check;
+		mosquitto_socks5_set;
 } MOSQ_1.3;

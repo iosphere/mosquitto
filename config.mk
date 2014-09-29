@@ -70,6 +70,9 @@ WITH_EC:=yes
 # Build man page documentation by default.
 WITH_DOCS:=yes
 
+# Build with client support for SOCK5 proxy.
+WITH_SOCKS:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -172,6 +175,11 @@ endif
 ifeq ($(WITH_THREADING),yes)
 	LIB_LIBS:=$(LIB_LIBS) -lpthread
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_THREADING
+endif
+
+ifeq ($(WITH_SOCKS),yes)
+	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SOCKS
+	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_SOCKS
 endif
 
 ifeq ($(WITH_UUID),yes)

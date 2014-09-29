@@ -143,6 +143,9 @@ void print_usage(void)
 	printf("                     [--psk hex-key --psk-identity identity [--ciphers ciphers]]\n");
 #endif
 #endif
+#ifdef WITH_SOCKS
+	printf("                     [--proxy socks-url]\n");
+#endif
 	printf("       mosquitto_sub --help\n\n");
 	printf(" -1 : disconnect and exit after receiving the first message.\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
@@ -192,6 +195,11 @@ void print_usage(void)
 	printf(" --psk : pre-shared-key in hexadecimal (no leading 0x) to enable TLS-PSK mode.\n");
 	printf(" --psk-identity : client identity string for TLS-PSK mode.\n");
 #endif
+#endif
+#ifdef WITH_SOCKS
+	printf(" --proxy : SOCKS5 proxy URL of the form:\n");
+	printf("           socks5h://[username[:password]@]hostname[:port]\n");
+	printf("           Only \"none\" and \"username\" authentication is supported.\n");
 #endif
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }

@@ -31,6 +31,7 @@ Contributors:
 #include <mosquitto.h>
 #include "client_shared.h"
 
+static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url);
 static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[]);
 
 void init_config(struct mosq_config *cfg)
@@ -359,6 +360,18 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}else{
 				cfg->pub_mode = MSGMODE_NULL;
 			}
+#ifdef WITH_SOCKS
+		}else if(!strcmp(argv[i], "--proxy")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --proxy argument given but no proxy url specified.\n\n");
+				return 1;
+			}else{
+				if(mosquitto__parse_socks_url(cfg, argv[i+1])){
+					return 1;
+				}
+				i++;
+			}
+#endif
 #ifdef WITH_TLS_PSK
 		}else if(!strcmp(argv[i], "--psk")){
 			if(i==argc-1){
@@ -544,6 +557,8 @@ unknown_option:
 
 int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 {
+	int rc;
+
 	if(cfg->will_topic && mosquitto_will_set(mosq, cfg->will_topic,
 				cfg->will_payloadlen, cfg->will_payload, cfg->will_qos,
 				cfg->will_retain)){
@@ -584,6 +599,15 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 	}
 #endif
 	mosquitto_max_inflight_messages_set(mosq, cfg->max_inflight);
+#ifdef WITH_SOCKS
+	if(cfg->socks5_host){
+		rc = mosquitto_socks5_set(mosq, cfg->socks5_host, cfg->socks5_port, cfg->socks5_username, cfg->socks5_password);
+		if(rc){
+			mosquitto_lib_cleanup();
+			return rc;
+		}
+	}
+#endif
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -648,3 +672,174 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	}
 	return MOSQ_ERR_SUCCESS;
 }
+
+#ifdef WITH_SOCKS
+/* Convert %25 -> %, %3a, %3A -> :, %40 -> @ */
+static int mosquitto__urldecode(char *str)
+{
+	int i, j;
+	int len;
+	if(!str) return 0;
+
+	if(!strchr(str, '%')) return 0;
+
+	len = strlen(str);
+	for(i=0; i<len; i++){
+		if(str[i] == '%'){
+			if(i+2 >= len){
+				return 1;
+			}
+			if(str[i+1] == '2' && str[i+2] == '5'){
+				str[i] = '%';
+				len -= 2;
+				for(j=i+1; j<len; j++){
+					str[j] = str[j+2];
+				}
+				str[j] = '\0';
+			}else if(str[i+1] == '3' && (str[i+2] == 'A' || str[i+2] == 'a')){
+				str[i] = ':';
+				len -= 2;
+				for(j=i+1; j<len; j++){
+					str[j] = str[j+2];
+				}
+				str[j] = '\0';
+			}else if(str[i+1] == '4' && str[i+2] == '0'){
+				str[i] = ':';
+				len -= 2;
+				for(j=i+1; j<len; j++){
+					str[j] = str[j+2];
+				}
+				str[j] = '\0';
+			}else{
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
+{
+	char *str;
+	int i;
+	char *username = NULL, *password = NULL, *host = NULL, *port = NULL;
+	char *username_or_host = NULL;
+	int start;
+	int len;
+	bool have_auth = false;
+	int port_int;
+
+	if(!strncmp(url, "socks5h://", strlen("socks5h://"))){
+		str = url + strlen("socks5h://");
+	}else{
+		fprintf(stderr, "Error: Unsupported proxy protocol: %s\n", url);
+		return 1;
+	}
+
+	start = 0;
+	for(i=0; i<strlen(str); i++){
+		if(str[i] == ':'){
+			if(i == start){
+				goto cleanup;
+			}
+			if(have_auth){
+				len = i-start;
+				host = malloc(len + 1);
+				memcpy(host, &(str[start]), len);
+				host[len] = '\0';
+				start = i+1;
+			}else if(!username_or_host){
+				len = i-start;
+				username_or_host = malloc(len + 1);
+				memcpy(username_or_host, &(str[start]), len);
+				username_or_host[len] = '\0';
+				start = i+1;
+			}
+		}else if(str[i] == '@'){
+			if(i == start){
+				goto cleanup;
+			}
+			have_auth = true;
+			if(username_or_host){
+				username = username_or_host;
+				username_or_host = NULL;
+
+				len = i-start;
+				password = malloc(len + 1);
+				memcpy(password, &(str[start]), len);
+				password[len] = '\0';
+				start = i+1;
+			}else{
+				len = i-start;
+				username = malloc(len + 1);
+				memcpy(username, &(str[start]), len);
+				username[len] = '\0';
+				start = i+1;
+			}
+		}
+	}
+
+	/* Deal with remainder */
+	if(i > start){
+		len = i-start;
+		if(host){
+			port = malloc(len + 1);
+			memcpy(port, &(str[start]), len);
+			port[len] = '\0';
+		}else if(username_or_host){
+			if(have_auth){
+				host = malloc(len + 1);
+				memcpy(host, &(str[start]), len);
+				host[len] = '\0';
+			}else{
+				host = username_or_host;
+				username_or_host = NULL;
+				port = malloc(len + 1);
+				memcpy(port, &(str[start]), len);
+				port[len] = '\0';
+			}
+		}else{
+			host = malloc(len + 1);
+			memcpy(host, &(str[start]), len);
+			host[len] = '\0';
+		}
+	}
+
+	if(!host){
+		fprintf(stderr, "Error: Invalid proxy.\n");
+		goto cleanup;
+	}
+
+	if(mosquitto__urldecode(username)){
+		goto cleanup;
+	}
+	if(mosquitto__urldecode(password)){
+		goto cleanup;
+	}
+	if(port){
+		port_int = atoi(port);
+		if(port_int < 1 || port_int > 65535){
+			fprintf(stderr, "Error: Invalid proxy port %d\n", port_int);
+			goto cleanup;
+		}
+		free(port);
+	}else{
+		port_int = 1080;
+	}
+
+	cfg->socks5_username = username;
+	cfg->socks5_password = password;
+	cfg->socks5_host = host;
+	cfg->socks5_port = port_int;
+
+	return 0;
+cleanup:
+	if(username_or_host) free(username_or_host);
+	if(username) free(username);
+	if(password) free(password);
+	if(host) free(host);
+	if(port) free(port);
+	return 1;
+}
+
+#endif

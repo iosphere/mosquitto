@@ -218,6 +218,9 @@ void print_usage(void)
 	printf("                     [--psk hex-key --psk-identity identity [--ciphers ciphers]]\n");
 #endif
 #endif
+#ifdef WITH_SOCKS
+	printf("                     [--proxy socks-url]\n");
+#endif
 	printf("       mosquitto_pub --help\n\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
@@ -263,10 +266,15 @@ void print_usage(void)
 	printf("              hostname. Using this option means that you cannot be sure that the\n");
 	printf("              remote host is the server you wish to connect to and so is insecure.\n");
 	printf("              Do not use this option in a production environment.\n");
-#ifdef WITH_TLS_PSK
+#  ifdef WITH_TLS_PSK
 	printf(" --psk : pre-shared-key in hexadecimal (no leading 0x) to enable TLS-PSK mode.\n");
 	printf(" --psk-identity : client identity string for TLS-PSK mode.\n");
+#  endif
 #endif
+#ifdef WITH_SOCKS
+	printf(" --proxy : SOCKS5 proxy URL of the form:\n");
+	printf("           socks5h://[username[:password]@]hostname[:port]\n");
+	printf("           Only \"none\" and \"username\" authentication is supported.\n");
 #endif
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }

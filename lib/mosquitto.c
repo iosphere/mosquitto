@@ -38,6 +38,7 @@ typedef int ssize_t;
 #include <net_mosq.h>
 #include <read_handle.h>
 #include <send_mosq.h>
+#include <socks_mosq.h>
 #include <time_mosq.h>
 #include <tls_mosq.h>
 #include <util_mosq.h>
@@ -461,7 +462,11 @@ static int _mosquitto_reconnect(struct mosquitto *mosq, bool blocking)
 	if(!mosq->host || mosq->port <= 0) return MOSQ_ERR_INVAL;
 
 	pthread_mutex_lock(&mosq->state_mutex);
-	mosq->state = mosq_cs_new;
+	if(mosq->socks5_host){
+		mosq->state = mosq_cs_socks5_new;
+	}else{
+		mosq->state = mosq_cs_new;
+	}
 	pthread_mutex_unlock(&mosq->state_mutex);
 
 	pthread_mutex_lock(&mosq->msgtime_mutex);
@@ -497,12 +502,20 @@ static int _mosquitto_reconnect(struct mosquitto *mosq, bool blocking)
 
 	_mosquitto_messages_reconnect_reset(mosq);
 
-	rc = _mosquitto_socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
+	if(mosq->socks5_host){
+		rc = _mosquitto_socket_connect(mosq, mosq->socks5_host, mosq->socks5_port, mosq->bind_address, blocking);
+	}else{
+		rc = _mosquitto_socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
+	}
 	if(rc){
 		return rc;
 	}
 
-	return _mosquitto_send_connect(mosq, mosq->keepalive, mosq->clean_session);
+	if(mosq->socks5_host){
+		return mosquitto__socks5_send(mosq);
+	}else{
+		return _mosquitto_send_connect(mosq, mosq->keepalive, mosq->clean_session);
+	}
 }
 
 int mosquitto_disconnect(struct mosquitto *mosq)
@@ -951,6 +964,7 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			case MOSQ_ERR_UNKNOWN:
 			case MOSQ_ERR_ERRNO:
 			case MOSQ_ERR_EAI:
+			case MOSQ_ERR_PROXY:
 				return rc;
 		}
 		if(errno == EPROTO){
@@ -1075,7 +1089,11 @@ int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 	 * have QoS > 0. We should try to deal with that many in this loop in order
 	 * to keep up. */
 	for(i=0; i<max_packets; i++){
-		rc = _mosquitto_packet_read(mosq);
+		if(mosq->socks5_host){
+			rc = mosquitto__socks5_read(mosq);
+		}else{
+			rc = _mosquitto_packet_read(mosq);
+		}
 		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
 			return _mosquitto_loop_rc_handle(mosq, rc);
 		}
@@ -1212,6 +1230,8 @@ const char *mosquitto_strerror(int mosq_errno)
 			return "Unknown error.";
 		case MOSQ_ERR_ERRNO:
 			return strerror(errno);
+		case MOSQ_ERR_PROXY:
+			return "Proxy error.";
 		default:
 			return "Unknown error.";
 	}

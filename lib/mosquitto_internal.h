@@ -86,7 +86,14 @@ enum mosquitto_client_state {
 	mosq_cs_connect_pending = 4,
 	mosq_cs_connect_srv = 5,
 	mosq_cs_disconnect_ws = 6,
-	mosq_cs_disconnected = 7
+	mosq_cs_disconnected = 7,
+	mosq_cs_socks5_new = 8,
+	mosq_cs_socks5_start = 9,
+	mosq_cs_socks5_request = 10,
+	mosq_cs_socks5_reply = 11,
+	mosq_cs_socks5_auth_ok = 12,
+	mosq_cs_socks5_userpass_reply = 13,
+	mosq_cs_socks5_send_userpass = 14,
 };
 
 enum _mosquitto_protocol {
@@ -199,6 +206,12 @@ struct mosquitto {
 	struct libwebsocket *wsi;
 #  endif
 #else
+#  ifdef WITH_SOCKS
+	char *socks5_host;
+	int socks5_port;
+	char *socks5_username;
+	char *socks5_password;
+#  endif
 	void *userdata;
 	bool in_callback;
 	unsigned int message_retry;
@@ -238,6 +251,9 @@ struct mosquitto {
 	struct mosquitto *for_free_next;
 #  ifdef WITH_BRIDGE
 	UT_hash_handle hh_bridge;
+#  endif
+#  ifdef WITH_WEBSOCKETS
+	UT_hash_handle hh_websockets;
 #  endif
 #endif
 };

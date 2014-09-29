@@ -78,7 +78,8 @@ enum mosq_err_t {
 	MOSQ_ERR_ACL_DENIED = 12,
 	MOSQ_ERR_UNKNOWN = 13,
 	MOSQ_ERR_ERRNO = 14,
-	MOSQ_ERR_EAI = 15
+	MOSQ_ERR_EAI = 15,
+	MOSQ_ERR_PROXY = 16
 };
 
 /* MQTT specification restricts client ids to a maximum of 23 characters */
@@ -1294,6 +1295,29 @@ libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned
  */
 libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
 
+/* =============================================================================
+ *
+ * Section: SOCKS5 proxy functions
+ *
+ * =============================================================================
+ */
+
+/*
+ * Function: mosquitto_socks5_set
+ *
+ * Configure the client to use a SOCKS5 proxy when connecting. Must be called
+ * before connecting. "None" and "username/password" authentication is
+ * supported.
+ *
+ * Parameters:
+ *   mosq - a valid mosquitto instance.
+ *   host - the SOCKS5 proxy host to connect to.
+ *   port - the SOCKS5 proxy port to use.
+ *   username - if not NULL, use this username when authenticating with the proxy.
+ *   password - if not NULL and username is not NULL, use this password when
+ *              authenticating with the proxy.
+ */
+libmosq_EXPORT int mosquitto_socks5_set(struct mosquitto *mosq, const char *host, int port, const char *username, const char *password);
 
 /* =============================================================================
  *

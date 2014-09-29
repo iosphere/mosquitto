@@ -78,6 +78,12 @@ struct mosq_config {
 	bool verbose; /* sub */
 	bool eol; /* sub */
 	bool oneshot; /* sub */
+#ifdef WITH_SOCKS
+	char *socks5_host;
+	int socks5_port;
+	char *socks5_username;
+	char *socks5_password;
+#endif
 };
 
 int client_config_load(struct mosq_config *config, int pub_or_sub, int argc, char *argv[]);
