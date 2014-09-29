@@ -47,6 +47,10 @@ Clients:
 - Both clients can now load default configuration options from a file.
 - Add -1 (oneshot) option to mosquitto_sub.
 
+Client library:
+- mosquitto_loop_forever now quits after a fatal error, rather than blindly
+  retrying.
+
 1.3.2 - 2014xxxx
 ================
 

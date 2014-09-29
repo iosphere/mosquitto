@@ -937,6 +937,22 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 				reconnects = 0;
 			}
 		}while(run && rc == MOSQ_ERR_SUCCESS);
+		/* Quit after fatal errors. */
+		switch(rc){
+			case MOSQ_ERR_NOMEM:
+			case MOSQ_ERR_PROTOCOL:
+			case MOSQ_ERR_INVAL:
+			case MOSQ_ERR_NOT_FOUND:
+			case MOSQ_ERR_TLS:
+			case MOSQ_ERR_PAYLOAD_SIZE:
+			case MOSQ_ERR_NOT_SUPPORTED:
+			case MOSQ_ERR_AUTH:
+			case MOSQ_ERR_ACL_DENIED:
+			case MOSQ_ERR_UNKNOWN:
+			case MOSQ_ERR_ERRNO:
+			case MOSQ_ERR_EAI:
+				return rc;
+		}
 		if(errno == EPROTO){
 			return rc;
 		}
