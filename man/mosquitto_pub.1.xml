@@ -266,6 +266,9 @@
 						%3A and %40 are URL decoded into %, : and @
 						respectively, if present in the username or
 						password.</para>
+					<para>If username is not given, then no authentication is
+						attempted. If the port is not given, then the default
+						of 1080 is used.</para>
 					<para>More SOCKS versions may be available in the future,
 						depending on demand, and will use different protocol
 						prefixes as described in <citerefentry>
