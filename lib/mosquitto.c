@@ -462,9 +462,12 @@ static int _mosquitto_reconnect(struct mosquitto *mosq, bool blocking)
 	if(!mosq->host || mosq->port <= 0) return MOSQ_ERR_INVAL;
 
 	pthread_mutex_lock(&mosq->state_mutex);
+#ifdef WITH_SOCKS
 	if(mosq->socks5_host){
 		mosq->state = mosq_cs_socks5_new;
-	}else{
+	}else
+#endif
+	{
 		mosq->state = mosq_cs_new;
 	}
 	pthread_mutex_unlock(&mosq->state_mutex);
@@ -502,18 +505,24 @@ static int _mosquitto_reconnect(struct mosquitto *mosq, bool blocking)
 
 	_mosquitto_messages_reconnect_reset(mosq);
 
+#ifdef WITH_SOCKS
 	if(mosq->socks5_host){
 		rc = _mosquitto_socket_connect(mosq, mosq->socks5_host, mosq->socks5_port, mosq->bind_address, blocking);
-	}else{
+	}else
+#endif
+	{
 		rc = _mosquitto_socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
 	}
 	if(rc){
 		return rc;
 	}
 
+#ifdef WITH_SOCKS
 	if(mosq->socks5_host){
 		return mosquitto__socks5_send(mosq);
-	}else{
+	}else
+#endif
+	{
 		return _mosquitto_send_connect(mosq, mosq->keepalive, mosq->clean_session);
 	}
 }
@@ -1089,9 +1098,12 @@ int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 	 * have QoS > 0. We should try to deal with that many in this loop in order
 	 * to keep up. */
 	for(i=0; i<max_packets; i++){
+#ifdef WITH_SOCKS
 		if(mosq->socks5_host){
 			rc = mosquitto__socks5_read(mosq);
-		}else{
+		}else
+#endif
+		{
 			rc = _mosquitto_packet_read(mosq);
 		}
 		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
