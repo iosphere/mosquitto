@@ -274,6 +274,12 @@ void mosquittopp::user_data_set(void *userdata)
 	mosquitto_user_data_set(m_mosq, userdata);
 }
 
+int mosquittopp::socks5_set(const char *host, int port, const char *username, const char *password)
+{
+	return mosquitto_socks5_set(m_mosq, host, port, username, password);
+}
+
+
 int mosquittopp::tls_set(const char *cafile, const char *capath, const char *certfile, const char *keyfile, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata))
 {
 	return mosquitto_tls_set(m_mosq, cafile, capath, certfile, keyfile, pw_callback);
