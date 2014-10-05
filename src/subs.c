@@ -155,8 +155,13 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 		new_topic->topic = _mosquitto_strdup("");
 		if(!new_topic->topic) goto cleanup;
 
-		*topics = new_topic;
-		tail = new_topic;
+		if(tail){
+			tail->next = new_topic;
+			tail = tail->next;
+		}else{
+			*topics = new_topic;
+			tail = new_topic;
+		}
 	}
 
 	len = strlen(subtopic);
@@ -168,8 +173,13 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 		new_topic->topic = _mosquitto_strdup("");
 		if(!new_topic->topic) goto cleanup;
 
-		*topics = new_topic;
-		tail = new_topic;
+		if(tail){
+			tail->next = new_topic;
+			tail = tail->next;
+		}else{
+			*topics = new_topic;
+			tail = new_topic;
+		}
 
 		start = 1;
 	}else{
