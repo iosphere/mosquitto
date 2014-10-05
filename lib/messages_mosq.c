@@ -297,7 +297,7 @@ int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquit
 }
 
 #ifdef WITH_THREADING
-void _mosquitto_message_retry_check_actual(struct mosquitto *mosq, struct mosquitto_message_all *messages, pthread_mutex_t mutex)
+void _mosquitto_message_retry_check_actual(struct mosquitto *mosq, struct mosquitto_message_all *messages, pthread_mutex_t *mutex)
 #else
 void _mosquitto_message_retry_check_actual(struct mosquitto *mosq, struct mosquitto_message_all *messages)
 #endif
@@ -306,7 +306,7 @@ void _mosquitto_message_retry_check_actual(struct mosquitto *mosq, struct mosqui
 	assert(mosq);
 
 #ifdef WITH_THREADING
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(mutex);
 #endif
 
 	while(messages){
@@ -335,15 +335,15 @@ void _mosquitto_message_retry_check_actual(struct mosquitto *mosq, struct mosqui
 		messages = messages->next;
 	}
 #ifdef WITH_THREADING
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(mutex);
 #endif
 }
 
 void _mosquitto_message_retry_check(struct mosquitto *mosq)
 {
 #ifdef WITH_THREADING
-	_mosquitto_message_retry_check_actual(mosq, mosq->out_messages, mosq->out_message_mutex);
-	_mosquitto_message_retry_check_actual(mosq, mosq->in_messages, mosq->in_message_mutex);
+	_mosquitto_message_retry_check_actual(mosq, mosq->out_messages, &mosq->out_message_mutex);
+	_mosquitto_message_retry_check_actual(mosq, mosq->in_messages, &mosq->in_message_mutex);
 #else
 	_mosquitto_message_retry_check_actual(mosq, mosq->out_messages);
 	_mosquitto_message_retry_check_actual(mosq, mosq->in_messages);
