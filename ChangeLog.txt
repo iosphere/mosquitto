@@ -43,6 +43,9 @@ Broker:
 - Add support for use_username_as_clientid which can be used with
   authentication to restrict ownership of client ids and hence prevent one
   client disconnecting another by using the same client id.
+- When "require_certificate" was false, the broker was incorrectly asking for
+  a certificate (but not checking it). This caused problems with some clients
+  and has been fixed so the broker no longer asks.
 
 Clients:
 - Both clients can now load default configuration options from a file.
