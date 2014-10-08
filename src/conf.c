@@ -505,7 +505,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 		config->log_dest = cr.log_dest;
 	}
 	if(config->verbose){
-		config->log_type = MOSQ_LOG_DEBUG | MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
+		config->log_type = INT_MAX;
 	}else if(cr.log_type_set){
 		config->log_type = cr.log_type;
 	}
