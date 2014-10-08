@@ -5,6 +5,11 @@ Broker:
 - Fix possible memory leak when using a topic that has a leading slash. Fixes
   bug #1360985.
 - Fix saving persistent database on Windows.
+- Temporarily disable ACL checks on subscriptions when using MQTT v3.1.1. This
+  is due to the complexity of checking wildcard ACLs against wildcard
+  subscriptions. This does not have a negative impact on security because
+  checks are still made before a message is sent to a client.
+  Fixes bug #1374291.
 
 Client library:
 - Fix mutex being incorrectly passed by value. Fixes bug #1373785.
