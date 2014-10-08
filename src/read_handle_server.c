@@ -634,6 +634,19 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "\t%s (QoS %d)", sub, qos);
 
+#if 0
+			/* FIXME
+			 * This section has been disabled temporarily. mosquitto_acl_check
+			 * calls mosquitto_topic_matches_sub, which can't cope with
+			 * checking subscriptions that have wildcards against ACLs that
+			 * have wildcards. Bug #1374291 is related.
+			 *
+			 * It's a very difficult problem when an ACL looks like foo/+/bar
+			 * and a subscription request to foo/# is made.
+			 *
+			 * This should be changed to using MOSQ_ACL_SUBSCRIPTION in the
+			 * future anyway.
+			 */
 			if(context->protocol == mosq_p_mqtt311){
 				rc = mosquitto_acl_check(db, context, sub, MOSQ_ACL_READ);
 				switch(rc){
@@ -647,6 +660,7 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 						return rc;
 				}
 			}
+#endif
 
 			if(qos != 0x80){
 				rc2 = mqtt3_sub_add(db, context, sub, qos, &db->subs);
