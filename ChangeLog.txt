@@ -10,6 +10,8 @@ Broker:
   subscriptions. This does not have a negative impact on security because
   checks are still made before a message is sent to a client.
   Fixes bug #1374291.
+- When using -v and the broker receives a SIGHUP, verbose logging was being
+  disabled. This has been fixed.
 
 Client library:
 - Fix mutex being incorrectly passed by value. Fixes bug #1373785.
