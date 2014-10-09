@@ -156,7 +156,7 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 	 * remove any messages and the next loop carries out the resubscription
 	 * anyway. This means any unwanted subs will be removed.
 	 */
-	mqtt3_subs_clean_session(db, context, &db->subs);
+	mqtt3_subs_clean_session(db, context);
 
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){

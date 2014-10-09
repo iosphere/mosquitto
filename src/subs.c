@@ -247,6 +247,8 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 {
 	struct _mosquitto_subhier *branch, *last = NULL;
 	struct _mosquitto_subleaf *leaf, *last_leaf;
+	struct _mosquitto_subhier **subs;
+	int i;
 
 	if(!tokens){
 		if(context){
@@ -280,6 +282,32 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 			}else{
 				subhier->subs = leaf;
 				leaf->prev = NULL;
+			}
+			if(context->subs){
+				for(i=0; i<context->sub_count; i++){
+					if(!context->subs[i]){
+						context->subs[i] = subhier;
+					}
+					break;
+				}
+				if(i == context->sub_count){
+					context->sub_count++;
+					subs = _mosquitto_realloc(context->subs, sizeof(struct _mosquitto_subhier *)*context->sub_count);
+					if(!subs){
+						_mosquitto_free(leaf);
+						return MOSQ_ERR_NOMEM;
+					}
+					context->subs = subs;
+					context->subs[context->sub_count-1] = subhier;
+				}
+			}else{
+				context->sub_count = 1;
+				context->subs = _mosquitto_malloc(sizeof(struct _mosquitto_subhier *)*context->sub_count);
+				if(!context->subs){
+					_mosquitto_free(leaf);
+					return MOSQ_ERR_NOMEM;
+				}
+				context->subs[0] = subhier;
 			}
 #ifdef WITH_SYS_TREE
 			db->subscription_count++;
@@ -316,6 +344,7 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 {
 	struct _mosquitto_subhier *branch, *last = NULL;
 	struct _mosquitto_subleaf *leaf;
+	int i;
 
 	if(!tokens){
 		leaf = subhier->subs;
@@ -333,6 +362,17 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 					leaf->next->prev = leaf->prev;
 				}
 				_mosquitto_free(leaf);
+
+				/* Remove the reference to the sub that the client is keeping.
+				 * It would be nice to be able to use the reference directly,
+				 * but that would involve keeping a copy of the topic string in
+				 * each subleaf. Might be worth considering though. */
+				for(i=0; i<context->sub_count; i++){
+					if(context->subs[i] == subhier){
+						context->subs[i] = NULL;
+						break;
+					}
+				}
 				return MOSQ_ERR_SUCCESS;
 			}
 			leaf = leaf->next;
@@ -499,71 +539,37 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 	return rc;
 }
 
-static int _subs_clean_session(struct mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root)
+/* Remove all subscriptions for a client.
+ */
+int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
 {
-	int rc = 0;
-	struct _mosquitto_subhier *child, *last = NULL;
-	struct _mosquitto_subleaf *leaf, *next;
+	int i;
+	struct _mosquitto_subleaf *leaf;
 
-	if(!root) return MOSQ_ERR_SUCCESS;
-
-	leaf = root->subs;
-	while(leaf){
-		if(leaf->context == context){
+	for(i=0; i<context->sub_count; i++){
+		leaf = context->subs[i]->subs;
+		while(leaf){
+			if(leaf->context==context){
 #ifdef WITH_SYS_TREE
-			db->subscription_count--;
+				db->subscription_count--;
 #endif
-			if(leaf->prev){
-				leaf->prev->next = leaf->next;
-			}else{
-				root->subs = leaf->next;
+				if(leaf->prev){
+					leaf->prev->next = leaf->next;
+				}else{
+					context->subs[i]->subs = leaf->next;
+				}
+				if(leaf->next){
+					leaf->next->prev = leaf->prev;
+				}
+				_mosquitto_free(leaf);
+				break;
 			}
-			if(leaf->next){
-				leaf->next->prev = leaf->prev;
-			}
-			next = leaf->next;
-			_mosquitto_free(leaf);
-			leaf = next;
-		}else{
 			leaf = leaf->next;
 		}
 	}
-
-	child = root->children;
-	while(child){
-		_subs_clean_session(db, context, child);
-		if(!child->children && !child->subs && !child->retained){
-			if(last){
-				last->next = child->next;
-			}else{
-				root->children = child->next;
-			}
-			_mosquitto_free(child->topic);
-			_mosquitto_free(child);
-			if(last){
-				child = last->next;
-			}else{
-				child = root->children;
-			}
-		}else{
-			last = child;
-			child = child->next;
-		}
-	}
-	return rc;
-}
-
-/* Remove all subscriptions for a client.
- */
-int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root)
-{
-	struct _mosquitto_subhier *child;
-
-	child = root->children;
-	while(child){
-		_subs_clean_session(db, context, child);
-		child = child->next;
-	}
+	_mosquitto_free(context->subs);
+	context->subs = NULL;
+	context->sub_count = 0;
 
 	return MOSQ_ERR_SUCCESS;
 }

@@ -393,7 +393,7 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root);
 int mqtt3_sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *root, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
 void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level);
-int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root);
+int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
  * Context functions
