@@ -220,7 +220,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(db->config->clientid_prefixes){
 		if(strncmp(db->config->clientid_prefixes, client_id, strlen(db->config->clientid_prefixes))){
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
-			rc = MOSQ_ERR_SUCCESS;
+			rc = 1;
 			goto handle_connect_error;
 		}
 	}
@@ -314,7 +314,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->listener && context->listener->ssl_ctx && context->listener->use_identity_as_username){
 		if(!context->ssl){
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-			rc = MOSQ_ERR_SUCCESS;
+			rc = 1;
 			goto handle_connect_error;
 		}
 #ifdef REAL_WITH_TLS_PSK
@@ -322,7 +322,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			/* Client should have provided an identity to get this far. */
 			if(!context->username){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				rc = MOSQ_ERR_SUCCESS;
+				rc = 1;
 				goto handle_connect_error;
 			}
 		}else{
@@ -330,26 +330,26 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			client_cert = SSL_get_peer_certificate(context->ssl);
 			if(!client_cert){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				rc = MOSQ_ERR_SUCCESS;
+				rc = 1;
 				goto handle_connect_error;
 			}
 			name = X509_get_subject_name(client_cert);
 			if(!name){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				rc = MOSQ_ERR_SUCCESS;
+				rc = 1;
 				goto handle_connect_error;
 			}
 
 			i = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
 			if(i == -1){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				rc = MOSQ_ERR_SUCCESS;
+				rc = 1;
 				goto handle_connect_error;
 			}
 			name_entry = X509_NAME_get_entry(name, i);
 			context->username = _mosquitto_strdup((char *)ASN1_STRING_data(name_entry->value));
 			if(!context->username){
-				rc = MOSQ_ERR_SUCCESS;
+				rc = 1;
 				goto handle_connect_error;
 			}
 			X509_free(client_cert);
@@ -365,14 +365,14 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 				case MOSQ_ERR_SUCCESS:
 					break;
 				case MOSQ_ERR_AUTH:
-					_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
+					_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
 					mqtt3_context_disconnect(db, context);
-					rc = MOSQ_ERR_SUCCESS;
+					rc = 1;
 					goto handle_connect_error;
 					break;
 				default:
 					mqtt3_context_disconnect(db, context);
-					rc = MOSQ_ERR_SUCCESS;
+					rc = 1;
 					goto handle_connect_error;
 					break;
 			}
@@ -384,7 +384,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 		if(!username_flag && db->config->allow_anonymous == false){
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
-			rc = MOSQ_ERR_SUCCESS;
+			rc = 1;
 			goto handle_connect_error;
 		}
 #ifdef WITH_TLS
@@ -401,7 +401,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}else{
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
-			rc = MOSQ_ERR_SUCCESS;
+			rc = 1;
 			goto handle_connect_error;
 		}
 	}
@@ -432,6 +432,8 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		found_context->state = mosq_cs_disconnecting;
 
 		HASH_DELETE(hh_id, db->contexts_by_id, found_context);
+		_mosquitto_free(found_context->id);
+		found_context->id = NULL;
 
 #ifdef WITH_WEBSOCKETS
 		if(found_context->wsi){
@@ -439,9 +441,11 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			found_context->sock = INVALID_SOCKET;
 		}else
 #endif
-		if(found_context->sock != INVALID_SOCKET){
-			HASH_DELETE(hh_sock, db->contexts_by_sock, context);
-			found_context->sock = INVALID_SOCKET;
+		{
+			if(found_context->sock != INVALID_SOCKET){
+				HASH_DELETE(hh_sock, db->contexts_by_sock, found_context);
+			}
+			mosquitto__add_context_to_disused(db, found_context);
 		}
 
 		if(found_context->msgs){
