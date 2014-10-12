@@ -200,15 +200,7 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	if(!db->auth_plugin.lib){
 		return mosquitto_acl_check_default(db, context, topic, access);
 	}else{
-#ifdef WITH_BRIDGE
-		if(context->bridge){
-			return db->auth_plugin.acl_check(db->auth_plugin.user_data, context->id, context->bridge->local_username, topic, access);
-		}else{
-#endif
-			return db->auth_plugin.acl_check(db->auth_plugin.user_data, context->id, context->username, topic, access);
-#ifdef WITH_BRIDGE
-		}
-#endif
+		return db->auth_plugin.acl_check(db->auth_plugin.user_data, context->id, context->username, topic, access);
 	}
 }
 

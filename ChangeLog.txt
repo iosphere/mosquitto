@@ -57,15 +57,55 @@ Client library:
 - mosquitto_loop_forever now quits after a fatal error, rather than blindly
   retrying.
 
-1.3.2 - 2014xxxx
+1.3.5 - 20141008
 ================
 
 Broker:
+- Fix possible memory leak when using a topic that has a leading slash. Fixes
+  bug #1360985.
+- Fix saving persistent database on Windows.
+- Temporarily disable ACL checks on subscriptions when using MQTT v3.1.1. This
+  is due to the complexity of checking wildcard ACLs against wildcard
+  subscriptions. This does not have a negative impact on security because
+  checks are still made before a message is sent to a client.
+  Fixes bug #1374291.
+- When using -v and the broker receives a SIGHUP, verbose logging was being
+  disabled. This has been fixed.
+
+Client library:
+- Fix mutex being incorrectly passed by value. Fixes bug #1373785.
+
+1.3.4 - 20140806
+================
+
+Broker:
+- Don't ask client for certificate when require_certificate is false.
+- Backout incomplete functionality that was incorrectly included in 1.3.2.
+
+1.3.3 - 20140801
+================
+
+Broker:
+- Fix incorrect handling of anonymous bridges on the local broker.
+
+1.3.2 - 20140713
+================
+
+Broker:
+- Don't allow access to clients when authenticating if a security plugin
+  returns an application error. Fixes bug #1340782.
 - Ensure that bridges verify certificates by default when using TLS.
 - Fix possible crash when using pattern ACLs that do not include a %u and
   clients that connect without a username.
 - Fix subscriptions being deleted when clients subscribed to a topic beginning
   with a $ but that is not $SYS.
+- When a durable client reconnects, its queued messages are now checked
+  against ACLs in case of a change in username/ACL state since it last
+  connected.
+- Fix bug #1324411, which could have had unexpected consequences for delayed
+  messages in rare circumstances.
+- Anonymous clients are no longer accidently disconnected from the broker
+  after a SIGHUP.
 
 Client library:
 - Fix topic matching edge case.

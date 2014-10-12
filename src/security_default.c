@@ -628,7 +628,7 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username,
 
 	if(!db) return MOSQ_ERR_INVAL;
 	if(!db->unpwd) return MOSQ_ERR_SUCCESS;
-	if(!username) return MOSQ_ERR_INVAL;
+	if(!username) return MOSQ_ERR_INVAL; /* Check must be made only after checking db->unpwd. */
 
 	HASH_ITER(hh, db->unpwd, u, tmp){
 		if(!strcmp(u->username, username)){

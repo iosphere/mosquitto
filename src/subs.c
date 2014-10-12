@@ -135,7 +135,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 			}
 			if(mqtt3_db_message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored) == 1) rc = 1;
 		}else{
-			rc = 1;
+			return 1; /* Application error */
 		}
 		leaf = leaf->next;
 	}

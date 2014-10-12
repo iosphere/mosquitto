@@ -1,8 +1,8 @@
 Mosquitto
 =========
 
-Mosquitto is an open source implementation of a server for version 3.1 of the
-MQTT protocol.
+Mosquitto is an open source implementation of a server for version 3.1 and
+3.1.1 of the MQTT protocol.
 
 See the following links for more information on MQTT:
 

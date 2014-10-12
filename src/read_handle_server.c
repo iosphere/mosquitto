@@ -363,12 +363,20 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 #endif /* WITH_TLS */
 		if(username_flag){
 			rc = mosquitto_unpwd_check(db, username, password);
-			if(rc == MOSQ_ERR_AUTH){
-				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				rc = MOSQ_ERR_SUCCESS;
-				goto handle_connect_error;
-			}else if(rc == MOSQ_ERR_INVAL){
-				goto handle_connect_error;
+			switch(rc){
+				case MOSQ_ERR_SUCCESS:
+					break;
+				case MOSQ_ERR_AUTH:
+					_mosquitto_send_connack(context, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
+					mqtt3_context_disconnect(db, context);
+					rc = MOSQ_ERR_SUCCESS;
+					goto handle_connect_error;
+					break;
+				default:
+					mqtt3_context_disconnect(db, context);
+					rc = MOSQ_ERR_SUCCESS;
+					goto handle_connect_error;
+					break;
 			}
 			context->username = username;
 			context->password = password;
@@ -728,12 +736,33 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "\t%s (QoS %d)", sub, qos);
 
+#if 0
+			/* FIXME
+			 * This section has been disabled temporarily. mosquitto_acl_check
+			 * calls mosquitto_topic_matches_sub, which can't cope with
+			 * checking subscriptions that have wildcards against ACLs that
+			 * have wildcards. Bug #1374291 is related.
+			 *
+			 * It's a very difficult problem when an ACL looks like foo/+/bar
+			 * and a subscription request to foo/# is made.
+			 *
+			 * This should be changed to using MOSQ_ACL_SUBSCRIPTION in the
+			 * future anyway.
+			 */
 			if(context->protocol == mosq_p_mqtt311){
 				rc = mosquitto_acl_check(db, context, sub, MOSQ_ACL_READ);
-				if(rc == MOSQ_ERR_ACL_DENIED){
-					qos = 0x80;
+				switch(rc){
+					case MOSQ_ERR_SUCCESS:
+						break;
+					case MOSQ_ERR_ACL_DENIED:
+						qos = 0x80;
+						break;
+					default:
+						_mosquitto_free(sub);
+						return rc;
 				}
 			}
+#endif
 
 			if(qos != 0x80){
 				rc2 = mqtt3_sub_add(db, context, sub, qos, &db->subs);
