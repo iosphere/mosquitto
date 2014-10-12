@@ -299,9 +299,6 @@ struct _mqtt3_bridge{
 #ifdef WITH_WEBSOCKETS
 struct libws_mqtt_hack {
 	char *http_dir;
-	struct mosquitto *old_mosq;
-	struct mosquitto *new_mosq;
-	struct libws_mqtt_hack *next;
 };
 
 struct libws_mqtt_data {

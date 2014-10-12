@@ -167,9 +167,6 @@ int main(int argc, char *argv[])
 	struct timeval tv;
 #endif
 	struct mosquitto *ctxt, *ctxt_tmp;
-#ifdef WITH_WEBSOCKETS
-	struct libws_mqtt_hack *hack_head, *hack;
-#endif
 
 #if defined(WIN32) || defined(__CYGWIN__)
 	if(argc == 2){
@@ -345,18 +342,7 @@ int main(int argc, char *argv[])
 #ifdef WITH_WEBSOCKETS
 	for(i=0; i<int_db.config->listener_count; i++){
 		if(int_db.config->listeners[i].ws_context){
-			hack_head = libwebsocket_context_user(int_db.config->listeners[i].ws_context);
 			libwebsocket_context_destroy(int_db.config->listeners[i].ws_context);
-			if(hack_head){
-				while(hack_head){
-					if(hack_head->http_dir){
-						_mosquitto_free(hack_head->http_dir);
-					}
-					hack = hack_head->next;
-					_mosquitto_free(hack_head);
-					hack_head = hack;
-				}
-			}
 		}
 		if(int_db.config->listeners[i].ws_protocol){
 			_mosquitto_free(int_db.config->listeners[i].ws_protocol);
