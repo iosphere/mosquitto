@@ -276,13 +276,6 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 			leaf->next = NULL;
 			leaf->context = context;
 			leaf->qos = qos;
-			if(last_leaf){
-				last_leaf->next = leaf;
-				leaf->prev = last_leaf;
-			}else{
-				subhier->subs = leaf;
-				leaf->prev = NULL;
-			}
 			if(context->subs){
 				for(i=0; i<context->sub_count; i++){
 					if(!context->subs[i]){
@@ -308,6 +301,13 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 					return MOSQ_ERR_NOMEM;
 				}
 				context->subs[0] = subhier;
+			}
+			if(last_leaf){
+				last_leaf->next = leaf;
+				leaf->prev = last_leaf;
+			}else{
+				subhier->subs = leaf;
+				leaf->prev = NULL;
 			}
 #ifdef WITH_SYS_TREE
 			db->subscription_count++;
