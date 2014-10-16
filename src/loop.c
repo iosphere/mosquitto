@@ -385,6 +385,10 @@ static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
 	struct mosquitto *context, *ctxt_tmp;
 
 	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
+		if(context->pollfd_index < 0){
+			continue;
+		}
+
 		if(pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL)){
 			do_disconnect(db, context);
 		}
@@ -396,6 +400,10 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 	struct mosquitto *context, *ctxt_tmp;
 
 	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
+		if(context->pollfd_index < 0){
+			continue;
+		}
+
 		assert(pollfds[context->pollfd_index].fd == context->sock);
 #ifdef WITH_TLS
 		if(pollfds[context->pollfd_index].revents & POLLOUT ||
@@ -412,6 +420,10 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 	}
 
 	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
+		if(context->pollfd_index < 0){
+			continue;
+		}
+
 #ifdef WITH_TLS
 		if(pollfds[context->pollfd_index].revents & POLLIN ||
 				(context->ssl && context->state == mosq_cs_new)){

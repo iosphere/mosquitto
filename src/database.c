@@ -214,6 +214,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 
 	assert(stored);
 	if(!context) return MOSQ_ERR_INVAL;
+	if(!context->id) return MOSQ_ERR_SUCCESS; /* Protect against unlikely "client is disconnected but not entirely freed" scenario */
 
 	/* Check whether we've already sent this message to this client
 	 * for outgoing messages only.
