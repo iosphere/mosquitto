@@ -251,7 +251,7 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 	int i;
 
 	if(!tokens){
-		if(context){
+		if(context && context->id){
 			leaf = subhier->subs;
 			last_leaf = NULL;
 			while(leaf){
