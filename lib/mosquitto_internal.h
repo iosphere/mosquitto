@@ -254,9 +254,6 @@ struct mosquitto {
 #  ifdef WITH_BRIDGE
 	UT_hash_handle hh_bridge;
 #  endif
-#  ifdef WITH_WEBSOCKETS
-	UT_hash_handle hh_websockets;
-#  endif
 #endif
 };
 
