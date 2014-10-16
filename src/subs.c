@@ -547,6 +547,9 @@ int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
 	struct _mosquitto_subleaf *leaf;
 
 	for(i=0; i<context->sub_count; i++){
+		if(context->subs[i] == NULL){
+			continue;
+		}
 		leaf = context->subs[i]->subs;
 		while(leaf){
 			if(leaf->context==context){
