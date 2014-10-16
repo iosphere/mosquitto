@@ -287,8 +287,8 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 				for(i=0; i<context->sub_count; i++){
 					if(!context->subs[i]){
 						context->subs[i] = subhier;
+						break;
 					}
-					break;
 				}
 				if(i == context->sub_count){
 					context->sub_count++;
