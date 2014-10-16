@@ -428,45 +428,32 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 
 		context->clean_session = clean_session;
-		found_context->clean_session = clean_session;
-		found_context->state = mosq_cs_disconnecting;
 
-		HASH_DELETE(hh_id, db->contexts_by_id, found_context);
-		_mosquitto_free(found_context->id);
-		found_context->id = NULL;
-
-#ifdef WITH_WEBSOCKETS
-		if(found_context->wsi){
-			found_context->state = mosq_cs_disconnect_ws;
-			found_context->sock = INVALID_SOCKET;
-		}else
-#endif
-		{
-			if(found_context->sock != INVALID_SOCKET){
-				HASH_DELETE(hh_sock, db->contexts_by_sock, found_context);
+		if(context->clean_session == false && found_context->clean_session == false){
+			if(found_context->msgs){
+				context->msgs = found_context->msgs;
+				found_context->msgs = NULL;
+				mqtt3_db_message_reconnect_reset(context);
 			}
-			mosquitto__add_context_to_disused(db, found_context);
-		}
+			context->subs = found_context->subs;
+			found_context->subs = NULL;
+			context->sub_count = found_context->sub_count;
+			found_context->sub_count = 0;
 
-		if(found_context->msgs){
-			context->msgs = found_context->msgs;
-			found_context->msgs = NULL;
-			mqtt3_db_message_reconnect_reset(context);
-		}
-		context->subs = found_context->subs;
-		found_context->subs = NULL;
-		context->sub_count = found_context->sub_count;
-		found_context->sub_count = 0;
-
-		for(i=0; i<context->sub_count; i++){
-			leaf = context->subs[i]->subs;
-			while(leaf){
-				if(leaf->context == found_context){
-					leaf->context = context;
+			for(i=0; i<context->sub_count; i++){
+				leaf = context->subs[i]->subs;
+				while(leaf){
+					if(leaf->context == found_context){
+						leaf->context = context;
+					}
+					leaf = leaf->next;
 				}
-				leaf = leaf->next;
 			}
 		}
+
+		found_context->clean_session = true;
+		found_context->state = mosq_cs_disconnecting;
+		do_disconnect(db, found_context);
 	}
 
 	/* Associate user with its ACL, assuming we have ACLs loaded. */
