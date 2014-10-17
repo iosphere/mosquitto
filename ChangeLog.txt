@@ -56,6 +56,7 @@ Client library:
 - Add experimental SOCKS5 support.
 - mosquitto_loop_forever now quits after a fatal error, rather than blindly
   retrying.
+- SRV support is now not compiled in by default.
 
 1.3.5 - 20141008
 ================
