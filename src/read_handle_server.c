@@ -441,12 +441,14 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			found_context->sub_count = 0;
 
 			for(i=0; i<context->sub_count; i++){
-				leaf = context->subs[i]->subs;
-				while(leaf){
-					if(leaf->context == found_context){
-						leaf->context = context;
+				if(context->subs[i]){
+					leaf = context->subs[i]->subs;
+					while(leaf){
+						if(leaf->context == found_context){
+							leaf->context = context;
+						}
+						leaf = leaf->next;
 					}
-					leaf = leaf->next;
 				}
 			}
 		}
