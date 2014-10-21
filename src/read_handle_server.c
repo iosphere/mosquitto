@@ -201,6 +201,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			goto handle_connect_error;
 		}else{ /* mqtt311 */
 			_mosquitto_free(client_id);
+			client_id = NULL;
 
 			if(clean_session == 0 || db->config->allow_zero_length_clientid == false){
 				_mosquitto_send_connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
