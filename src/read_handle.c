@@ -107,10 +107,6 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 		_mosquitto_free(topic);
 		return 1;
 	}
-	if(!strlen(topic)){
-		_mosquitto_free(topic);
-		return 1;
-	}
 #ifdef WITH_BRIDGE
 	if(context->bridge && context->bridge->topics && context->bridge->topic_remapping){
 		for(i=0; i<context->bridge->topic_count; i++){
