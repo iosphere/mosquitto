@@ -31,6 +31,7 @@ Contributors:
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <time.h>
 
 #ifdef WITH_WEBSOCKETS
@@ -39,6 +40,7 @@ Contributors:
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
+#include <send_mosq.h>
 #include <time_mosq.h>
 #include <util_mosq.h>
 
@@ -145,7 +147,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 							&& now > context->bridge->primary_retry){
 
 						/* FIXME - this should be non-blocking */
-						if(_mosquitto_try_connect(context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, true) == MOSQ_ERR_SUCCESS){
+						if(_mosquitto_try_connect(context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) == MOSQ_ERR_SUCCESS){
 							COMPAT_CLOSE(bridge_sock);
 							_mosquitto_socket_close(db, context);
 							context->bridge->cur_address = context->bridge->address_count-1;
@@ -163,7 +165,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						pollfds[pollfd_index].fd = context->sock;
 						pollfds[pollfd_index].events = POLLIN;
 						pollfds[pollfd_index].revents = 0;
-						if(context->current_out_packet){
+						if(context->current_out_packet || context->state == mosq_cs_connect_pending){
 							pollfds[pollfd_index].events |= POLLOUT;
 						}
 						context->pollfd_index = pollfd_index;
@@ -398,6 +400,7 @@ static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
 static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds)
 {
 	struct mosquitto *context, *ctxt_tmp;
+	int err, len;
 
 	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
 		if(context->pollfd_index < 0){
@@ -412,6 +415,17 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #else
 		if(pollfds[context->pollfd_index].revents & POLLOUT){
 #endif
+			if(context->state == mosq_cs_connect_pending){
+				len = sizeof(int);
+				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, &err, &len)){
+					if(err == 0){
+						context->state = mosq_cs_new;
+					}
+				}else{
+					do_disconnect(db, context);
+					continue;
+				}
+			}
 			if(_mosquitto_packet_write(context)){
 				do_disconnect(db, context);
 				continue;

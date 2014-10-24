@@ -730,6 +730,10 @@ int mqtt3_db_message_write(struct mosquitto *context)
 		return MOSQ_ERR_INVAL;
 	}
 
+	if(context->state != mosq_cs_connected){
+		return MOSQ_ERR_SUCCESS;
+	}
+
 	tail = context->msgs;
 	while(tail){
 		if(tail->direction == mosq_md_in){

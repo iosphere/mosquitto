@@ -40,10 +40,6 @@ struct mosquitto_db;
 #  define COMPAT_EWOULDBLOCK EWOULDBLOCK
 #endif
 
-#ifndef WIN32
-#else
-#endif
-
 /* For when not using winsock libraries. */
 #ifndef INVALID_SOCKET
 #define INVALID_SOCKET -1
