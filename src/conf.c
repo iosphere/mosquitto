@@ -1478,7 +1478,8 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 #ifdef WITH_WEBSOCKETS
 							cur_listener->protocol = mp_websockets;
 #else
-							_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Websockets support not available.");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Websockets support not available.");
+							return MOSQ_ERR_INVAL;
 #endif
 						}else{
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid protocol value (%s).", token);
