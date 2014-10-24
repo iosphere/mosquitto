@@ -146,8 +146,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 							&& context->bridge->cur_address != 0
 							&& now > context->bridge->primary_retry){
 
-						/* FIXME - this should be non-blocking */
-						if(_mosquitto_try_connect(context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) == MOSQ_ERR_SUCCESS){
+						if(_mosquitto_try_connect(context, context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) == MOSQ_ERR_SUCCESS){
 							COMPAT_CLOSE(bridge_sock);
 							_mosquitto_socket_close(db, context);
 							context->bridge->cur_address = context->bridge->address_count-1;
@@ -400,7 +399,12 @@ static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
 static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds)
 {
 	struct mosquitto *context, *ctxt_tmp;
-	int err, len;
+#ifdef WIN32
+	char err;
+#else
+	int err;
+#endif
+	socklen_t len;
 
 	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
 		if(context->pollfd_index < 0){

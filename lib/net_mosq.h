@@ -60,7 +60,7 @@ int _mosquitto_socket_close(struct mosquitto_db *db, struct mosquitto *mosq);
 #else
 int _mosquitto_socket_close(struct mosquitto *mosq);
 #endif
-int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking);
+int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking);
 int _mosquitto_socket_nonblock(int sock);
 int _mosquitto_socketpair(int *sp1, int *sp2);
 

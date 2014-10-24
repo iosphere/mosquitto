@@ -268,7 +268,7 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 }
 #endif
 
-int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking)
+int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking)
 {
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
@@ -281,7 +281,14 @@ int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const cha
 
 	*sock = INVALID_SOCKET;
 	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = PF_UNSPEC;
+#ifdef WITH_TLS
+	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){
+		hints.ai_family = PF_INET;
+	}else
+#endif
+	{
+		hints.ai_family = PF_UNSPEC;
+	}
 	hints.ai_flags = AI_ADDRCONFIG;
 	hints.ai_socktype = SOCK_STREAM;
 
@@ -380,13 +387,7 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 
 	if(!mosq || !host || !port) return MOSQ_ERR_INVAL;
 
-#ifdef WITH_TLS
-	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){
-		blocking = true;
-	}
-#endif
-
-	rc = _mosquitto_try_connect(host, port, &sock, bind_address, blocking);
+	rc = _mosquitto_try_connect(mosq, host, port, &sock, bind_address, blocking);
 	if(rc > 0) return rc;
 
 #ifdef WITH_TLS
