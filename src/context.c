@@ -212,8 +212,8 @@ void mosquitto__add_context_to_disused(struct mosquitto_db *db, struct mosquitto
 
 void mosquitto__free_disused_contexts(struct mosquitto_db *db)
 {
-	assert(db);
 	struct mosquitto *context, *next;
+	assert(db);
 
 	context = db->ll_for_free;
 	while(context){
