@@ -50,14 +50,16 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	FILE *fptr;
 	char line[1024];
 	int count;
-#ifndef WIN32
-	char *env;
 	char *loc = NULL;
 	int len;
 	char *args[3];
 
-	args[0] = NULL;
+#ifndef WIN32
+	char *env;
+#else
+	char env[1024];
 #endif
+	args[0] = NULL;
 
 	init_config(cfg);
 
@@ -88,6 +90,22 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 			fprintf(stderr, "Warning: Unable to locate configuration directory, default config not loaded.\n");
 		}
 	}
+
+#else
+	rc = GetEnvironmentVariable("USERPROFILE", env, 1024);
+	if(rc > 0 && rc < 1024){
+		len = strlen(env) + strlen("\\mosquitto_pub.conf") + 1;
+		loc = malloc(len);
+		if(pub_or_sub == CLIENT_PUB){
+			snprintf(loc, len, "%s\\mosquitto_pub.conf", env);
+		}else{
+			snprintf(loc, len, "%s\\mosquitto_sub.conf", env);
+		}
+		loc[len-1] = '\0';
+	}else{
+		fprintf(stderr, "Warning: Unable to locate configuration directory, default config not loaded.\n");
+	}
+#endif
 
 	if(loc){
 		fptr = fopen(loc, "rt");
@@ -120,9 +138,6 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		}
 		free(loc);
 	}
-#else
-// FIXME - config file support
-#endif
 
 	/* Deal with real argc/argv */
 	rc = client_config_line_proc(cfg, pub_or_sub, argc, argv);
