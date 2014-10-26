@@ -220,7 +220,7 @@ int _mosquitto_socket_close(struct mosquitto *mosq)
 	}
 #endif
 
-	if(mosq->sock >= 0){
+	if((int)mosq->sock >= 0){
 #ifdef WITH_BROKER
 		HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
 #endif

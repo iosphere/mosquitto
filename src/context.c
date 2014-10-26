@@ -58,7 +58,7 @@ struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, int sock)
 	context->current_out_packet = NULL;
 
 	context->address = NULL;
-	if(sock >= 0){
+	if((int)sock >= 0){
 		if(!_mosquitto_socket_get_address(sock, address, 1024)){
 			context->address = _mosquitto_strdup(address);
 		}
@@ -77,7 +77,7 @@ struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, int sock)
 	context->ssl = NULL;
 #endif
 
-	if(context->sock >= 0){
+	if((int)context->sock >= 0){
 		HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
 	}
 	return context;
