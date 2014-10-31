@@ -1,7 +1,9 @@
 The following packages are required for mosquitto:
 
 * tcp-wrappers (optional, package name libwrap0-dev)
-* openssl (version 1.0.0 or greater if TLS-PSK support is needed)
+* openssl (version 1.0.0 or greater if TLS-PSK support is needed, can be disabled)
+* c-ares (for DNS-SRV support, can be disabled)
+* libuuid (from e2fsprogs, can be disabled)
 * On Windows, the Redhat pthreads library is required if threading support is
   to be included.
 
