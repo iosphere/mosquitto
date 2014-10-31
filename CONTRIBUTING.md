@@ -53,7 +53,7 @@ which allows you to amend commits and have Gerrit track them as the same
 change.
 
 What happens next depends on the content of the patch. If it is 100% authored
-by the contributor and is less than 250 lines (and meets the needs of the
+by the contributor and is less than 1000 lines (and meets the needs of the
 project), then it can be committed to the main repository. If not, more steps
 are required. These are detailed in the legal process poster:
 
