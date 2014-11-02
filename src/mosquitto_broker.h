@@ -97,6 +97,7 @@ struct mqtt3_config {
 	struct _mqtt3_listener *listeners;
 	int listener_count;
 	int log_dest;
+	int log_facility;
 	int log_type;
 	bool log_timestamp;
 	char *log_file;
@@ -404,7 +405,7 @@ void mosquitto__free_disused_contexts(struct mosquitto_db *db);
 /* ============================================================
  * Logging functions
  * ============================================================ */
-int mqtt3_log_init(int level, int destinations);
+int mqtt3_log_init(int level, int destinations, int facility);
 int mqtt3_log_close(void);
 int _mosquitto_log_printf(struct mosquitto *mosq, int level, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
 

@@ -314,7 +314,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			mosquitto_security_cleanup(db, true);
 			mosquitto_security_init(db, true);
 			mosquitto_security_apply(db);
-			mqtt3_log_init(db->config->log_type, db->config->log_dest);
+			mqtt3_log_init(db->config->log_type, db->config->log_dest, db->config->log_facility);
 			flag_reload = false;
 		}
 		if(flag_tree_print){

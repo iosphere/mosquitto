@@ -35,6 +35,10 @@ Contributors:
 #  include <ws2tcpip.h>
 #endif
 
+#if !defined(WIN32) && !defined(__CYGWIN__)
+#  include <sys/syslog.h>
+#endif
+
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 #include "tls_mosq.h"
@@ -130,6 +134,7 @@ static void _config_init_reload(struct mqtt3_config *config)
 		config->log_dest = MQTT3_LOG_STDERR;
 	}
 #else
+	config->log_facility = LOG_DAEMON;
 	config->log_dest = MQTT3_LOG_STDERR;
 	if(config->verbose){
 		config->log_type = INT_MAX;
@@ -534,7 +539,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 	int rc;
 	char buf[1024];
 	char *token;
-	int port_tmp;
+	int tmp_int;
 	char *saveptr = NULL;
 #ifdef WITH_BRIDGE
 	struct _mqtt3_bridge *cur_bridge = NULL;
@@ -598,12 +603,12 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						if(address){
 							token = strtok_r(NULL, ":", &saveptr);
 							if(token){
-								port_tmp = atoi(token);
-								if(port_tmp < 1 || port_tmp > 65535){
-									_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", port_tmp);
+								tmp_int = atoi(token);
+								if(tmp_int < 1 || tmp_int > 65535){
+									_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
 									return MOSQ_ERR_INVAL;
 								}
-								cur_bridge->addresses[i].port = port_tmp;
+								cur_bridge->addresses[i].port = tmp_int;
 							}else{
 								cur_bridge->addresses[i].port = 1883;
 							}
@@ -1139,15 +1144,15 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
-						port_tmp = atoi(token);
-						if(port_tmp < 1 || port_tmp > 65535){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", port_tmp);
+						tmp_int = atoi(token);
+						if(tmp_int < 1 || tmp_int > 65535){
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
 							return MOSQ_ERR_INVAL;
 						}
 						cur_listener = &config->listeners[config->listener_count-1];
 						memset(cur_listener, 0, sizeof(struct _mqtt3_listener));
 						cur_listener->protocol = mp_mqtt;
-						cur_listener->port = port_tmp;
+						cur_listener->port = tmp_int;
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
 							cur_listener->host = _mosquitto_strdup(token);
@@ -1286,6 +1291,41 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty log_dest value in configuration.");
 						return MOSQ_ERR_INVAL;
 					}
+				}else if(!strcmp(token, "log_facility")){
+#if defined(WIN32) || defined(__CYGWIN__)
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: log_facility not supported on Windows.");
+#else
+					if(_conf_parse_int(&token, "log_facility", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					switch(tmp_int){
+						case 0:
+							config->log_facility = LOG_LOCAL0;
+							break;
+						case 1:
+							config->log_facility = LOG_LOCAL1;
+							break;
+						case 2:
+							config->log_facility = LOG_LOCAL2;
+							break;
+						case 3:
+							config->log_facility = LOG_LOCAL3;
+							break;
+						case 4:
+							config->log_facility = LOG_LOCAL4;
+							break;
+						case 5:
+							config->log_facility = LOG_LOCAL5;
+							break;
+						case 6:
+							config->log_facility = LOG_LOCAL6;
+							break;
+						case 7:
+							config->log_facility = LOG_LOCAL7;
+							break;
+						default:
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid log_facility value (%d).", tmp_int);
+							return MOSQ_ERR_INVAL;
+					}
+#endif
 				}else if(!strcmp(token, "log_timestamp")){
 					if(_conf_parse_bool(&token, token, &config->log_timestamp, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "log_type")){
@@ -1459,12 +1499,12 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					if(config->default_listener.port){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Default listener port specified multiple times. Only the latest will be used.");
 					}
-					if(_conf_parse_int(&token, "port", &port_tmp, saveptr)) return MOSQ_ERR_INVAL;
-					if(port_tmp < 1 || port_tmp > 65535){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", port_tmp);
+					if(_conf_parse_int(&token, "port", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					if(tmp_int < 1 || tmp_int > 65535){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
 						return MOSQ_ERR_INVAL;
 					}
-					config->default_listener.port = port_tmp;
+					config->default_listener.port = tmp_int;
 				}else if(!strcmp(token, "protocol")){
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){

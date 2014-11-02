@@ -301,6 +301,17 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>log_facility</option> <replaceable>local facility</replaceable></term>
+				<listitem>
+					<para>If using syslog logging (not on Windows), messages
+						will be logged to the "daemon" facility by default. Use
+						the <option>log_facility</option> option to choose
+						which of local0 to local7 to log to instead. The option
+						value should be an integer value, e.g. "log_facility 5"
+						to use local5.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>log_timestamp</option> [ true | false ]</term>
 				<listitem>
 					<para>Boolean value, if set to

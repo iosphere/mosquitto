@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
 
 	/* Initialise logging only after initialising the database in case we're
 	 * logging to topics */
-	mqtt3_log_init(config.log_type, config.log_dest);
+	mqtt3_log_init(config.log_type, config.log_dest, config.log_facility);
 	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
 	if(config.config_file){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);

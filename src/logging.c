@@ -49,7 +49,7 @@ HANDLE syslog_h;
 static int log_destinations = MQTT3_LOG_STDERR;
 static int log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
 
-int mqtt3_log_init(int priorities, int destinations)
+int mqtt3_log_init(int priorities, int destinations, int facility)
 {
 	int rc = 0;
 
@@ -58,7 +58,7 @@ int mqtt3_log_init(int priorities, int destinations)
 
 	if(log_destinations & MQTT3_LOG_SYSLOG){
 #ifndef WIN32
-		openlog("mosquitto", LOG_PID, LOG_DAEMON);
+		openlog("mosquitto", LOG_PID|LOG_CONS, facility);
 #else
 		syslog_h = OpenEventLog(NULL, "mosquitto");
 #endif

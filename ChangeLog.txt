@@ -46,6 +46,8 @@ Broker:
 - When "require_certificate" was false, the broker was incorrectly asking for
   a certificate (but not checking it). This caused problems with some clients
   and has been fixed so the broker no longer asks.
+- When using syslog logging on non-Windows OSs, it is now possible to specify
+  the logging facility to one of local0-7 instead of the default "daemon".
 
 Clients:
 - Both clients can now load default configuration options from a file.
