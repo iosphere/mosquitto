@@ -81,9 +81,8 @@ int mqtt3_log_close(void)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
+int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt, va_list va)
 {
-	va_list va;
 	char *s;
 	char *st;
 	int len;
@@ -164,9 +163,7 @@ int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt,
 		s = _mosquitto_malloc(len*sizeof(char));
 		if(!s) return MOSQ_ERR_NOMEM;
 
-		va_start(va, fmt);
 		vsnprintf(s, len, fmt, va);
-		va_end(va);
 		s[len-1] = '\0'; /* Ensure string is null terminated. */
 
 		if(log_destinations & MQTT3_LOG_STDOUT){
@@ -219,5 +216,26 @@ int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt,
 	}
 
 	return MOSQ_ERR_SUCCESS;
+}
+
+int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
+{
+	va_list va;
+	int rc;
+
+	va_start(va, fmt);
+	rc = _mosquitto_log_vprintf(mosq, priority, fmt, va);
+	va_end(va);
+
+	return rc;
+}
+
+void mosquitto_log_printf(int level, const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	_mosquitto_log_vprintf(NULL, level, fmt, va);
+	va_end(va);
 }
 
