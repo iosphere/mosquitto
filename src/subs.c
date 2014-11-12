@@ -654,7 +654,7 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 			if(branch->children){
 				_retain_search(db, branch, tokens, context, sub, sub_qos, level+1);
 			}
-		}else if(strcmp(branch->topic, "+") && (!strcmp(branch->topic, tokens->topic) || !strcmp(branch->topic, "+"))){
+		}else if(strcmp(branch->topic, "+") && (!strcmp(branch->topic, tokens->topic) || !strcmp(tokens->topic, "+"))){
 			if(tokens->next){
 				if(_retain_search(db, branch, tokens->next, context, sub, sub_qos, level+1) == -1
 						|| (!branch->next && tokens->next && !strcmp(tokens->next->topic, "#") && level>0)){

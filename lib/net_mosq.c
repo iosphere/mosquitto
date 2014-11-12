@@ -28,7 +28,7 @@ Contributors:
 #include <ws2tcpip.h>
 #endif
 
-#ifdef ANDROID
+#ifdef __ANDROID__
 #include <linux/in.h>
 #include <linux/in6.h>
 #include <sys/endian.h>

@@ -44,7 +44,9 @@ struct mosq_config {
 	long msglen; /* pub */
 	char *topic; /* pub */
 	char *bind_address;
+#ifdef WITH_SRV
 	bool use_srv;
+#endif
 	bool debug;
 	bool quiet;
 	unsigned int max_inflight;

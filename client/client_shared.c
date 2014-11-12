@@ -664,11 +664,15 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	char err[1024];
 	int rc;
 
+#ifdef WITH_SRV
 	if(cfg->use_srv){
 		rc = mosquitto_connect_srv(mosq, cfg->host, cfg->keepalive, cfg->bind_address);
 	}else{
 		rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
 	}
+#else
+	rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
+#endif
 	if(rc){
 		if(!cfg->quiet){
 			if(rc == MOSQ_ERR_ERRNO){

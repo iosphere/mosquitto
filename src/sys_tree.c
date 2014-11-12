@@ -84,7 +84,7 @@ static void _sys_update_clients(struct mosquitto_db *db, char *buf)
 	}
 }
 
-#ifdef WITH_MEMORY_TRACKING
+#ifdef REAL_WITH_MEMORY_TRACKING
 static void _sys_update_memory(struct mosquitto_db *db, char *buf)
 {
 	static unsigned long current_heap = -1;
@@ -268,7 +268,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/retained messages/count", 2, strlen(buf), buf, 1);
 		}
 
-#ifdef WITH_MEMORY_TRACKING
+#ifdef REAL_WITH_MEMORY_TRACKING
 		_sys_update_memory(db, buf);
 #endif
 

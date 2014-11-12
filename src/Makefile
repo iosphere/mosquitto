@@ -1,3 +1,5 @@
+include ../config.mk
+
 .PHONY: all install uninstall clean reallyclean
 
 ifeq ($(WITH_TLS),yes)
