@@ -404,10 +404,10 @@ libmosq_EXPORT int mosquitto_connect_bind(struct mosquitto *mosq, const char *ho
 libmosq_EXPORT int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, int keepalive);
 
 /*
- * Function: mosquitto_connect_async
+ * Function: mosquitto_connect_bind_async
  *
  * Connect to an MQTT broker. This is a non-blocking call. If you use
- * <mosquitto_connect_async> your client must use the threaded interface
+ * <mosquitto_connect_bind_async> your client must use the threaded interface
  * <mosquitto_loop_start>. If you need to use <mosquitto_loop>, you must use
  * <mosquitto_connect> to connect the client.
  *
