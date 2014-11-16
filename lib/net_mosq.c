@@ -747,6 +747,7 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
 
 	if(mosq->state == mosq_cs_connect_pending){
+		pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 		return MOSQ_ERR_SUCCESS;
 	}
 
