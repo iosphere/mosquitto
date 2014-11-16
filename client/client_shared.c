@@ -44,6 +44,51 @@ void init_config(struct mosq_config *cfg)
 	cfg->eol = true;
 }
 
+void client_config_cleanup(struct mosq_config *cfg)
+{
+	int i;
+	if(cfg->id) free(cfg->id);
+	if(cfg->id_prefix) free(cfg->id_prefix);
+	if(cfg->host) free(cfg->host);
+	if(cfg->file_input) free(cfg->file_input);
+	if(cfg->message) free(cfg->message);
+	if(cfg->topic) free(cfg->topic);
+	if(cfg->bind_address) free(cfg->bind_address);
+	if(cfg->username) free(cfg->username);
+	if(cfg->password) free(cfg->password);
+	if(cfg->will_topic) free(cfg->will_topic);
+	if(cfg->will_payload) free(cfg->will_payload);
+#ifdef WITH_TLS
+	if(cfg->cafile) free(cfg->cafile);
+	if(cfg->capath) free(cfg->capath);
+	if(cfg->certfile) free(cfg->certfile);
+	if(cfg->keyfile) free(cfg->keyfile);
+	if(cfg->ciphers) free(cfg->ciphers);
+	if(cfg->tls_version) free(cfg->tls_version);
+#  ifdef WITH_TLS_PSK
+	if(cfg->psk) free(cfg->psk);
+	if(cfg->psk_identity) free(cfg->psk_identity);
+#  endif
+#endif
+	if(cfg->topics){
+		for(i=0; i<cfg->topic_count; i++){
+			free(cfg->topics[i]);
+		}
+		free(cfg->topics);
+	}
+	if(cfg->filter_outs){
+		for(i=0; i<cfg->filter_out_count; i++){
+			free(cfg->filter_outs[i]);
+		}
+		free(cfg->filter_outs);
+	}
+#ifdef WITH_SOCKS
+	if(cfg->socks5_host) free(cfg->socks5_host);
+	if(cfg->socks5_username) free(cfg->socks5_username);
+	if(cfg->socks5_password) free(cfg->socks5_password);
+#endif
+}
+
 int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
 {
 	int rc;
@@ -755,6 +800,13 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 		return 1;
 	}
 
+	// socks5h://username:password@host:1883
+	// socks5h://username:password@host
+	// socks5h://username@host:1883
+	// socks5h://username@host
+	// socks5h://host:1883
+	// socks5h://host
+
 	start = 0;
 	for(i=0; i<strlen(str); i++){
 		if(str[i] == ':'){
@@ -762,12 +814,17 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				goto cleanup;
 			}
 			if(have_auth){
+				/* Have already seen a @ , so this must be of form
+				 * socks5h://username[:password]@host:port */
 				len = i-start;
 				host = malloc(len + 1);
 				memcpy(host, &(str[start]), len);
 				host[len] = '\0';
 				start = i+1;
 			}else if(!username_or_host){
+				/* Haven't seen a @ before, so must be of form
+				 * socks5h://host:port or
+				 * socks5h://username:password@host[:port] */
 				len = i-start;
 				username_or_host = malloc(len + 1);
 				memcpy(username_or_host, &(str[start]), len);
@@ -780,6 +837,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			}
 			have_auth = true;
 			if(username_or_host){
+				/* Must be of form socks5h://username:password@... */
 				username = username_or_host;
 				username_or_host = NULL;
 
@@ -789,6 +847,8 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				password[len] = '\0';
 				start = i+1;
 			}else{
+				/* Haven't seen a : yet, so must be of form
+				 * socks5h://username@... */
 				len = i-start;
 				username = malloc(len + 1);
 				memcpy(username, &(str[start]), len);
@@ -802,10 +862,15 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 	if(i > start){
 		len = i-start;
 		if(host){
+			/* Have already seen a @ , so this must be of form
+			 * socks5h://username[:password]@host:port */
 			port = malloc(len + 1);
 			memcpy(port, &(str[start]), len);
 			port[len] = '\0';
 		}else if(username_or_host){
+			/* Haven't seen a @ before, so must be of form
+			 * socks5h://host:port or
+			 * socks5h://username:password@host[:port] */
 			if(have_auth){
 				host = malloc(len + 1);
 				memcpy(host, &(str[start]), len);

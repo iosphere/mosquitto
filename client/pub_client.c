@@ -289,6 +289,7 @@ int main(int argc, char *argv[])
 
 	rc = client_config_load(&cfg, CLIENT_PUB, argc, argv);
 	if(rc){
+		client_config_cleanup(&cfg);
 		if(rc == 2){
 			/* --help */
 			print_usage();
