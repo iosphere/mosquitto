@@ -651,13 +651,15 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			if(context->listener && context->listener->mount_point){
 				len = strlen(context->listener->mount_point) + strlen(sub) + 1;
-				sub_mount = _mosquitto_calloc(len, sizeof(char));
+				sub_mount = _mosquitto_malloc(len+1);
 				if(!sub_mount){
 					_mosquitto_free(sub);
 					if(payload) _mosquitto_free(payload);
 					return MOSQ_ERR_NOMEM;
 				}
 				snprintf(sub_mount, len, "%s%s", context->listener->mount_point, sub);
+				sub_mount[len] = '\0';
+
 				_mosquitto_free(sub);
 				sub = sub_mount;
 

@@ -138,12 +138,14 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 					if(cur_topic->local_prefix){
 						/* This prefix needs adding. */
 						len = strlen(topic) + strlen(cur_topic->local_prefix)+1;
-						topic_temp = _mosquitto_calloc(len+1, sizeof(char));
+						topic_temp = _mosquitto_malloc(len+1);
 						if(!topic_temp){
 							_mosquitto_free(topic);
 							return MOSQ_ERR_NOMEM;
 						}
 						snprintf(topic_temp, len, "%s%s", cur_topic->local_prefix, topic);
+						topic_temp[len] = '\0';
+
 						_mosquitto_free(topic);
 						topic = topic_temp;
 					}
@@ -172,12 +174,14 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 	if(context->listener && context->listener->mount_point){
 		len = strlen(context->listener->mount_point) + strlen(topic) + 1;
-		topic_mount = _mosquitto_calloc(len, sizeof(char));
+		topic_mount = _mosquitto_malloc(len+1);
 		if(!topic_mount){
 			_mosquitto_free(topic);
 			return MOSQ_ERR_NOMEM;
 		}
 		snprintf(topic_mount, len, "%s%s", context->listener->mount_point, topic);
+		topic_mount[len] = '\0';
+
 		_mosquitto_free(topic);
 		topic = topic_mount;
 	}

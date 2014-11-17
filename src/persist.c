@@ -412,16 +412,18 @@ static int _db_client_msg_restore(struct mosquitto_db *db, const char *client_id
 	struct mosquitto_msg_store *store;
 	struct mosquitto *context;
 
-	cmsg = _mosquitto_calloc(1, sizeof(struct mosquitto_client_msg));
+	cmsg = _mosquitto_malloc(sizeof(struct mosquitto_client_msg));
 	if(!cmsg){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 
+	cmsg->next = NULL;
 	cmsg->store = NULL;
 	cmsg->mid = mid;
 	cmsg->qos = qos;
 	cmsg->retain = retain;
+	cmsg->timestamp = 0;
 	cmsg->direction = direction;
 	cmsg->state = state;
 	cmsg->dup = dup;
@@ -451,7 +453,6 @@ static int _db_client_msg_restore(struct mosquitto_db *db, const char *client_id
 	}else{
 		context->msgs = cmsg;
 	}
-	cmsg->next = NULL;
 	context->last_msg = cmsg;
 
 	return MOSQ_ERR_SUCCESS;
@@ -472,13 +473,14 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 		fclose(db_fptr);
 		return 1;
 	}
-	client_id = _mosquitto_calloc(slen+1, sizeof(char));
+	client_id = _mosquitto_malloc(slen+1);
 	if(!client_id){
 		fclose(db_fptr);
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	read_e(db_fptr, client_id, slen);
+	client_id[slen] = '\0';
 
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	last_mid = ntohs(i16temp);
@@ -522,13 +524,14 @@ static int _db_client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 		fclose(db_fptr);
 		return 1;
 	}
-	client_id = _mosquitto_calloc(slen+1, sizeof(char));
+	client_id = _mosquitto_malloc(slen+1);
 	if(!client_id){
 		fclose(db_fptr);
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	read_e(db_fptr, client_id, slen);
+	client_id[slen] = '\0';
 
 	read_e(db_fptr, &i64temp, sizeof(dbid_t));
 	store_id = i64temp;
@@ -572,13 +575,14 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
 	if(slen){
-		source_id = _mosquitto_calloc(slen+1, sizeof(char));
+		source_id = _mosquitto_malloc(slen+1);
 		if(!source_id){
 			fclose(db_fptr);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		read_e(db_fptr, source_id, slen);
+		source_id[slen] = '\0';
 	}
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	source_mid = ntohs(i16temp);
@@ -589,7 +593,7 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
 	if(slen){
-		topic = _mosquitto_calloc(slen+1, sizeof(char));
+		topic = _mosquitto_malloc(slen+1);
 		if(!topic){
 			fclose(db_fptr);
 			if(source_id) _mosquitto_free(source_id);
@@ -597,6 +601,7 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 			return MOSQ_ERR_NOMEM;
 		}
 		read_e(db_fptr, topic, slen);
+		topic[slen] = '\0';
 	}else{
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid msg_store chunk when restoring persistent database.");
 		fclose(db_fptr);
@@ -672,16 +677,18 @@ static int _db_sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
-	client_id = _mosquitto_calloc(slen+1, sizeof(char));
+	client_id = _mosquitto_malloc(slen+1);
 	if(!client_id){
 		fclose(db_fptr);
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	read_e(db_fptr, client_id, slen);
+	client_id[slen] = '\0';
+
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
-	topic = _mosquitto_calloc(slen+1, sizeof(char));
+	topic = _mosquitto_malloc(slen+1);
 	if(!topic){
 		fclose(db_fptr);
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
@@ -689,6 +696,8 @@ static int _db_sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 		return MOSQ_ERR_NOMEM;
 	}
 	read_e(db_fptr, topic, slen);
+	topic[slen] = '\0';
+
 	read_e(db_fptr, &qos, sizeof(uint8_t));
 	if(_db_restore_sub(db, client_id, topic, qos)){
 		rc = 1;

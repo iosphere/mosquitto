@@ -200,11 +200,12 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 			stop = i;
 
 			if(start != stop){
-				tlen = stop-start + 1;
+				tlen = stop-start;
 
-				topic = _mosquitto_calloc(tlen, sizeof(char));
+				topic = _mosquitto_malloc(tlen+1);
 				if(!topic) goto cleanup;
-				memcpy(topic, &subtopic[start], tlen-1);
+				memcpy(topic, &subtopic[start], tlen);
+				topic[tlen] = '\0';
 			}else{
 				topic = _mosquitto_strdup("");
 				if(!topic) goto cleanup;
