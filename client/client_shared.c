@@ -877,19 +877,12 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			port[len] = '\0';
 		}else if(username_or_host){
 			/* Haven't seen a @ before, so must be of form
-			 * socks5h://host:port or
-			 * socks5h://username:password@host[:port] */
-			if(have_auth){
-				host = malloc(len + 1);
-				memcpy(host, &(str[start]), len);
-				host[len] = '\0';
-			}else{
-				host = username_or_host;
-				username_or_host = NULL;
-				port = malloc(len + 1);
-				memcpy(port, &(str[start]), len);
-				port[len] = '\0';
-			}
+			 * socks5h://host:port */
+			host = username_or_host;
+			username_or_host = NULL;
+			port = malloc(len + 1);
+			memcpy(port, &(str[start]), len);
+			port[len] = '\0';
 		}else{
 			host = malloc(len + 1);
 			memcpy(host, &(str[start]), len);
