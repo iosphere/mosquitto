@@ -816,6 +816,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			if(have_auth){
 				/* Have already seen a @ , so this must be of form
 				 * socks5h://username[:password]@host:port */
+				if(host){
+					/* Already seen a host, must be malformed. */
+					goto cleanup;
+				}
 				len = i-start;
 				host = malloc(len + 1);
 				memcpy(host, &(str[start]), len);
@@ -849,6 +853,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			}else{
 				/* Haven't seen a : yet, so must be of form
 				 * socks5h://username@... */
+				if(username){
+					/* Already got a username, must be malformed. */
+					goto cleanup;
+				}
 				len = i-start;
 				username = malloc(len + 1);
 				memcpy(username, &(str[start]), len);
