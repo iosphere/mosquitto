@@ -54,7 +54,11 @@ int _mosquitto_handle_pingresp(struct mosquitto *mosq)
 	return MOSQ_ERR_SUCCESS;
 }
 
+#ifdef WITH_BROKER
+int _mosquitto_handle_pubackcomp(struct mosquitto_db *db, struct mosquitto *mosq, const char *type)
+#else
 int _mosquitto_handle_pubackcomp(struct mosquitto *mosq, const char *type)
+#endif
 {
 	uint16_t mid;
 	int rc;
@@ -66,7 +70,7 @@ int _mosquitto_handle_pubackcomp(struct mosquitto *mosq, const char *type)
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received %s from %s (Mid: %d)", type, mosq->id, mid);
 
 	if(mid){
-		rc = mqtt3_db_message_delete(mosq, mid, mosq_md_out);
+		rc = mqtt3_db_message_delete(db, mosq, mid, mosq_md_out);
 		if(rc) return rc;
 	}
 #else

@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
 
 #ifdef WITH_PERSISTENCE
 	if(config.persistence){
-		mqtt3_db_backup(&int_db, true, true);
+		mqtt3_db_backup(&int_db, true);
 	}
 #endif
 

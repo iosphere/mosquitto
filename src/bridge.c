@@ -146,10 +146,10 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 	context->ping_t = 0;
 	context->bridge->lazy_reconnect = false;
 	mqtt3_bridge_packet_cleanup(context);
-	mqtt3_db_message_reconnect_reset(context);
+	mqtt3_db_message_reconnect_reset(db, context);
 
 	if(context->clean_session){
-		mqtt3_db_messages_delete(context);
+		mqtt3_db_messages_delete(db, context);
 	}
 
 	/* Delete all local subscriptions even for clean_session==false. We don't

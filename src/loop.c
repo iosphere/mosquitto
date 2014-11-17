@@ -67,7 +67,6 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 #ifdef WITH_PERSISTENCE
 	time_t last_backup = mosquitto_time();
 #endif
-	time_t last_store_clean = mosquitto_time();
 	time_t now = 0;
 	time_t now_time;
 	int time_count;
@@ -162,7 +161,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						|| context->bridge
 						|| now - context->last_msg_in < (time_t)(context->keepalive)*3/2){
 
-					if(mqtt3_db_message_write(context) == MOSQ_ERR_SUCCESS){
+					if(mqtt3_db_message_write(db, context) == MOSQ_ERR_SUCCESS){
 						pollfds[pollfd_index].fd = context->sock;
 						pollfds[pollfd_index].events = POLLIN;
 						pollfds[pollfd_index].revents = 0;
@@ -287,24 +286,21 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 		if(db->config->persistence && db->config->autosave_interval){
 			if(db->config->autosave_on_changes){
 				if(db->persistence_changes > db->config->autosave_interval){
-					mqtt3_db_backup(db, false, false);
+					mqtt3_db_backup(db, false);
 					db->persistence_changes = 0;
 				}
 			}else{
 				if(last_backup + db->config->autosave_interval < mosquitto_time()){
-					mqtt3_db_backup(db, false, false);
+					mqtt3_db_backup(db, false);
 					last_backup = mosquitto_time();
 				}
 			}
 		}
 #endif
-		if(!db->config->store_clean_interval || last_store_clean + db->config->store_clean_interval < mosquitto_time()){
-			mqtt3_db_store_clean(db);
-			last_store_clean = mosquitto_time();
-		}
+
 #ifdef WITH_PERSISTENCE
 		if(flag_db_backup){
-			mqtt3_db_backup(db, false, false);
+			mqtt3_db_backup(db, false);
 			flag_db_backup = false;
 		}
 #endif

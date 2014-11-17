@@ -155,7 +155,6 @@ static void _config_init_reload(struct mqtt3_config *config)
 	config->psk_file = NULL;
 	config->queue_qos0_messages = false;
 	config->retry_interval = 20;
-	config->store_clean_interval = 10;
 	config->sys_interval = 10;
 	config->upgrade_outgoing_qos = false;
 	if(config->auth_options){
@@ -1618,11 +1617,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "store_clean_interval")){
-					if(_conf_parse_int(&token, "store_clean_interval", &config->store_clean_interval, saveptr)) return MOSQ_ERR_INVAL;
-					if(config->store_clean_interval < 0 || config->store_clean_interval > 65535){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid store_clean_interval value (%d).", config->store_clean_interval);
-						return MOSQ_ERR_INVAL;
-					}
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: store_clean_interval is no longer needed.");
 				}else if(!strcmp(token, "sys_interval")){
 					if(_conf_parse_int(&token, "sys_interval", &config->sys_interval, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->sys_interval < 0 || config->sys_interval > 65535){

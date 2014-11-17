@@ -81,7 +81,10 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 #endif
 		if(hier->retained){
 			hier->retained->ref_count--;
-			/* FIXME - it would be nice to be able to remove the message from the store at this point if ref_count == 0 */
+			if(hier->retained->ref_count == 0){
+				HASH_DELETE(hh, db->msg_store, hier->retained);
+				db->msg_store_count--;
+			}
 #ifdef WITH_SYS_TREE
 			db->retained_count--;
 #endif

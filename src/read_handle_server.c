@@ -434,7 +434,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			if(found_context->msgs){
 				context->msgs = found_context->msgs;
 				found_context->msgs = NULL;
-				mqtt3_db_message_reconnect_reset(context);
+				mqtt3_db_message_reconnect_reset(db, context);
 			}
 			context->subs = found_context->subs;
 			found_context->subs = NULL;

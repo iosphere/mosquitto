@@ -113,7 +113,6 @@ struct mqtt3_config {
 	char *psk_file;
 	bool queue_qos0_messages;
 	int retry_interval;
-	int store_clean_interval;
 	int sys_interval;
 	bool upgrade_outgoing_qos;
 	char *user;
@@ -360,27 +359,26 @@ int mqtt3_handle_unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db);
 int mqtt3_db_close(struct mosquitto_db *db);
 #ifdef WITH_PERSISTENCE
-int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown);
+int mqtt3_db_backup(struct mosquitto_db *db, bool shutdown);
 int mqtt3_db_restore(struct mosquitto_db *db);
 #endif
 void mqtt3_db_limits_set(int inflight, int queued);
 /* Return the number of in-flight messages in count. */
 int mqtt3_db_message_count(int *count);
-int mqtt3_db_message_delete(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir);
+int mqtt3_db_message_delete(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir);
 int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored);
 int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir);
 int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state);
-int mqtt3_db_message_write(struct mosquitto *context);
-int mqtt3_db_messages_delete(struct mosquitto *context);
+int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context);
+int mqtt3_db_messages_delete(struct mosquitto_db *db, struct mosquitto *context);
 int mqtt3_db_messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain);
 int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
 int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id);
 int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored);
 /* Check all messages waiting on a client reply and resend if timeout has been exceeded. */
 int mqtt3_db_message_timeout_check(struct mosquitto_db *db, unsigned int timeout);
-int mqtt3_db_message_reconnect_reset(struct mosquitto *context);
+int mqtt3_db_message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context);
 int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos);
-void mqtt3_db_store_clean(struct mosquitto_db *db);
 void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_time);
 void mqtt3_db_vacuum(void);
 

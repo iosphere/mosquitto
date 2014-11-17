@@ -322,7 +322,7 @@ static int mqtt3_db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown)
+int mqtt3_db_backup(struct mosquitto_db *db, bool shutdown)
 {
 	int rc = 0;
 	FILE *db_fptr = NULL;
@@ -338,9 +338,6 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool cleanup, bool shutdown)
 
 	if(!db || !db->config || !db->config->persistence_filepath) return MOSQ_ERR_INVAL;
 	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Saving in-memory database to %s.", db->config->persistence_filepath);
-	if(cleanup){
-		mqtt3_db_store_clean(db);
-	}
 
 	len = strlen(db->config->persistence_filepath)+5;
 	outfile = _mosquitto_calloc(len+1, 1);

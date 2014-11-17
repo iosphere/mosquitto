@@ -41,9 +41,9 @@ int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context)
 		case PINGRESP:
 			return _mosquitto_handle_pingresp(context);
 		case PUBACK:
-			return _mosquitto_handle_pubackcomp(context, "PUBACK");
+			return _mosquitto_handle_pubackcomp(db, context, "PUBACK");
 		case PUBCOMP:
-			return _mosquitto_handle_pubackcomp(context, "PUBCOMP");
+			return _mosquitto_handle_pubackcomp(db, context, "PUBCOMP");
 		case PUBLISH:
 			return mqtt3_handle_publish(db, context);
 		case PUBREC:
