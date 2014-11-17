@@ -346,7 +346,8 @@ void handle_sigint(int signal)
 
 int main(int argc, char *argv[])
 {
-	char *password_file = NULL;
+	char *password_file_tmp = NULL;
+	char password_file[1024];
 	char *username = NULL;
 	char *password_cmd = NULL;
 	bool batch_mode = false;
@@ -369,7 +370,7 @@ int main(int argc, char *argv[])
 		}else{
 			fprintf(stderr, "Error: Unknown option '%s'\n", argv[1]);
 		}
-		password_file = argv[2];
+		password_file_tmp = argv[2];
 		username = argv[3];
 		password_cmd = argv[4];
 	}else if(argc == 4){
@@ -381,20 +382,22 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Error: Unknown option '%s'\n", argv[1]);
 			return 1;
 		}
-		password_file = argv[2];
+		password_file_tmp = argv[2];
 		username = argv[3];
 	}else if(argc == 3){
 		if(!strcmp(argv[1], "-U")){
 			do_update_file = true;
-			password_file = argv[2];
+			password_file_tmp = argv[2];
 		}else{
-			password_file = argv[1];
+			password_file_tmp = argv[1];
 			username = argv[2];
 		}
 	}else{
 		print_usage();
 		return 1;
 	}
+
+	snprintf(password_file, 1024, "%s", password_file_tmp);
 
 	if(create_new){
 		rc = get_password(password, 1024);
