@@ -131,14 +131,13 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 	uint32_t i32temp;
 	uint16_t i16temp, slen;
 	uint8_t i8temp;
-	struct mosquitto_msg_store *stored;
+	struct mosquitto_msg_store *stored, *stored_tmp;
 	bool force_no_retain;
 
 	assert(db);
 	assert(db_fptr);
 
-	stored = db->msg_store;
-	while(stored){
+	HASH_ITER(hh, db->msg_store, stored, stored_tmp){
 		if(!strncmp(stored->msg.topic, "$SYS", 4)){
 			/* Don't save $SYS messages as retained otherwise they can give
 			 * misleading information when reloaded. They should still be saved
@@ -193,8 +192,6 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		if(stored->msg.payloadlen){
 			write_e(db_fptr, stored->msg.payload, (unsigned int)stored->msg.payloadlen);
 		}
-
-		stored = stored->next;
 	}
 
 	return MOSQ_ERR_SUCCESS;
@@ -428,20 +425,14 @@ static int _db_client_msg_restore(struct mosquitto_db *db, const char *client_id
 	cmsg->state = state;
 	cmsg->dup = dup;
 
-	store = db->msg_store;
-	while(store){
-		if(store->db_id == store_id){
-			cmsg->store = store;
-			cmsg->store->ref_count++;
-			break;
-		}
-		store = store->next;
-	}
-	if(!cmsg->store){
+	HASH_FIND(hh, db->msg_store, &store_id, sizeof(dbid_t), store);
+	if(!store){
 		_mosquitto_free(cmsg);
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
 		return 1;
 	}
+	cmsg->store = store;
+
 	context = _db_find_or_add_context(db, client_id, 0);
 	if(!context){
 		_mosquitto_free(cmsg);
@@ -655,13 +646,12 @@ static int _db_retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 		return 1;
 	}
 	store_id = i64temp;
-	store = db->msg_store;
-	while(store){
-		if(store->db_id == store_id){
-			mqtt3_db_messages_queue(db, NULL, store->msg.topic, store->msg.qos, store->msg.retain, store);
-			break;
-		}
-		store = store->next;
+	HASH_FIND(hh, db->msg_store, &store_id, sizeof(dbid_t), store);
+	if(store){
+		mqtt3_db_messages_queue(db, NULL, store->msg.topic, store->msg.qos, store->msg.retain, store);
+	}else{
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt database whilst restoring a retained message.");
+		return MOSQ_ERR_INVAL;
 	}
 	return MOSQ_ERR_SUCCESS;
 }

@@ -143,7 +143,7 @@ struct _mosquitto_subhier {
 };
 
 struct mosquitto_msg_store{
-	struct mosquitto_msg_store *next;
+	UT_hash_handle hh;
 	dbid_t db_id;
 	int ref_count;
 	char *source_id;

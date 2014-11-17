@@ -36,5 +36,8 @@ lib/libmosquitto.a
 
 test/ssl/*.csr
 
+test/lib/c/*.test
+test/lib/cpp/*.test
+
 build/
 dist/

@@ -438,7 +438,6 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	temp = _mosquitto_malloc(sizeof(struct mosquitto_msg_store));
 	if(!temp) return MOSQ_ERR_NOMEM;
 
-	temp->next = db->msg_store;
 	temp->ref_count = 0;
 	if(source){
 		temp->source_id = _mosquitto_strdup(source);
@@ -490,7 +489,6 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	temp->dest_ids = NULL;
 	temp->dest_id_count = 0;
 	db->msg_store_count++;
-	db->msg_store = temp;
 	(*stored) = temp;
 
 	if(!store_id){
@@ -498,6 +496,8 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	}else{
 		temp->db_id = store_id;
 	}
+
+	HASH_ADD(hh, db->msg_store, db_id, sizeof(dbid_t), temp);
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -841,35 +841,25 @@ int mqtt3_db_message_write(struct mosquitto *context)
 void mqtt3_db_store_clean(struct mosquitto_db *db)
 {
 	/* FIXME - this may not be necessary if checks are made when messages are removed. */
-	struct mosquitto_msg_store *tail, *last = NULL;
+	struct mosquitto_msg_store *msg_store, *msg_tmp;
 	int i;
 	assert(db);
 
-	tail = db->msg_store;
-	while(tail){
-		if(tail->ref_count == 0){
-			if(tail->source_id) _mosquitto_free(tail->source_id);
-			if(tail->dest_ids){
-				for(i=0; i<tail->dest_id_count; i++){
-					if(tail->dest_ids[i]) _mosquitto_free(tail->dest_ids[i]);
+	HASH_ITER(hh, db->msg_store, msg_store, msg_tmp){
+		if(msg_store->ref_count == 0){
+			HASH_DELETE(hh, db->msg_store, msg_store);
+
+			if(msg_store->source_id) _mosquitto_free(msg_store->source_id);
+			if(msg_store->dest_ids){
+				for(i=0; i<msg_store->dest_id_count; i++){
+					if(msg_store->dest_ids[i]) _mosquitto_free(msg_store->dest_ids[i]);
 				}
-				_mosquitto_free(tail->dest_ids);
+				_mosquitto_free(msg_store->dest_ids);
 			}
-			if(tail->msg.topic) _mosquitto_free(tail->msg.topic);
-			if(tail->msg.payload) _mosquitto_free(tail->msg.payload);
-			if(last){
-				last->next = tail->next;
-				_mosquitto_free(tail);
-				tail = last->next;
-			}else{
-				db->msg_store = tail->next;
-				_mosquitto_free(tail);
-				tail = db->msg_store;
-			}
+			if(msg_store->msg.topic) _mosquitto_free(msg_store->msg.topic);
+			if(msg_store->msg.payload) _mosquitto_free(msg_store->msg.payload);
+			_mosquitto_free(msg_store);
 			db->msg_store_count--;
-		}else{
-			last = tail;
-			tail = tail->next;
 		}
 	}
 }
