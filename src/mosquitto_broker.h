@@ -144,21 +144,26 @@ struct _mosquitto_subhier {
 struct mosquitto_msg_store{
 	UT_hash_handle hh;
 	dbid_t db_id;
-	int ref_count;
 	char *source_id;
 	char **dest_ids;
 	int dest_id_count;
+	int ref_count;
+	char *topic;
+	void *payload;
+	uint32_t payloadlen;
 	uint16_t source_mid;
-	struct mosquitto_message msg;
+	uint16_t mid;
+	uint8_t qos;
+	bool retain;
 };
 
 struct mosquitto_client_msg{
 	struct mosquitto_client_msg *next;
 	struct mosquitto_msg_store *store;
-	uint16_t mid;
-	int qos;
-	bool retain;
 	time_t timestamp;
+	uint16_t mid;
+	uint8_t qos;
+	bool retain;
 	enum mosquitto_msg_direction direction;
 	enum mosquitto_msg_state state;
 	bool dup;
@@ -169,8 +174,8 @@ struct _mosquitto_unpwd{
 	char *password;
 #ifdef WITH_TLS
 	unsigned int password_len;
-	unsigned char *salt;
 	unsigned int salt_len;
+	unsigned char *salt;
 #endif
 	UT_hash_handle hh;
 };
@@ -261,8 +266,10 @@ struct _mqtt3_bridge{
 	int address_count;
 	time_t primary_retry;
 	bool round_robin;
-	int keepalive;
+	bool try_private;
+	bool try_private_accepted;
 	bool clean_session;
+	int keepalive;
 	struct _mqtt3_bridge_topic *topics;
 	int topic_count;
 	bool topic_remapping;
@@ -280,8 +287,6 @@ struct _mqtt3_bridge{
 	int restart_timeout;
 	int threshold;
 	bool lazy_reconnect;
-	bool try_private;
-	bool try_private_accepted;
 #ifdef WITH_TLS
 	char *tls_cafile;
 	char *tls_capath;

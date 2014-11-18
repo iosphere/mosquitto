@@ -455,39 +455,39 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 		return MOSQ_ERR_NOMEM;
 	}
 	temp->source_mid = source_mid;
-	temp->msg.mid = 0;
-	temp->msg.qos = qos;
-	temp->msg.retain = retain;
+	temp->mid = 0;
+	temp->qos = qos;
+	temp->retain = retain;
 	if(topic){
-		temp->msg.topic = _mosquitto_strdup(topic);
-		if(!temp->msg.topic){
+		temp->topic = _mosquitto_strdup(topic);
+		if(!temp->topic){
 			_mosquitto_free(temp->source_id);
 			_mosquitto_free(temp);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 	}else{
-		temp->msg.topic = NULL;
+		temp->topic = NULL;
 	}
-	temp->msg.payloadlen = payloadlen;
+	temp->payloadlen = payloadlen;
 	if(payloadlen){
-		temp->msg.payload = _mosquitto_malloc(sizeof(char)*payloadlen);
-		if(!temp->msg.payload){
+		temp->payload = _mosquitto_malloc(sizeof(char)*payloadlen);
+		if(!temp->payload){
 			if(temp->source_id) _mosquitto_free(temp->source_id);
-			if(temp->msg.topic) _mosquitto_free(temp->msg.topic);
-			if(temp->msg.payload) _mosquitto_free(temp->msg.payload);
+			if(temp->topic) _mosquitto_free(temp->topic);
+			if(temp->payload) _mosquitto_free(temp->payload);
 			_mosquitto_free(temp);
 			return MOSQ_ERR_NOMEM;
 		}
-		memcpy(temp->msg.payload, payload, sizeof(char)*payloadlen);
+		memcpy(temp->payload, payload, sizeof(char)*payloadlen);
 	}else{
-		temp->msg.payload = NULL;
+		temp->payload = NULL;
 	}
 
-	if(!temp->source_id || (payloadlen && !temp->msg.payload)){
+	if(!temp->source_id || (payloadlen && !temp->payload)){
 		if(temp->source_id) _mosquitto_free(temp->source_id);
-		if(temp->msg.topic) _mosquitto_free(temp->msg.topic);
-		if(temp->msg.payload) _mosquitto_free(temp->msg.payload);
+		if(temp->topic) _mosquitto_free(temp->topic);
+		if(temp->payload) _mosquitto_free(temp->payload);
 		_mosquitto_free(temp);
 		return 1;
 	}
@@ -687,8 +687,8 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 			}
 		}
 		if(tail->mid == mid && tail->direction == dir){
-			qos = tail->store->msg.qos;
-			topic = tail->store->msg.topic;
+			qos = tail->store->qos;
+			topic = tail->store->topic;
 			retain = tail->retain;
 			source_id = tail->store->source_id;
 
@@ -748,10 +748,10 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 			mid = tail->mid;
 			retries = tail->dup;
 			retain = tail->retain;
-			topic = tail->store->msg.topic;
+			topic = tail->store->topic;
 			qos = tail->qos;
-			payloadlen = tail->store->msg.payloadlen;
-			payload = tail->store->msg.payload;
+			payloadlen = tail->store->payloadlen;
+			payload = tail->store->payload;
 
 			switch(tail->state){
 				case mosq_ms_publish_qos0:

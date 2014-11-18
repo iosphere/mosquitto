@@ -89,7 +89,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 			db->retained_count--;
 #endif
 		}
-		if(stored->msg.payloadlen){
+		if(stored->payloadlen){
 			hier->retained = stored;
 			hier->retained->ref_count++;
 #ifdef WITH_SYS_TREE
@@ -618,14 +618,14 @@ static int _retain_process(struct mosquitto_db *db, struct mosquitto_msg_store *
 	int qos;
 	uint16_t mid;
 
-	rc = mosquitto_acl_check(db, context, retained->msg.topic, MOSQ_ACL_READ);
+	rc = mosquitto_acl_check(db, context, retained->topic, MOSQ_ACL_READ);
 	if(rc == MOSQ_ERR_ACL_DENIED){
 		return MOSQ_ERR_SUCCESS;
 	}else if(rc != MOSQ_ERR_SUCCESS){
 		return rc;
 	}
 
-	qos = retained->msg.qos;
+	qos = retained->qos;
 
 	if(qos > sub_qos) qos = sub_qos;
 	if(qos > 0){

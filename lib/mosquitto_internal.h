@@ -111,17 +111,17 @@ enum _mosquitto_transport {
 };
 
 struct _mosquitto_packet{
-	uint8_t command;
-	uint8_t have_remaining;
-	uint8_t remaining_count;
-	uint16_t mid;
+	uint8_t *payload;
+	struct _mosquitto_packet *next;
 	uint32_t remaining_mult;
 	uint32_t remaining_length;
 	uint32_t packet_length;
 	uint32_t to_process;
 	uint32_t pos;
-	uint8_t *payload;
-	struct _mosquitto_packet *next;
+	uint16_t mid;
+	uint8_t command;
+	uint8_t have_remaining;
+	uint8_t remaining_count;
 };
 
 struct mosquitto_message_all{
@@ -169,11 +169,11 @@ struct mosquitto {
 	char *tls_certfile;
 	char *tls_keyfile;
 	int (*tls_pw_callback)(char *buf, int size, int rwflag, void *userdata);
-	int tls_cert_reqs;
 	char *tls_version;
 	char *tls_ciphers;
 	char *tls_psk;
 	char *tls_psk_identity;
+	int tls_cert_reqs;
 	bool tls_insecure;
 #endif
 	bool want_write;
@@ -189,6 +189,7 @@ struct mosquitto {
 	pthread_t thread_id;
 #endif
 #ifdef WITH_BROKER
+	bool is_dropping;
 	bool is_bridge;
 	struct _mqtt3_bridge *bridge;
 	struct mosquitto_client_msg *msgs;
@@ -198,11 +199,10 @@ struct mosquitto {
 	struct _mosquitto_acl_user *acl_list;
 	struct _mqtt3_listener *listener;
 	time_t disconnect_t;
-	int pollfd_index;
 	struct _mosquitto_packet *out_packet_last;
-	bool is_dropping;
 	struct _mosquitto_subhier **subs;
 	int sub_count;
+	int pollfd_index;
 #  ifdef WITH_WEBSOCKETS
 	struct libwebsocket_context *ws_context;
 	struct libwebsocket *wsi;
