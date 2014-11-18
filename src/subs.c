@@ -82,8 +82,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 		if(hier->retained){
 			hier->retained->ref_count--;
 			if(hier->retained->ref_count == 0){
-				HASH_DELETE(hh, db->msg_store, hier->retained);
-				db->msg_store_count--;
+				mosquitto__db_msg_store_remove(db, hier->retained);
 			}
 #ifdef WITH_SYS_TREE
 			db->retained_count--;

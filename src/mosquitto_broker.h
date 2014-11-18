@@ -141,8 +141,15 @@ struct _mosquitto_subhier {
 	struct mosquitto_msg_store *retained;
 };
 
-struct mosquitto_msg_store{
+struct mosquitto_msg_store_load{
 	UT_hash_handle hh;
+	dbid_t db_id;
+	struct mosquitto_msg_store *store;
+};
+
+struct mosquitto_msg_store{
+	struct mosquitto_msg_store *next;
+	struct mosquitto_msg_store *prev;
 	dbid_t db_id;
 	char *source_id;
 	char **dest_ids;
@@ -220,6 +227,7 @@ struct mosquitto_db{
 	struct mosquitto *contexts_bridge;
 	struct _clientid_index_hash *clientid_index_hash;
 	struct mosquitto_msg_store *msg_store;
+	struct mosquitto_msg_store_load *msg_store_load;
 	int msg_store_count;
 	struct mqtt3_config *config;
 	int persistence_changes;
@@ -380,6 +388,9 @@ int mqtt3_db_messages_easy_queue(struct mosquitto_db *db, struct mosquitto *cont
 int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
 int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id);
 int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored);
+void mosquitto__db_msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_store *store);
+void mosquitto__db_msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *store);
+void mosquitto__db_msg_store_clean(struct mosquitto_db *db);
 /* Check all messages waiting on a client reply and resend if timeout has been exceeded. */
 int mqtt3_db_message_timeout_check(struct mosquitto_db *db, unsigned int timeout);
 int mqtt3_db_message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context);
