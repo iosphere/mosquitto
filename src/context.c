@@ -93,7 +93,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 {
 	struct _mosquitto_packet *packet;
 	struct mosquitto_client_msg *msg, *next;
-	struct mosquitto *ctx_tmp;
+	int i;
 
 	if(!context) return;
 
@@ -107,11 +107,12 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 	}
 #ifdef WITH_BRIDGE
 	if(context->bridge){
-		if(context->bridge->local_clientid){
-			HASH_FIND(hh_bridge, db->contexts_bridge, context->bridge->local_clientid, strlen(context->bridge->local_clientid), ctx_tmp);
-			if(ctx_tmp){
-				HASH_DELETE(hh_bridge, db->contexts_bridge, context);
+		for(i=0; i<db->bridge_count; i++){
+			if(db->bridges[i] == context){
+				db->bridges[i] = NULL;
 			}
+		}
+		if(context->bridge->local_clientid){
 			_mosquitto_free(context->bridge->local_clientid);
 			context->bridge->local_clientid = NULL;
 		}

@@ -42,7 +42,8 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	db->contexts_by_id = NULL;
 	db->contexts_by_sock = NULL;
 	db->contexts_for_free = NULL;
-	db->contexts_bridge = NULL;
+	db->bridges = NULL;
+	db->bridge_count = 0;
 
 	// Initialize the hashtable
 	db->clientid_index_hash = NULL;

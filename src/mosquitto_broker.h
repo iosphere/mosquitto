@@ -224,10 +224,15 @@ struct mosquitto_db{
 	struct mosquitto *contexts_by_id;
 	struct mosquitto *contexts_by_sock;
 	struct mosquitto *contexts_for_free;
-	struct mosquitto *contexts_bridge;
+#ifdef WITH_BRIDGE
+	struct mosquitto **bridges;
+#endif
 	struct _clientid_index_hash *clientid_index_hash;
 	struct mosquitto_msg_store *msg_store;
 	struct mosquitto_msg_store_load *msg_store_load;
+#ifdef WITH_BRIDGE
+	int bridge_count;
+#endif
 	int msg_store_count;
 	struct mqtt3_config *config;
 	int persistence_changes;

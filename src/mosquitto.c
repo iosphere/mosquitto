@@ -363,8 +363,13 @@ int main(int argc, char *argv[])
 		mqtt3_context_cleanup(&int_db, ctxt, true);
 	}
 #ifdef WITH_BRIDGE
-	HASH_ITER(hh_bridge, int_db.contexts_bridge, ctxt, ctxt_tmp){
-		mqtt3_context_cleanup(&int_db, ctxt, true);
+	for(i=0; i<int_db.bridge_count; i++){
+		if(int_db.bridges[i]){
+			mqtt3_context_cleanup(&int_db, int_db.bridges[i], true);
+		}
+	}
+	if(int_db.bridges){
+		_mosquitto_free(int_db.bridges);
 	}
 #endif
 	mosquitto__free_disused_contexts(&int_db);

@@ -45,6 +45,7 @@ Contributors:
 int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 {
 	struct mosquitto *new_context = NULL;
+	struct mosquitto **bridges;
 	char hostname[256];
 	int len;
 	char *id, *local_id;
@@ -120,7 +121,14 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 
 	bridge->try_private_accepted = true;
 
-	HASH_ADD_KEYPTR(hh_bridge, db->contexts_bridge, new_context->bridge->local_clientid, strlen(new_context->bridge->local_clientid), new_context);
+	bridges = _mosquitto_realloc(db->bridges, (db->bridge_count+1)*sizeof(struct mosquitto *));
+	if(bridges){
+		db->bridges = bridges;
+		db->bridge_count++;
+		db->bridges[db->bridge_count-1] = new_context;
+	}else{
+		return MOSQ_ERR_NOMEM;
+	}
 
 	return mqtt3_bridge_connect(db, new_context);
 }

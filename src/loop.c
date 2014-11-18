@@ -105,7 +105,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 
 		context_count = HASH_CNT(hh_sock, db->contexts_by_sock);
 #ifdef WITH_BRIDGE
-		context_count += HASH_CNT(hh_bridge, db->contexts_bridge);
+		context_count += db->bridge_count;
 #endif
 
 		if(listensock_count + context_count > pollfd_count || !pollfds){
@@ -185,7 +185,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 
 #ifdef WITH_BRIDGE
 		time_count = 0;
-		HASH_ITER(hh_bridge, db->contexts_bridge, context, ctxt_tmp){
+		for(i=0; i<db->bridge_count; i++){
+			if(!db->bridges[i]) continue;
+
+			context = db->bridges[i];
+
 			if(context->sock == INVALID_SOCKET){
 				if(time_count > 0){
 					time_count--;

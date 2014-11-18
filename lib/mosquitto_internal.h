@@ -251,9 +251,6 @@ struct mosquitto {
 	UT_hash_handle hh_id;
 	UT_hash_handle hh_sock;
 	struct mosquitto *for_free_next;
-#  ifdef WITH_BRIDGE
-	UT_hash_handle hh_bridge;
-#  endif
 #endif
 };
 
