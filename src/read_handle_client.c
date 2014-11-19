@@ -70,11 +70,11 @@ int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
 				}
 				for(i=0; i<context->bridge->topic_count; i++){
 					if(context->bridge->topics[i].direction == bd_in || context->bridge->topics[i].direction == bd_both){
-						if(_mosquitto_send_subscribe(context, NULL, false, context->bridge->topics[i].remote_topic, context->bridge->topics[i].qos)){
+						if(_mosquitto_send_subscribe(context, NULL, context->bridge->topics[i].remote_topic, context->bridge->topics[i].qos)){
 							return 1;
 						}
 					}else{
-						if(_mosquitto_send_unsubscribe(context, NULL, false, context->bridge->topics[i].remote_topic)){
+						if(_mosquitto_send_unsubscribe(context, NULL, context->bridge->topics[i].remote_topic)){
 							/* direction = inwards only. This means we should not be subscribed
 			 				 * to the topic. It is possible that we used to be subscribed to
 			 				 * this topic so unsubscribe. */

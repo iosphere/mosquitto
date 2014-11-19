@@ -323,7 +323,7 @@ void _mosquitto_message_retry_check_actual(struct mosquitto *mosq, struct mosqui
 				case mosq_ms_wait_for_pubcomp:
 					messages->timestamp = now;
 					messages->dup = true;
-					_mosquitto_send_pubrel(mosq, messages->msg.mid, true);
+					_mosquitto_send_pubrel(mosq, messages->msg.mid);
 					break;
 				default:
 					break;

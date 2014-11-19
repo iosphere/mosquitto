@@ -185,14 +185,14 @@ int _mosquitto_send_pubrec(struct mosquitto *mosq, uint16_t mid)
 	return _mosquitto_send_command_with_mid(mosq, PUBREC, mid, false);
 }
 
-int _mosquitto_send_pubrel(struct mosquitto *mosq, uint16_t mid, bool dup)
+int _mosquitto_send_pubrel(struct mosquitto *mosq, uint16_t mid)
 {
 #ifdef WITH_BROKER
 	if(mosq) _mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREL to %s (Mid: %d)", mosq->id, mid);
 #else
 	if(mosq) _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", mosq->id, mid);
 #endif
-	return _mosquitto_send_command_with_mid(mosq, PUBREL|2, mid, dup);
+	return _mosquitto_send_command_with_mid(mosq, PUBREL|2, mid, false);
 }
 
 /* For PUBACK, PUBCOMP, PUBREC, and PUBREL */

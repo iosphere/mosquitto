@@ -28,7 +28,6 @@ publish_packet = mosq_test.gen_publish("pub/qos2/test", qos=2, mid=mid, payload=
 publish_dup_packet = mosq_test.gen_publish("pub/qos2/test", qos=2, mid=mid, payload="message", dup=True)
 pubrec_packet = mosq_test.gen_pubrec(mid)
 pubrel_packet = mosq_test.gen_pubrel(mid)
-pubrel_dup_packet = mosq_test.gen_pubrel(mid, dup=True)
 pubcomp_packet = mosq_test.gen_pubcomp(mid)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -78,7 +77,7 @@ try:
                         if mosq_test.expect_packet(conn, "connect", connect_packet):
                             conn.send(connack_packet)
 
-                            if mosq_test.expect_packet(conn, "retried pubrel", pubrel_dup_packet):
+                            if mosq_test.expect_packet(conn, "retried pubrel", pubrel_packet):
                                 conn.send(pubcomp_packet)
 
                                 if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):

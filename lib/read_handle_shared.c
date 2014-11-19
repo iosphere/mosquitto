@@ -109,7 +109,7 @@ int _mosquitto_handle_pubrec(struct mosquitto *mosq)
 	rc = _mosquitto_message_out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
 #endif
 	if(rc) return rc;
-	rc = _mosquitto_send_pubrel(mosq, mid, false);
+	rc = _mosquitto_send_pubrel(mosq, mid);
 	if(rc) return rc;
 
 	return MOSQ_ERR_SUCCESS;

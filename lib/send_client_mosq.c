@@ -142,7 +142,7 @@ int _mosquitto_send_disconnect(struct mosquitto *mosq)
 	return _mosquitto_send_simple_command(mosq, DISCONNECT);
 }
 
-int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const char *topic, uint8_t topic_qos)
+int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, const char *topic, uint8_t topic_qos)
 {
 	/* FIXME - only deals with a single topic */
 	struct _mosquitto_packet *packet = NULL;
@@ -158,7 +158,7 @@ int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const 
 
 	packetlen = 2 + 2+strlen(topic) + 1;
 
-	packet->command = SUBSCRIBE | (dup<<3) | (1<<1);
+	packet->command = SUBSCRIBE | (1<<1);
 	packet->remaining_length = packetlen;
 	rc = _mosquitto_packet_alloc(packet);
 	if(rc){
@@ -187,7 +187,7 @@ int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const 
 }
 
 
-int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, bool dup, const char *topic)
+int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
 {
 	/* FIXME - only deals with a single topic */
 	struct _mosquitto_packet *packet = NULL;
@@ -203,7 +203,7 @@ int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, bool dup, cons
 
 	packetlen = 2 + 2+strlen(topic);
 
-	packet->command = UNSUBSCRIBE | (dup<<3) | (1<<1);
+	packet->command = UNSUBSCRIBE | (1<<1);
 	packet->remaining_length = packetlen;
 	rc = _mosquitto_packet_alloc(packet);
 	if(rc){

@@ -613,7 +613,7 @@ int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int q
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
 
-	return _mosquitto_send_subscribe(mosq, mid, false, sub, qos);
+	return _mosquitto_send_subscribe(mosq, mid, sub, qos);
 }
 
 int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
@@ -623,7 +623,7 @@ int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
 
-	return _mosquitto_send_unsubscribe(mosq, mid, false, sub);
+	return _mosquitto_send_unsubscribe(mosq, mid, sub);
 }
 
 int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *capath, const char *certfile, const char *keyfile, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata))
