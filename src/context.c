@@ -173,7 +173,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		msg = context->msgs;
 		while(msg){
 			next = msg->next;
-			msg->store->ref_count--;
+			mosquitto__db_msg_store_deref(db, &msg->store);
 			_mosquitto_free(msg);
 			msg = next;
 		}

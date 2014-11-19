@@ -95,7 +95,7 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	return rc;
 }
 
-static void subhier_clean(struct _mosquitto_subhier *subhier)
+static void subhier_clean(struct mosquitto_db *db, struct _mosquitto_subhier *subhier)
 {
 	struct _mosquitto_subhier *next;
 	struct _mosquitto_subleaf *leaf, *nextleaf;
@@ -109,9 +109,9 @@ static void subhier_clean(struct _mosquitto_subhier *subhier)
 			leaf = nextleaf;
 		}
 		if(subhier->retained){
-			subhier->retained->ref_count--;
+			mosquitto__db_msg_store_deref(db, &subhier->retained);
 		}
-		subhier_clean(subhier->children);
+		subhier_clean(db, subhier->children);
 		if(subhier->topic) _mosquitto_free(subhier->topic);
 
 		_mosquitto_free(subhier);
@@ -121,7 +121,7 @@ static void subhier_clean(struct _mosquitto_subhier *subhier)
 
 int mqtt3_db_close(struct mosquitto_db *db)
 {
-	subhier_clean(db->subs.children);
+	subhier_clean(db, db->subs.children);
 	mosquitto__db_msg_store_clean(db);
 
 	return MOSQ_ERR_SUCCESS;
@@ -181,6 +181,15 @@ void mosquitto__db_msg_store_clean(struct mosquitto_db *db)
 	}
 }
 
+void mosquitto__db_msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg_store **store)
+{
+	(*store)->ref_count--;
+	if((*store)->ref_count == 0){
+		mosquitto__db_msg_store_remove(db, *store);
+		store = NULL;
+	}
+}
+
 
 static void _message_remove(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **msg, struct mosquitto_client_msg *last)
 {
@@ -188,10 +197,7 @@ static void _message_remove(struct mosquitto_db *db, struct mosquitto *context, 
 		return;
 	}
 
-	(*msg)->store->ref_count--;
-	if((*msg)->store->ref_count == 0){
-		mosquitto__db_msg_store_remove(db, (*msg)->store);
-	}
+	mosquitto__db_msg_store_deref(db, &(*msg)->store);
 	if(last){
 		last->next = (*msg)->next;
 		if(!last->next){
@@ -453,10 +459,7 @@ int mqtt3_db_messages_delete(struct mosquitto_db *db, struct mosquitto *context)
 
 	tail = context->msgs;
 	while(tail){
-		tail->store->ref_count--;
-		if(tail->store->ref_count == 0){
-			mosquitto__db_msg_store_remove(db, tail->store);
-		}
+		mosquitto__db_msg_store_deref(db, &tail->store);
 		next = tail->next;
 		_mosquitto_free(tail);
 		tail = next;

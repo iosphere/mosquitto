@@ -526,7 +526,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	while(msg_tail){
 		if(msg_tail->direction == mosq_md_out){
 			if(mosquitto_acl_check(db, context, msg_tail->store->topic, MOSQ_ACL_READ) == MOSQ_ERR_ACL_DENIED){
-				msg_tail->store->ref_count--;
+				mosquitto__db_msg_store_deref(db, &msg_tail->store);
 				if(msg_prev){
 					msg_prev->next = msg_tail->next;
 					_mosquitto_free(msg_tail);
