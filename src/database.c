@@ -197,7 +197,9 @@ static void _message_remove(struct mosquitto_db *db, struct mosquitto *context, 
 		return;
 	}
 
-	mosquitto__db_msg_store_deref(db, &(*msg)->store);
+	if((*msg)->store){
+		mosquitto__db_msg_store_deref(db, &(*msg)->store);
+	}
 	if(last){
 		last->next = (*msg)->next;
 		if(!last->next){
@@ -488,7 +490,7 @@ int mqtt3_db_messages_easy_queue(struct mosquitto_db *db, struct mosquitto *cont
 	}
 	if(mqtt3_db_message_store(db, source_id, 0, topic, qos, payloadlen, payload, retain, &stored, 0)) return 1;
 
-	return mqtt3_db_messages_queue(db, source_id, topic, qos, retain, stored);
+	return mqtt3_db_messages_queue(db, source_id, topic, qos, retain, &stored);
 }
 
 int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id)
@@ -754,7 +756,7 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 			 * denied/dropped and is being processed so the client doesn't
 			 * keep resending it. That means we don't send it to other
 			 * clients. */
-			if(!topic || !mqtt3_db_messages_queue(db, source_id, topic, qos, retain, tail->store)){
+			if(!topic || !mqtt3_db_messages_queue(db, source_id, topic, qos, retain, &tail->store)){
 				_message_remove(db, context, &tail, last);
 				deleted = true;
 			}else{

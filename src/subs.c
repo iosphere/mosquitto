@@ -510,7 +510,7 @@ int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const c
 	return rc;
 }
 
-int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
+int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored)
 {
 	int rc = 0;
 	struct _mosquitto_subhier *subhier;
@@ -521,6 +521,12 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 
 	if(_sub_topic_tokenise(topic, &tokens)) return 1;
 
+	/* Protect this message until we have sent it to all
+	clients - this is required because websockets client calls
+	mqtt3_db_message_write(), which could remove the message if ref_count==0.
+	*/
+	(*stored)->ref_count++;
+
 	subhier = db->subs.children;
 	while(subhier){
 		if(!strcmp(subhier->topic, tokens->topic)){
@@ -530,11 +536,14 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 				 */
 				_sub_add(db, NULL, 0, subhier, tokens);
 			}
-			_sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored, true);
+			_sub_search(db, subhier, tokens, source_id, topic, qos, retain, *stored, true);
 		}
 		subhier = subhier->next;
 	}
 	_sub_topic_tokens_free(tokens);
+
+	/* Remove our reference and free if needed. */
+	mosquitto__db_msg_store_deref(db, stored);
 
 	return rc;
 }
