@@ -16,10 +16,14 @@ applications for Machine-to-Machine (M2M) and Internet of Things (IoT).
 Source
 ------
 
-The Mosquitto code is stored in a git repository. The URLs to access it are:
+The Mosquitto code is stored in a git repository. The URL for anonymous access is:
 
-- ssh://<username>@git.eclipse.org:29418/mosquitto/org.eclipse.mosquitto
-- https://<username>@git.eclipse.org/r/mosquitto/org.eclipse.mosquitto
+- http://git.eclipse.org/gitroot/mosquitto/org.eclipse.mosquitto.git
+
+Access via Gerrit (for code review) is through the following URLs:
+
+- ssh://username@git.eclipse.org:29418/mosquitto/org.eclipse.mosquitto
+- https://username@git.eclipse.org/r/mosquitto/org.eclipse.mosquitto
 
 A web browsable repository is available at
 
