@@ -22,6 +22,7 @@
 			<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
 			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
 			<arg><option>-I</option> <replaceable>client id prefix</replaceable></arg>
+			<arg><option>-k</option> <replaceable>keepalive time</replaceable></arg>
 			<arg><option>-p</option> <replaceable>port number</replaceable></arg>
 			<arg><option>-q</option> <replaceable>message QoS</replaceable></arg>
 			<arg><option>--quiet</option></arg>
@@ -205,6 +206,15 @@
 						resort to using this option in a production
 						environment, your setup is at fault and there is no
 						point using encryption.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-k</option></term>
+				<term><option>--keepalive</option></term>
+				<listitem>
+					<para>The number of seconds between sending PING commands
+					to the broker for the purposes of informing it we are still
+					connected and functioning. Defaults to 60 seconds.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
