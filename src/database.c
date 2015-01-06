@@ -186,7 +186,7 @@ void mosquitto__db_msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg
 	(*store)->ref_count--;
 	if((*store)->ref_count == 0){
 		mosquitto__db_msg_store_remove(db, *store);
-		store = NULL;
+		*store = NULL;
 	}
 }
 
