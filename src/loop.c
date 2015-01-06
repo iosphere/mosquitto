@@ -258,6 +258,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						g_clients_expired++;
 #endif
 						context->clean_session = true;
+						context->state = mosq_cs_expiring;
 						do_disconnect(db, context);
 					}
 				}
