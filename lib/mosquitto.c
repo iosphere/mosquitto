@@ -841,6 +841,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 #ifdef WITH_TLS
 		}else if(mosq->ssl && mosq->want_write){
 			FD_SET(mosq->sock, &writefds);
+			mosq->want_write = false;
 #endif
 		}
 		pthread_mutex_unlock(&mosq->out_packet_mutex);
