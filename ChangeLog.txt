@@ -48,6 +48,9 @@ Broker:
   and has been fixed so the broker no longer asks.
 - When using syslog logging on non-Windows OSs, it is now possible to specify
   the logging facility to one of local0-7 instead of the default "daemon".
+- The bridge_attempt_unsubscribe option has been added, to allow the sending
+  of UNSUBSCRIBE requests to be disabled for topics with "out" direction.
+  Closes bug #456899.
 
 Clients:
 - Both clients can now load default configuration options from a file.

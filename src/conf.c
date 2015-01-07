@@ -681,6 +681,17 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					if(_conf_attempt_resolve(config->default_listener.host, "bind_address", MOSQ_LOG_ERR, "Error")){
 						return MOSQ_ERR_INVAL;
 					}
+				}else if(!strcmp(token, "bridge_attempt_unsubscribe")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					if(_conf_parse_bool(&token, "bridge_attempt_unsubscribe", &cur_bridge->attempt_unsubscribe, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
 				}else if(!strcmp(token, "bridge_cafile")){
 #if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
@@ -1007,6 +1018,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						cur_bridge->restart_timeout = 30;
 						cur_bridge->threshold = 10;
 						cur_bridge->try_private = true;
+						cur_bridge->attempt_unsubscribe = true;
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
 						return MOSQ_ERR_INVAL;

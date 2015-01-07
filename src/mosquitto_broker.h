@@ -300,6 +300,7 @@ struct _mqtt3_bridge{
 	int restart_timeout;
 	int threshold;
 	bool lazy_reconnect;
+	bool attempt_unsubscribe;
 #ifdef WITH_TLS
 	char *tls_cafile;
 	char *tls_capath;

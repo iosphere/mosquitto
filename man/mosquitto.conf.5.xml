@@ -1221,6 +1221,21 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 				configure SSL/TLS support.</para>
 			<variablelist>
 				<varlistentry>
+					<term><option>bridge_attempt_unsubscribe</option> [ true | false ]</term>
+					<listitem>
+						<para>If a bridge has topics that have "out" direction,
+							the default behaviour is to send an unsubscribe
+							request to the remote broker on that topic. This
+							means that changing a topic direction from "in" to
+							"out" will not keep receiving incoming messages.
+							Sending these unsubscribe requests is not always
+							desirable, setting
+							<option>bridge_attempt_unsubscribe</option> to
+							<replaceable>false</replaceable> will disable
+							sending the unsubscribe request.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>bridge_cafile</option> <replaceable>file path</replaceable></term>
 					<listitem>
 						<para>One of <option>bridge_cafile</option> or
