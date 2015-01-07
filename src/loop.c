@@ -353,8 +353,9 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			libwebsocket_callback_on_writable(context->ws_context, context->wsi);
 		}
 		context->sock = INVALID_SOCKET;
-	}else{
+	}else
 #endif
+	{
 		if(db->config->connection_messages == true){
 			if(context->state != mosq_cs_disconnecting){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", context->id);
@@ -375,10 +376,8 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 				context->id = NULL;
 			}
 		}
-#ifdef WITH_WEBSOCKETS
+		context->state = mosq_cs_disconnected;
 	}
-#endif
-	context->state = mosq_cs_disconnected;
 }
 
 /* Error ocurred, probably an fd has been closed. 
