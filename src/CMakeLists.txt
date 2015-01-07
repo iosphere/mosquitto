@@ -90,7 +90,7 @@ add_definitions (-DWITH_BROKER)
 
 add_executable(mosquitto ${MOSQ_SRCS})
 
-set (MOSQ_LIBS ${OPENSSL_LIBRARIES})
+set (MOSQ_LIBS ${MOSQ_LIBS} ${OPENSSL_LIBRARIES})
 
 if (UNIX)
 	if (APPLE)
