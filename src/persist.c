@@ -431,6 +431,7 @@ static int _db_client_msg_restore(struct mosquitto_db *db, const char *client_id
 		return 1;
 	}
 	cmsg->store = load->store;
+	cmsg->store->ref_count++;
 
 	context = _db_find_or_add_context(db, client_id, 0);
 	if(!context){
