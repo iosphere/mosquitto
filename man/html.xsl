@@ -16,7 +16,7 @@
 		<xsl:call-template name="user.preroot"/>
 		<xsl:call-template name="root.messages"/>
 
-		<xsl:text disable-output-escaping="yes"><![CDATA[<?php include '_includes/bare_header.php' ?>]]></xsl:text>
+		<xsl:text disable-output-escaping="yes"><![CDATA[<?php include '../_includes/header.php' ?>]]></xsl:text>
 			<xsl:call-template name="body.attributes"/>
 			<xsl:call-template name="user.header.content">
 				<xsl:with-param name="node" select="$doc"/>
@@ -25,7 +25,7 @@
 			<xsl:call-template name="user.footer.content">
 				<xsl:with-param name="node" select="$doc"/>
 			</xsl:call-template>
-		<xsl:text disable-output-escaping="yes"><![CDATA[<?php include '_includes/bare_footer.php' ?>]]></xsl:text>
+		<xsl:text disable-output-escaping="yes"><![CDATA[<?php include '../_includes/footer.php' ?>]]></xsl:text>
 	
 		<!-- Generate any css files only once, not once per chunk -->
 		<xsl:call-template name="generate.css.files"/>
