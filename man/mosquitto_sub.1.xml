@@ -498,7 +498,7 @@
 	<refsect1>
 		<title>Bugs</title>
 		<para><command>mosquitto_sub</command> bug information can be found at
-		<uri type="webpage">http://launchpad.net/mosquitto</uri></para>
+			<uri type="webpage">https://bugs.eclipse.org/bugs/describecomponents.cgi?product=Mosquitto</uri></para>
 	</refsect1>
 
 	<refsect1>

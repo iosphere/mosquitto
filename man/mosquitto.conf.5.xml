@@ -1347,7 +1347,7 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 	<refsect1>
 		<title>Bugs</title>
 		<para><command>mosquitto</command> bug information can be found at <uri
-		type="webpage">http://launchpad.net/mosquitto</uri></para>
+				type="webpage">https://bugs.eclipse.org/bugs/describecomponents.cgi?product=Mosquitto</uri></para>
 	</refsect1>
 
 	<refsect1>
