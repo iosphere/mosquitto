@@ -89,7 +89,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 
 	if(!result){
 		for(i=0; i<cfg->topic_count; i++){
-			mosquitto_subscribe(mosq, NULL, cfg->topics[i], cfg->topic_qos);
+			mosquitto_subscribe(mosq, NULL, cfg->topics[i], cfg->qos);
 		}
 	}else{
 		if(result && !cfg->quiet){

@@ -73,7 +73,6 @@ struct mosq_config {
 	bool clean_session; /* sub */
 	char **topics; /* sub */
 	int topic_count; /* sub */
-	int topic_qos; /* sub */
 	bool no_retain; /* sub */
 	char **filter_outs; /* sub */
 	int filter_out_count; /* sub */
