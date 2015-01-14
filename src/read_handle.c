@@ -191,7 +191,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 			goto process_bad_message;
 		}
-		payload = _mosquitto_malloc(payloadlen+1);
+		payload = _mosquitto_calloc(payloadlen+1, 1);
 		if(!payload){
 			_mosquitto_free(topic);
 			return 1;
@@ -201,7 +201,6 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 			_mosquitto_free(payload);
 			return 1;
 		}
-		payload[payloadlen] = '\0';
 	}
 
 	/* Check for topic access */

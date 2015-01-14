@@ -590,9 +590,10 @@ int _mosquitto_read_string(struct _mosquitto_packet *packet, char **str)
 
 	if(packet->pos+len > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
 
-	*str = _mosquitto_calloc(len+1, sizeof(char));
+	*str = _mosquitto_malloc(len+1);
 	if(*str){
 		memcpy(*str, &(packet->payload[packet->pos]), len);
+		(*str)[len] = '\0';
 		packet->pos += len;
 	}else{
 		return MOSQ_ERR_NOMEM;
