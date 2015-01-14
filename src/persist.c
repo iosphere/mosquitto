@@ -342,12 +342,13 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool shutdown)
 	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Saving in-memory database to %s.", db->config->persistence_filepath);
 
 	len = strlen(db->config->persistence_filepath)+5;
-	outfile = _mosquitto_calloc(len+1, 1);
+	outfile = _mosquitto_malloc(len+1);
 	if(!outfile){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	snprintf(outfile, len, "%s.new", db->config->persistence_filepath);
+	outfile[len] = '\0';
 	db_fptr = _mosquitto_fopen(outfile, "wb");
 	if(db_fptr == NULL){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, unable to open %s for writing.", outfile);
@@ -479,7 +480,7 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	if(db_version == 2){
 		disconnect_t = time(NULL);
 	}else{
-		read_e(db_fptr, &disconnect_t, sizeof(time_t));
+		read_e(db_fptr, &disconnect_t, sizeof(uint32_t));
 	}
 
 	context = _db_find_or_add_context(db, client_id, last_mid);

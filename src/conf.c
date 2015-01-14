@@ -1074,12 +1074,13 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 
 						do{
 							len = strlen(token)+1+strlen(find_data.cFileName)+1;
-							conf_file = _mosquitto_calloc(len+1, sizeof(char));
+							conf_file = _mosquitto_malloc(len+1);
 							if(!conf_file){
 								FindClose(fh);
 								return MOSQ_ERR_NOMEM;
 							}
 							snprintf(conf_file, len, "%s\\%s", token, find_data.cFileName);
+							conf_file[len] = '\0';
 								
 							rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
 							if(rc){
@@ -1102,12 +1103,13 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							if(strlen(de->d_name) > 5){
 								if(!strcmp(&de->d_name[strlen(de->d_name)-5], ".conf")){
 									len = strlen(token)+1+strlen(de->d_name)+1;
-									conf_file = _mosquitto_calloc(len+1, sizeof(char));
+									conf_file = _mosquitto_malloc(len+1);
 									if(!conf_file){
 										closedir(dh);
 										return MOSQ_ERR_NOMEM;
 									}
 									snprintf(conf_file, len, "%s/%s", token, de->d_name);
+									conf_file[len] = '\0';
 									
 									rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
 									if(rc){
@@ -1757,12 +1759,13 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					if(cur_topic->local_prefix){
 						if(cur_topic->topic){
 							len = strlen(cur_topic->topic) + strlen(cur_topic->local_prefix)+1;
-							cur_topic->local_topic = _mosquitto_calloc(len+1, sizeof(char));
+							cur_topic->local_topic = _mosquitto_malloc(len+1);
 							if(!cur_topic->local_topic){
 								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 								return MOSQ_ERR_NOMEM;
 							}
 							snprintf(cur_topic->local_topic, len+1, "%s%s", cur_topic->local_prefix, cur_topic->topic);
+							cur_topic->local_topic[len] = '\0';
 						}else{
 							cur_topic->local_topic = _mosquitto_strdup(cur_topic->local_prefix);
 							if(!cur_topic->local_topic){
@@ -1781,12 +1784,13 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					if(cur_topic->remote_prefix){
 						if(cur_topic->topic){
 							len = strlen(cur_topic->topic) + strlen(cur_topic->remote_prefix)+1;
-							cur_topic->remote_topic = _mosquitto_calloc(len+1, sizeof(char));
+							cur_topic->remote_topic = _mosquitto_malloc(len+1);
 							if(!cur_topic->remote_topic){
 								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 								return MOSQ_ERR_NOMEM;
 							}
 							snprintf(cur_topic->remote_topic, len, "%s%s", cur_topic->remote_prefix, cur_topic->topic);
+							cur_topic->remote_topic[len] = '\0';
 						}else{
 							cur_topic->remote_topic = _mosquitto_strdup(cur_topic->remote_prefix);
 							if(!cur_topic->remote_topic){
