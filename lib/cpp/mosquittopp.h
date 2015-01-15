@@ -53,7 +53,7 @@ class mosqpp_EXPORT mosquittopp {
 		struct mosquitto *m_mosq;
 	public:
 		mosquittopp(const char *id=NULL, bool clean_session=true);
-		~mosquittopp();
+		virtual ~mosquittopp();
 
 		int reinitialise(const char *id, bool clean_session);
 		int socket();

@@ -68,6 +68,8 @@ Client library:
   retrying.
 - SRV support is now not compiled in by default.
 - Wildcard TLS certificates are now supported.
+- mosquittopp now has a virtual destructor. Closes bug #452915.
+
 
 1.3.5 - 20141008
 ================
