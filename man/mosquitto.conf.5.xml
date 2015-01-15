@@ -454,7 +454,7 @@
 						to persistent clients that will never reconnect. This
 						option allows these clients to be removed.</para>
 					<para>The expiration period should be an integer followed
-						by one of d w m y for day, week, month and year
+						by one of h d w m y for hour, day, week, month and year
 						respectively. For example:</para>
 					<itemizedlist mark="circle">
 						<listitem><para>persistent_client_expiration 2m</para></listitem>

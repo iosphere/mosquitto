@@ -53,6 +53,8 @@ Broker:
   of UNSUBSCRIBE requests to be disabled for topics with "out" direction.
   Closes bug #456899.
 - Wildcard TLS certificates are now supported for bridges.
+- Support for "hour" client expiration lengths for the
+  persistent_client_expiration option. Closes bug #425835.
 
 Clients:
 - Both clients can now load default configuration options from a file.

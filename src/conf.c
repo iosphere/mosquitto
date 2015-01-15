@@ -1479,6 +1479,9 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						switch(token[strlen(token)-1]){
+							case 'h':
+								expiration_mult = 3600;
+								break;
 							case 'd':
 								expiration_mult = 86400;
 								break;
