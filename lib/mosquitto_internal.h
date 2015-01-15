@@ -24,7 +24,9 @@ Contributors:
 #endif
 
 #ifdef WITH_TLS
-#include <openssl/ssl.h>
+#  include <openssl/ssl.h>
+#else
+#  include <time.h>
 #endif
 #include <stdlib.h>
 

@@ -93,8 +93,8 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	struct mosquitto *found_context;
 	int slen;
 	struct _mosquitto_subleaf *leaf;
-#ifdef WITH_TLS
 	int i;
+#ifdef WITH_TLS
 	X509 *client_cert = NULL;
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
