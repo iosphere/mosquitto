@@ -16,6 +16,7 @@ Important changes:
 - New use_username_as_clientid option on the broker, for preventing hijacking
   of a client id.
 - The client library and clients now have experimental SOCKS5 support.
+- Wildcard TLS certificates are now supported for bridges and clients.
 
 
 Broker:
@@ -51,6 +52,7 @@ Broker:
 - The bridge_attempt_unsubscribe option has been added, to allow the sending
   of UNSUBSCRIBE requests to be disabled for topics with "out" direction.
   Closes bug #456899.
+- Wildcard TLS certificates are now supported for bridges.
 
 Clients:
 - Both clients can now load default configuration options from a file.
@@ -63,6 +65,7 @@ Client library:
 - mosquitto_loop_forever now quits after a fatal error, rather than blindly
   retrying.
 - SRV support is now not compiled in by default.
+- Wildcard TLS certificates are now supported.
 
 1.3.5 - 20141008
 ================
