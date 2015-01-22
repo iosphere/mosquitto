@@ -17,6 +17,7 @@ Important changes:
   of a client id.
 - The client library and clients now have experimental SOCKS5 support.
 - Wildcard TLS certificates are now supported for bridges and clients.
+- The clients have support for config files with default options.
 
 
 Broker:
@@ -61,6 +62,7 @@ Clients:
 - Add -1 (oneshot) option to mosquitto_sub.
 - Add --proxy SOCKS5 support for both clients.
 - Pub client supports setting its keepalive. Closes bug #454852.
+- Add support for config files with default options.
 
 Client library:
 - Add experimental SOCKS5 support.
