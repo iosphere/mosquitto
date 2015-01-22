@@ -59,9 +59,9 @@
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 				</arg>
 			</group>
+			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
 			<arg choice='opt' rep='repeat'><option>-T</option> <replaceable>filter-out</replaceable></arg>
 			<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
-			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_sub</command>
