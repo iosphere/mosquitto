@@ -3,14 +3,14 @@ include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/src
 		${STDBOOL_H_PATH} ${STDINT_H_PATH})
 
 if (UNIX)
-	set (CMAKE_EXE_LINKER_FLAGS "-Wl,--dynamic-list=${mosquitto_SOURCE_DIR}/src/linker.syms")
-	set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+	if (APPLE)
+		# FIXME - something else needs fixing before this will work.
+		#set (CMAKE_EXE_LINKER_FLAGS "-Wl,-exported_symbols_list -Wl,${mosquitto_SOURCE_DIR}/src/linker-macosx.syms")
+	else (APPLE)
+		set (CMAKE_EXE_LINKER_FLAGS "-Wl,--dynamic-list=${mosquitto_SOURCE_DIR}/src/linker.syms")
+		set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+	endif (APPLE)
 endif (UNIX)
-
-# FIXME - something else needs fixing before this will work.
-#if (APPLE)
-#	set (CMAKE_EXE_LINKER_FLAGS "-Wl,-exported_symbols_list -Wl,${mosquitto_SOURCE_DIR}/src/linker-macosx.syms")
-#endif (APPLE)
 
 set (MOSQ_SRCS
 	conf.c
