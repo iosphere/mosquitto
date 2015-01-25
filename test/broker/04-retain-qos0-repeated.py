@@ -26,7 +26,7 @@ subscribe_packet = mosq_test.gen_subscribe(mid, "retain/qos0/test", 0)
 suback_packet = mosq_test.gen_suback(mid, 0)
 
 unsub_mid = 13
-unsubscribe_packet = mosq_test.gen_unsubscribe(unsub_mid, "retain/qos0/test/")
+unsubscribe_packet = mosq_test.gen_unsubscribe(unsub_mid, "retain/qos0/test")
 unsuback_packet = mosq_test.gen_unsuback(unsub_mid)
 
 cmd = ['../../src/mosquitto', '-p', '1888']
