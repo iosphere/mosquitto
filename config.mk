@@ -1,6 +1,9 @@
 # =============================================================================
 # User configuration section.
 #
+# These options control compilation on all systems apart from Windows and Mac
+# OS X. Use CMake to compile on Windows and Mac.
+#
 # Largely, these are options that are designed to make mosquitto run more
 # easily in restrictive environments by removing features.
 #
@@ -94,6 +97,7 @@ DB_HTML_XSL=man/html.xsl
 #MANCOUNTRIES=en_GB
 
 UNAME:=$(shell uname -s)
+
 ifeq ($(UNAME),SunOS)
 	ifeq ($(CC),cc)
 		CFLAGS?=-O

@@ -1,4 +1,8 @@
-# This is a cmake script.
+# This is a cmake script. Process it with the CMake gui or command line utility
+# to produce makefiles / Visual Studio project files on Mac OS X and Windows.
+#
+# To configure the build options either use the CMake gui, or run the command
+# line utility including the "-i" option.
 
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 

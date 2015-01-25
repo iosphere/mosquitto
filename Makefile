@@ -14,6 +14,10 @@ docs :
 binary : mosquitto
 
 mosquitto :
+ifeq ($(UNAME),Darwin)
+	$(error Please compile using CMake on Mac OS X)
+endif
+
 	set -e; for d in ${DIRS}; do $(MAKE) -C $${d}; done
 
 clean :
