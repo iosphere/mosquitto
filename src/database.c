@@ -483,7 +483,7 @@ int mqtt3_db_messages_easy_queue(struct mosquitto_db *db, struct mosquitto *cont
 
 	if(!topic) return MOSQ_ERR_INVAL;
 
-	if(context){
+	if(context && context->id){
 		source_id = context->id;
 	}else{
 		source_id = "";

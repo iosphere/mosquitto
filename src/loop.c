@@ -85,6 +85,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 #endif
 	int context_count;
 	time_t expiration_check_time = 0;
+	char *id;
 
 #ifndef WIN32
 	sigemptyset(&sigblock);
@@ -175,7 +176,12 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 					}
 				}else{
 					if(db->config->connection_messages == true){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", context->id);
+						if(context->id){
+							id = context->id;
+						}else{
+							id = "<unknown>";
+						}
+						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
 					}
 					/* Client has exceeded keepalive*1.5 */
 					do_disconnect(db, context);
@@ -253,7 +259,12 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 					 * expire it and clean up.
 					 */
 					if(now_time > context->disconnect_t+db->config->persistent_client_expiration){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", context->id);
+						if(context->id){
+							id = context->id;
+						}else{
+							id = "<unknown>";
+						}
+						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
 #ifdef WITH_SYS_TREE
 						g_clients_expired++;
 #endif
@@ -341,6 +352,8 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 
 void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
+	char *id;
+
 	if(context->state == mosq_cs_disconnected){
 		return;
 	}
@@ -357,10 +370,15 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 	{
 		if(db->config->connection_messages == true){
-			if(context->state != mosq_cs_disconnecting){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", context->id);
+			if(context->id){
+				id = context->id;
 			}else{
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", context->id);
+				id = "<unknown>";
+			}
+			if(context->state != mosq_cs_disconnecting){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
+			}else{
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", id);
 			}
 		}
 		mqtt3_context_disconnect(db, context);
