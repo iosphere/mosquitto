@@ -264,6 +264,11 @@ bool mosquittopp::want_write()
 	return mosquitto_want_write(m_mosq);
 }
 
+int mosquittopp::opts_set(enum mosq_opt_t option, void *value)
+{
+	return mosquitto_opts_set(m_mosq, option, value);
+}
+
 int mosquittopp::threaded_set(bool threaded)
 {
 	return mosquitto_threaded_set(m_mosq, threaded);

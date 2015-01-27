@@ -60,6 +60,7 @@
 				</arg>
 			</group>
 			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
+			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
 			<arg choice='opt' rep='repeat'><option>-T</option> <replaceable>filter-out</replaceable></arg>
 			<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
 		</cmdsynopsis>
@@ -412,6 +413,16 @@
 					argument, messages will be printed as "topic payload". When
 					this argument is not given, the messages are printed as
 					"payload".</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-V</option></term>
+				<term><option>--protocol-version</option></term>
+				<listitem>
+					<para>Specify which version of the MQTT protocol should be
+						used when connecting to the rmeote broker. Can be
+						<option>mqttv31</option> or <option>mqttv311</option>.
+						Defaults to <option>mqttv31</option>.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

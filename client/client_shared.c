@@ -42,6 +42,7 @@ void init_config(struct mosq_config *cfg)
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
 	cfg->eol = true;
+	cfg->protocol_version = MQTT_PROTOCOL_v31;
 }
 
 void client_config_cleanup(struct mosq_config *cfg)
@@ -420,6 +421,21 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}else{
 				cfg->pub_mode = MSGMODE_NULL;
 			}
+		}else if(!strcmp(argv[i], "-V") || !strcmp(argv[i], "--protocol-version")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --protocol-version argument given but no version specified.\n\n");
+				return 1;
+			}else{
+				if(!strcmp(argv[i+1], "mqttv31")){
+					cfg->protocol_version = MQTT_PROTOCOL_v31;
+				}else if(!strcmp(argv[i+1], "mqttv311")){
+					cfg->protocol_version = MQTT_PROTOCOL_v311;
+				}else{
+					fprintf(stderr, "Error: Invalid protocol version argument given.\n\n");
+					return 1;
+				}
+				i++;
+			}
 #ifdef WITH_SOCKS
 		}else if(!strcmp(argv[i], "--proxy")){
 			if(i==argc-1){
@@ -668,6 +684,7 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		}
 	}
 #endif
+	mosquitto_opts_set(mosq, MOSQ_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
 	return MOSQ_ERR_SUCCESS;
 }
 
