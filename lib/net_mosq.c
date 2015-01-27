@@ -372,6 +372,32 @@ int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t po
 	return rc;
 }
 
+#ifdef WITH_TLS
+int mosquitto__socket_connect_tls(struct mosquitto *mosq)
+{
+	int ret;
+
+	ret = SSL_connect(mosq->ssl);
+	if(ret != 1){
+		ret = SSL_get_error(mosq->ssl, ret);
+		if(ret == SSL_ERROR_WANT_READ){
+			mosq->want_connect = true;
+			/* We always try to read anyway */
+		}else if(ret == SSL_ERROR_WANT_WRITE){
+			mosq->want_write = true;
+			mosq->want_connect = true;
+		}else{
+			COMPAT_CLOSE(mosq->sock);
+			mosq->sock = INVALID_SOCKET;
+			return MOSQ_ERR_TLS;
+		}
+	}else{
+		mosq->want_connect = false;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+#endif
+
 /* Create a socket and connect it to 'ip' on port 'port'.
  * Returns -1 on failure (ip is NULL, socket creation/connection error)
  * Returns sock number on success.
@@ -519,18 +545,11 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 		}
 		SSL_set_bio(mosq->ssl, bio, bio);
 
-		ret = SSL_connect(mosq->ssl);
-		if(ret != 1){
-			ret = SSL_get_error(mosq->ssl, ret);
-			if(ret == SSL_ERROR_WANT_READ){
-				/* We always try to read anyway */
-			}else if(ret == SSL_ERROR_WANT_WRITE){
-				mosq->want_write = true;
-			}else{
-				COMPAT_CLOSE(sock);
-				return MOSQ_ERR_TLS;
-			}
+		mosq->sock = sock;
+		if(mosquitto__socket_connect_tls(mosq)){
+			return MOSQ_ERR_TLS;
 		}
+
 	}
 #endif
 

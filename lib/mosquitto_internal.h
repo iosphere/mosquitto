@@ -180,6 +180,7 @@ struct mosquitto {
 	bool tls_insecure;
 #endif
 	bool want_write;
+	bool want_connect;
 #if defined(WITH_THREADING) && !defined(WITH_BROKER)
 	pthread_mutex_t callback_mutex;
 	pthread_mutex_t log_callback_mutex;
