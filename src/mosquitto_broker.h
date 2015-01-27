@@ -286,6 +286,7 @@ struct _mqtt3_bridge{
 	struct _mqtt3_bridge_topic *topics;
 	int topic_count;
 	bool topic_remapping;
+	enum _mosquitto_protocol protocol_version;
 	time_t restart_t;
 	char *remote_clientid;
 	char *remote_username;

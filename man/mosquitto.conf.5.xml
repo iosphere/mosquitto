@@ -900,6 +900,31 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>bridge_attempt_unsubscribe</option> [ true | false ]</term>
+				<listitem>
+					<para>If a bridge has topics that have "out" direction, the
+						default behaviour is to send an unsubscribe request to
+						the remote broker on that topic. This means that
+						changing a topic direction from "in" to "out" will not
+						keep receiving incoming messages. Sending these
+						unsubscribe requests is not always desirable, setting
+						<option>bridge_attempt_unsubscribe</option> to
+						<replaceable>false</replaceable> will disable sending
+						the unsubscribe request. Defaults to
+						<replaceable>true</replaceable>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>bridge_protocol_version</option> <replaceable>version</replaceable></term>
+				<listitem>
+					<para>Set the version of the MQTT protocol to use with for
+						this bridge. Can be one of
+						<replaceable>mqttv31</replaceable> or
+						<replaceable>mqttv311</replaceable>. Defaults to
+						<replaceable>mqttv31</replaceable>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>cleansession</option> [ true | false ]</term>
 				<listitem>
 					<para>Set the clean session option for this bridge. Setting

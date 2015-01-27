@@ -120,6 +120,7 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 #endif
 
 	bridge->try_private_accepted = true;
+	new_context->protocol = bridge->protocol_version;
 
 	bridges = _mosquitto_realloc(db->bridges, (db->bridge_count+1)*sizeof(struct mosquitto *));
 	if(bridges){

@@ -859,6 +859,30 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
+				}else if(!strcmp(token, "bridge_protocol_version")){
+#ifdef WITH_BRIDGE
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(!strcmp(token, "mqttv31")){
+							cur_bridge->protocol_version = mosq_p_mqtt31;
+						}else if(!strcmp(token, "mqttv311")){
+							cur_bridge->protocol_version = mosq_p_mqtt311;
+						}else{
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge_protocol_version value (%s).", token);
+							return MOSQ_ERR_INVAL;
+						}
+					}else{
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_protocol_version value in configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
 				}else if(!strcmp(token, "bridge_psk")){
 #if defined(WITH_BRIDGE) && defined(REAL_WITH_TLS_PSK)
 					if(reload) continue; // FIXME
@@ -1019,6 +1043,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						cur_bridge->threshold = 10;
 						cur_bridge->try_private = true;
 						cur_bridge->attempt_unsubscribe = true;
+						cur_bridge->protocol_version = mosq_p_mqtt31;
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
 						return MOSQ_ERR_INVAL;

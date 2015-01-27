@@ -19,6 +19,7 @@ Important changes:
 - Wildcard TLS certificates are now supported for bridges and clients.
 - The clients have support for config files with default options.
 - Client and client libraries have support for MQTT v3.1.1.
+- Bridge support for MQTT v3.1.1.
 
 
 Broker:
@@ -57,6 +58,7 @@ Broker:
 - Wildcard TLS certificates are now supported for bridges.
 - Support for "hour" client expiration lengths for the
   persistent_client_expiration option. Closes bug #425835.
+- Bridge support for MQTT v3.1.1.
 
 Clients:
 - Both clients can now load default configuration options from a file.
