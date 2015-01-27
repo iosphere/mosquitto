@@ -99,12 +99,14 @@
 						listed will have access. Topic access is added with
 						lines of the format:</para>
 
-					<para><code>topic [read|write] &lt;topic&gt;</code></para>
+					<para><code>topic [read|write|readwrite] &lt;topic&gt;</code></para>
 
-					<para>The access type is controlled using "read" or
-						"write". This parameter is optional - if not given then
-						the access is read/write.  &lt;topic&gt; can contain
-						the + or # wildcards as in subscriptions.</para>
+					<para>The access type is controlled using "read", "write" or
+						"readwrite". This parameter is optional (unless
+						&lt;topic&gt; includes a space character) - if not
+						given then the access is read/write.  &lt;topic&gt; can
+						contain the + or # wildcards as in
+						subscriptions.</para>
 
 					<para>The first set of topics are applied to anonymous
 						clients, assuming <option>allow_anonymous</option> is
@@ -121,7 +123,7 @@
 						substitution within the topic. The form is the same as
 						for the topic keyword, but using pattern as the
 						keyword.</para>
-					<para><code>pattern [read|write] &lt;topic&gt;</code></para>
+					<para><code>pattern [read|write|readwrite] &lt;topic&gt;</code></para>
 					
 					<para>The patterns available for substition are:</para>
 					<itemizedlist mark="circle">

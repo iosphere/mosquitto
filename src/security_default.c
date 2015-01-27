@@ -364,7 +364,7 @@ static int _aclfile_parse(struct mosquitto_db *db)
 					fclose(aclfile);
 					return MOSQ_ERR_INVAL;
 				}
-				token = strtok_r(NULL, " ", &saveptr);
+				token = strtok_r(NULL, "", &saveptr);
 				if(token){
 					topic = token;
 				}else{
@@ -376,8 +376,10 @@ static int _aclfile_parse(struct mosquitto_db *db)
 						access = MOSQ_ACL_READ;
 					}else if(!strcmp(access_s, "write")){
 						access = MOSQ_ACL_WRITE;
+					}else if(!strcmp(access_s, "readwrite")){
+						access = MOSQ_ACL_READ | MOSQ_ACL_WRITE;
 					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty invalid topic access type in acl_file.");
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid topic access type \"%s\" in acl_file.", access_s);
 						if(user) _mosquitto_free(user);
 						fclose(aclfile);
 						return MOSQ_ERR_INVAL;
@@ -395,7 +397,7 @@ static int _aclfile_parse(struct mosquitto_db *db)
 					return rc;
 				}
 			}else if(!strcmp(token, "user")){
-				token = strtok_r(NULL, " ", &saveptr);
+				token = strtok_r(NULL, "", &saveptr);
 				if(token){
 					if(user) _mosquitto_free(user);
 					user = _mosquitto_strdup(token);

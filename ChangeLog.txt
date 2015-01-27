@@ -62,6 +62,8 @@ Broker:
 - Root privileges are now dropped after starting listeners and loading
   certificates/private keys, to allow private keys to have their permissions
   restricted to the root user only. Closes bug #452914.
+- Usernames and topics given in ACL files can now include a space. Closes bug
+  #431780.
 
 Clients:
 - Both clients can now load default configuration options from a file.
