@@ -42,7 +42,7 @@ void init_config(struct mosq_config *cfg)
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
 	cfg->eol = true;
-	cfg->protocol_version = MQTT_PROTOCOL_v31;
+	cfg->protocol_version = MQTT_PROTOCOL_V31;
 }
 
 void client_config_cleanup(struct mosq_config *cfg)
@@ -427,9 +427,9 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				if(!strcmp(argv[i+1], "mqttv31")){
-					cfg->protocol_version = MQTT_PROTOCOL_v31;
+					cfg->protocol_version = MQTT_PROTOCOL_V31;
 				}else if(!strcmp(argv[i+1], "mqttv311")){
-					cfg->protocol_version = MQTT_PROTOCOL_v311;
+					cfg->protocol_version = MQTT_PROTOCOL_V311;
 				}else{
 					fprintf(stderr, "Error: Invalid protocol version argument given.\n\n");
 					return 1;
