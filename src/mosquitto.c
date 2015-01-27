@@ -228,8 +228,6 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
-	rc = drop_privileges(&config);
-	if(rc != MOSQ_ERR_SUCCESS) return rc;
 
 	rc = mqtt3_db_open(&config, &int_db);
 	if(rc != MOSQ_ERR_SUCCESS){
@@ -306,6 +304,9 @@ int main(int argc, char *argv[])
 #endif
 		}
 	}
+
+	rc = drop_privileges(&config);
+	if(rc != MOSQ_ERR_SUCCESS) return rc;
 
 	signal(SIGINT, handle_sigint);
 	signal(SIGTERM, handle_sigint);

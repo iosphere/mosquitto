@@ -59,6 +59,9 @@ Broker:
 - Support for "hour" client expiration lengths for the
   persistent_client_expiration option. Closes bug #425835.
 - Bridge support for MQTT v3.1.1.
+- Root privileges are now dropped after starting listeners and loading
+  certificates/private keys, to allow private keys to have their permissions
+  restricted to the root user only. Closes bug #452914.
 
 Clients:
 - Both clients can now load default configuration options from a file.
