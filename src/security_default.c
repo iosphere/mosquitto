@@ -265,6 +265,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 		tlen = strlen(acl_root->topic);
 
 		if(acl_root->ucount && !context->username){
+			acl_root = acl_root->next;
 			continue;
 		}
 
@@ -305,7 +306,6 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 				return MOSQ_ERR_SUCCESS;
 			}
 		}
-
 
 		acl_root = acl_root->next;
 	}

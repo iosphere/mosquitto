@@ -64,6 +64,8 @@ Broker:
   restricted to the root user only. Closes bug #452914.
 - Usernames and topics given in ACL files can now include a space. Closes bug
   #431780.
+- Fix hang if pattern acl contains a %u but an anonymous client connect.
+  Closes bug #455402.
 
 Clients:
 - Both clients can now load default configuration options from a file.
