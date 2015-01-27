@@ -139,6 +139,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	}else{
 		mosq->userdata = mosq;
 	}
+	mosq->protocol = mosq_p_mqtt31;
 	mosq->sock = INVALID_SOCKET;
 	mosq->sockpairR = INVALID_SOCKET;
 	mosq->sockpairW = INVALID_SOCKET;
