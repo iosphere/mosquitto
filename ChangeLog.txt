@@ -66,6 +66,7 @@ Broker:
   #431780.
 - Fix hang if pattern acl contains a %u but an anonymous client connect.
   Closes bug #455402.
+- Fix man page installation with cmake. Closes bug #458843.
 
 Clients:
 - Both clients can now load default configuration options from a file.
