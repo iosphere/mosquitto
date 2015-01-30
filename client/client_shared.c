@@ -252,12 +252,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 			}
 			i++;
-		}else if(!strcmp(argv[i], "-1") || !strcmp(argv[i], "--oneshot")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}else{
-				cfg->oneshot = true;
-			}
 		}else if(!strcmp(argv[i], "-A")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -A argument given but no address specified.\n\n");
@@ -300,6 +294,22 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			i++;
 #endif
+		}else if(!strcmp(argv[i], "-C")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}else{
+				if(i==argc-1){
+					fprintf(stderr, "Error: -C argument given but no count specified.\n\n");
+					return 1;
+				}else{
+					cfg->msg_count = atoi(argv[i+1]);
+					if(cfg->msg_count < 1){
+						fprintf(stderr, "Error: Invalid message count \"%d\".\n\n", cfg->msg_count);
+						return 1;
+					}
+				}
+				i++;
+			}
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
 			cfg->debug = true;
 		}else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--file")){

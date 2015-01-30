@@ -70,7 +70,8 @@ Broker:
 
 Clients:
 - Both clients can now load default configuration options from a file.
-- Add -1 (oneshot) option to mosquitto_sub.
+- Add -C option to mosquitto_sub to allow the client to quit after receiving a
+  certain count of messages. Closes bug #453850.
 - Add --proxy SOCKS5 support for both clients.
 - Pub client supports setting its keepalive. Closes bug #454852.
 - Add support for config files with default options.

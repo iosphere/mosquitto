@@ -17,9 +17,9 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>mosquitto_sub</command>
-			<arg><option>-1</option></arg>
 			<arg><option>-A</option> <replaceable>bind_address</replaceable></arg>
 			<arg><option>-c</option></arg>
+			<arg><option>-C</option> <replaceable>msg count</replaceable></arg>
 			<arg><option>-d</option></arg>
 			<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
 			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
@@ -96,19 +96,6 @@
 			and not processed any further.</para>
 		<variablelist>
 			<varlistentry>
-				<term><option>-1</option></term>
-				<listitem>
-					<para>Disconnect and exit the program immediately after the
-						first message is received. This may be useful in shell
-						scripts where on a single status value is required, for
-						example.</para>
-					<para>Combine with <option>-R</option> to print only the
-						first fresh message (i.e. that does not have the
-						retained flag set), or with <option>-T</option> to
-						filter which topics are processed.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>-A</option></term>
 				<listitem>
 					<para>Bind the outgoing connection to a local ip
@@ -168,6 +155,19 @@
 						in the client. See
 						<citerefentry><refentrytitle>ciphers</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 						for more information.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-C</option></term>
+				<listitem>
+					<para>Disconnect and exit the program immediately after
+						the given count of messages have been received. This
+						may be useful in shell scripts where on a single status
+						value is required, for example.</para>
+					<para>Combine with <option>-R</option> to print only the
+						first set of fresh messages (i.e. that does not have
+						the retained flag set), or with <option>-T</option> to
+						filter which topics are processed.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

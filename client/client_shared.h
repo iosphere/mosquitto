@@ -79,7 +79,7 @@ struct mosq_config {
 	int filter_out_count; /* sub */
 	bool verbose; /* sub */
 	bool eol; /* sub */
-	bool oneshot; /* sub */
+	int msg_count; /* sub */
 #ifdef WITH_SOCKS
 	char *socks5_host;
 	int socks5_port;

@@ -31,6 +31,7 @@ Contributors:
 #include "client_shared.h"
 
 bool process_messages = true;
+int msg_count = 0;
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
@@ -73,9 +74,12 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 			fflush(stdout);
 		}
 	}
-	if(cfg->oneshot){
-		process_messages = false;
-		mosquitto_disconnect(mosq);
+	if(cfg->msg_count>0){
+		msg_count++;
+		if(cfg->msg_count == msg_count){
+			process_messages = false;
+			mosquitto_disconnect(mosq);
+		}
 	}
 }
 
@@ -126,7 +130,7 @@ void print_usage(void)
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] -t topic ...\n");
-	printf("                     [-1] [-T filter_out]\n");
+	printf("                     [-C msg_count] [-T filter_out]\n");
 #ifdef WITH_SRV
 	printf("                     [-A bind_address] [-S]\n");
 #else
@@ -262,7 +266,7 @@ int main(int argc, char *argv[])
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
 
-	if(cfg.oneshot && rc == MOSQ_ERR_NO_CONN){
+	if(cfg.msg_count>0 && rc == MOSQ_ERR_NO_CONN){
 		rc = 0;
 	}
 	if(rc){
