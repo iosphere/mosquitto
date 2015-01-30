@@ -8,6 +8,7 @@
 	<xsl:param name="make.clean.html" select="1"></xsl:param>
 	<xsl:param name="make.valid.html" select="1"></xsl:param>
 	<xsl:param name="html.cleanup" select="1"></xsl:param>
+	<xsl:param name="docbook.css.source"></xsl:param>
 
 
 	<xsl:template match="*" mode="process.root">
