@@ -407,6 +407,15 @@ static int _mosquitto_connect_init(struct mosquitto *mosq, const char *host, int
 
 	mosq->keepalive = keepalive;
 
+	if(mosq->sockpairR != INVALID_SOCKET){
+		COMPAT_CLOSE(mosq->sockpairR);
+		mosq->sockpairR = INVALID_SOCKET;
+	}
+	if(mosq->sockpairW != INVALID_SOCKET){
+		COMPAT_CLOSE(mosq->sockpairW);
+		mosq->sockpairW = INVALID_SOCKET;
+	}
+
 	if(_mosquitto_socketpair(&mosq->sockpairR, &mosq->sockpairW)){
 		_mosquitto_log_printf(mosq, MOSQ_LOG_WARNING,
 				"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
