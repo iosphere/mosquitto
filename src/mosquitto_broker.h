@@ -427,8 +427,8 @@ void mosquitto__free_disused_contexts(struct mosquitto_db *db);
 /* ============================================================
  * Logging functions
  * ============================================================ */
-int mqtt3_log_init(int level, int destinations, int facility);
-int mqtt3_log_close(void);
+int mqtt3_log_init(struct mqtt3_config *config);
+int mqtt3_log_close(struct mqtt3_config *config);
 int _mosquitto_log_printf(struct mosquitto *mosq, int level, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
 
 /* ============================================================

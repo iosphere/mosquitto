@@ -27,6 +27,7 @@ Contributors:
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
+#include <util_mosq.h>
 
 extern struct mosquitto_db int_db;
 
@@ -49,25 +50,32 @@ HANDLE syslog_h;
 static int log_destinations = MQTT3_LOG_STDERR;
 static int log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
 
-int mqtt3_log_init(int priorities, int destinations, int facility)
+int mqtt3_log_init(struct mqtt3_config *config)
 {
 	int rc = 0;
 
-	log_priorities = priorities;
-	log_destinations = destinations;
+	log_priorities = config->log_type;
+	log_destinations = config->log_dest;
 
 	if(log_destinations & MQTT3_LOG_SYSLOG){
 #ifndef WIN32
-		openlog("mosquitto", LOG_PID|LOG_CONS, facility);
+		openlog("mosquitto", LOG_PID|LOG_CONS, config->log_facility);
 #else
 		syslog_h = OpenEventLog(NULL, "mosquitto");
 #endif
 	}
 
+	if(log_destinations & MQTT3_LOG_FILE){
+		config->log_fptr = _mosquitto_fopen(config->log_file, "at");
+		if(!config->log_fptr){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
+			return MOSQ_ERR_INVAL;
+		}
+	}
 	return rc;
 }
 
-int mqtt3_log_close(void)
+int mqtt3_log_close(struct mqtt3_config *config)
 {
 	if(log_destinations & MQTT3_LOG_SYSLOG){
 #ifndef WIN32
@@ -76,8 +84,13 @@ int mqtt3_log_close(void)
 		CloseEventLog(syslog_h);
 #endif
 	}
-	/* FIXME - do something for all destinations! */
+	if(log_destinations & MQTT3_LOG_FILE){
+		if(config->log_fptr){
+			fclose(config->log_fptr);
+		}
+	}
 
+	/* FIXME - do something for all destinations! */
 	return MOSQ_ERR_SUCCESS;
 }
 

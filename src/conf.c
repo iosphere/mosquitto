@@ -1304,11 +1304,6 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 									_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
 									return MOSQ_ERR_NOMEM;
 								}
-								config->log_fptr = _mosquitto_fopen(config->log_file, "at");
-								if(!config->log_fptr){
-									_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
-									return MOSQ_ERR_INVAL;
-								}
 							}else{
 								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty \"log_dest file\" value in configuration.");
 								return MOSQ_ERR_INVAL;

@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 
 	/* Initialise logging only after initialising the database in case we're
 	 * logging to topics */
-	mqtt3_log_init(config.log_type, config.log_dest, config.log_facility);
+	mqtt3_log_init(&config);
 	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
 	if(config.config_file){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
 	rc = mosquitto_main_loop(&int_db, listensock, listensock_count, listener_max);
 
 	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION);
-	mqtt3_log_close();
+	mqtt3_log_close(&config);
 
 #ifdef WITH_PERSISTENCE
 	if(config.persistence){
