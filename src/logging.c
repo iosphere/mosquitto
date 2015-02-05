@@ -92,6 +92,7 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 	const char *topic;
 	int syslog_priority;
 	time_t now = time(NULL);
+	static time_t last_flush = 0;
 
 	if((log_priorities & priority) && log_destinations != MQTT3_LOG_NONE){
 		switch(priority){
@@ -187,6 +188,10 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 				fprintf(int_db.config->log_fptr, "%d: %s\n", (int)now, s);
 			}else{
 				fprintf(int_db.config->log_fptr, "%s\n", s);
+			}
+			if(now - last_flush > 1){
+				fflush(int_db.config->log_fptr);
+				last_flush = now;
 			}
 		}
 		if(log_destinations & MQTT3_LOG_SYSLOG){
