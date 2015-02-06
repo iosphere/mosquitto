@@ -38,6 +38,7 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	int rc;
 	uint8_t version;
 	char *clientid, *username, *password;
+	int headerlen;
 
 	assert(mosq);
 	assert(mosq->id);
@@ -60,8 +61,10 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 
 	if(mosq->protocol == mosq_p_mqtt31){
 		version = MQTT_PROTOCOL_V31;
+		headerlen = 12;
 	}else if(mosq->protocol == mosq_p_mqtt311){
 		version = MQTT_PROTOCOL_V311;
+		headerlen = 10;
 	}else{
 		return MOSQ_ERR_INVAL;
 	}
@@ -84,7 +87,7 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	}
 
 	packet->command = CONNECT;
-	packet->remaining_length = 12+payloadlen;
+	packet->remaining_length = headerlen+payloadlen;
 	rc = _mosquitto_packet_alloc(packet);
 	if(rc){
 		_mosquitto_free(packet);
