@@ -349,6 +349,9 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload);
 /* Free all config data. */
 void mqtt3_config_cleanup(struct mqtt3_config *config);
 
+int drop_privileges(struct mqtt3_config *config, bool temporary);
+int restore_privileges(void);
+
 /* ============================================================
  * Server send functions
  * ============================================================ */

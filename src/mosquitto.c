@@ -64,7 +64,6 @@ int allow_severity = LOG_INFO;
 int deny_severity = LOG_INFO;
 #endif
 
-int drop_privileges(struct mqtt3_config *config);
 void handle_sigint(int signal);
 void handle_sigusr1(int signal);
 void handle_sigusr2(int signal);
@@ -82,11 +81,12 @@ struct mosquitto_db *_mosquitto_get_db(void)
  * Note that setting config->user to "root" does not produce an error, but it
  * strongly discouraged.
  */
-int drop_privileges(struct mqtt3_config *config)
+int drop_privileges(struct mqtt3_config *config, bool temporary)
 {
 #if !defined(__CYGWIN__) && !defined(WIN32)
 	struct passwd *pwd;
 	char err[256];
+	int rc;
 
 	if(geteuid() == 0){
 		if(config->user && strcmp(config->user, "root")){
@@ -100,12 +100,22 @@ int drop_privileges(struct mqtt3_config *config)
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error setting groups whilst dropping privileges: %s.", err);
 				return 1;
 			}
-			if(setgid(pwd->pw_gid) == -1){
+			if(temporary){
+				rc = setegid(pwd->pw_gid);
+			}else{
+				rc = setgid(pwd->pw_gid);
+			}
+			if(rc == -1){
 				strerror_r(errno, err, 256);
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst dropping privileges: %s.", err);
 				return 1;
 			}
-			if(setuid(pwd->pw_uid) == -1){
+			if(temporary){
+				rc = seteuid(pwd->pw_uid);
+			}else{
+				rc = setuid(pwd->pw_uid);
+			}
+			if(rc == -1){
 				strerror_r(errno, err, 256);
 				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst dropping privileges: %s.", err);
 				return 1;
@@ -113,6 +123,30 @@ int drop_privileges(struct mqtt3_config *config)
 		}
 		if(geteuid() == 0 || getegid() == 0){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Mosquitto should not be run as root/administrator.");
+		}
+	}
+#endif
+	return MOSQ_ERR_SUCCESS;
+}
+
+int restore_privileges(void)
+{
+#if !defined(__CYGWIN__) && !defined(WIN32)
+	char err[256];
+	int rc;
+
+	if(getuid() == 0){
+		rc = setegid(0);
+		if(rc == -1){
+			strerror_r(errno, err, 256);
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst restoring privileges: %s.", err);
+			return 1;
+		}
+		rc = seteuid(0);
+		if(rc == -1){
+			strerror_r(errno, err, 256);
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst restoring privileges: %s.", err);
+			return 1;
 		}
 	}
 #endif
@@ -305,7 +339,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	rc = drop_privileges(&config);
+	rc = drop_privileges(&config, false);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
 
 	signal(SIGINT, handle_sigint);
