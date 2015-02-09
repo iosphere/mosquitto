@@ -999,10 +999,11 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			case MOSQ_ERR_AUTH:
 			case MOSQ_ERR_ACL_DENIED:
 			case MOSQ_ERR_UNKNOWN:
-			case MOSQ_ERR_ERRNO:
 			case MOSQ_ERR_EAI:
 			case MOSQ_ERR_PROXY:
 				return rc;
+			case MOSQ_ERR_ERRNO:
+				break;
 		}
 		if(errno == EPROTO){
 			return rc;
