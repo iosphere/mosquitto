@@ -5,7 +5,7 @@ compiler:
 os:
     - linux
     - osx
-script: make
+script: make ; make test
 
 before_install:
     - sudo apt-get update -qq
