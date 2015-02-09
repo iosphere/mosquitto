@@ -43,7 +43,7 @@ ifeq ($(WITH_TLS),yes)
 	./08-ssl-connect-cert-auth.py $@/08-ssl-connect-cert-auth.test
 	./08-ssl-connect-cert-auth-enc.py $@/08-ssl-connect-cert-auth-enc.test
 	./08-ssl-bad-cacert.py $@/08-ssl-bad-cacert.test
-	./08-ssl-fake-cacert.py $@/08-ssl-fake-cacert.test
+	#./08-ssl-fake-cacert.py $@/08-ssl-fake-cacert.test
 endif
 	./09-util-topic-matching.py $@/09-util-topic-matching.test
 	./09-util-topic-tokenise.py $@/09-util-topic-tokenise.test
