@@ -1951,7 +1951,7 @@ static int _conf_parse_int(char **token, const char *name, int *value, char *sav
 
 static int _conf_parse_string(char **token, const char *name, char **value, char *saveptr)
 {
-	*token = strtok_r(NULL, " ", &saveptr);
+	*token = strtok_r(NULL, "", &saveptr);
 	if(*token){
 		if(*value){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate %s value in configuration.", name);
