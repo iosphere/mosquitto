@@ -194,10 +194,10 @@ int main(int argc, char *argv[])
 	FILE *pid;
 	int listener_max;
 	int rc;
-	char err[256];
 #ifdef WIN32
 	SYSTEMTIME st;
 #else
+	char err[256];
 	struct timeval tv;
 #endif
 	struct mosquitto *ctxt, *ctxt_tmp;

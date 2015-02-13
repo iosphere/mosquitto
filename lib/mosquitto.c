@@ -1184,8 +1184,9 @@ bool mosquitto_want_write(struct mosquitto *mosq)
 
 int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *value)
 {
-	if(!mosq || !value) return MOSQ_ERR_INVAL;
 	int ival;
+
+	if(!mosq || !value) return MOSQ_ERR_INVAL;
 
 	switch(option){
 		case MOSQ_OPT_PROTOCOL_VERSION:
