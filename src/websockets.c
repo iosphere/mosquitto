@@ -240,7 +240,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						return -1;
 					}
 				}
-				if(!mosq->in_packet.have_remaining){
+				if(mosq->in_packet.remaining_count == 0){
 					do{
 						if(pos == len){
 							return 0;
@@ -267,7 +267,6 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						}
 						mosq->in_packet.to_process = mosq->in_packet.remaining_length;
 					}
-					mosq->in_packet.have_remaining = 1;
 				}
 				while(mosq->in_packet.to_process>0){
 					if(len - pos >= mosq->in_packet.to_process){

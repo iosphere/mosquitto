@@ -123,7 +123,6 @@ struct _mosquitto_packet{
 	uint32_t pos;
 	uint16_t mid;
 	uint8_t command;
-	uint8_t have_remaining;
 	uint8_t remaining_count;
 };
 
@@ -154,12 +153,11 @@ struct mosquitto {
 	char *username;
 	char *password;
 	uint16_t keepalive;
-	bool clean_session;
+	uint16_t last_mid;
 	enum mosquitto_client_state state;
 	time_t last_msg_in;
 	time_t last_msg_out;
 	time_t ping_t;
-	uint16_t last_mid;
 	struct _mosquitto_packet in_packet;
 	struct _mosquitto_packet *current_out_packet;
 	struct _mosquitto_packet *out_packet;
@@ -192,6 +190,7 @@ struct mosquitto {
 	pthread_mutex_t out_message_mutex;
 	pthread_t thread_id;
 #endif
+	bool clean_session;
 #ifdef WITH_BROKER
 	bool is_dropping;
 	bool is_bridge;

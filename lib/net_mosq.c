@@ -133,7 +133,6 @@ void _mosquitto_packet_cleanup(struct _mosquitto_packet *packet)
 
 	/* Free data and reset values */
 	packet->command = 0;
-	packet->have_remaining = 0;
 	packet->remaining_count = 0;
 	packet->remaining_mult = 1;
 	packet->remaining_length = 0;
@@ -936,7 +935,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 			}
 		}
 	}
-	if(!mosq->in_packet.have_remaining){
+	if(mosq->in_packet.remaining_count == 0){
 		do{
 			read_length = _mosquitto_net_read(mosq, &byte, 1);
 			if(read_length == 1){
@@ -974,7 +973,6 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 			if(!mosq->in_packet.payload) return MOSQ_ERR_NOMEM;
 			mosq->in_packet.to_process = mosq->in_packet.remaining_length;
 		}
-		mosq->in_packet.have_remaining = 1;
 	}
 	while(mosq->in_packet.to_process>0){
 		read_length = _mosquitto_net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
