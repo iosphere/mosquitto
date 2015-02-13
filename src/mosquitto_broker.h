@@ -117,6 +117,9 @@ struct mqtt3_config {
 	bool upgrade_outgoing_qos;
 	char *user;
 	bool verbose;
+#ifdef WITH_WEBSOCKETS
+	int websockets_log_level;
+#endif
 #ifdef WITH_BRIDGE
 	struct _mqtt3_bridge *bridges;
 	int bridge_count;
@@ -476,7 +479,7 @@ void service_run(void);
  * Websockets related functions
  * ============================================================ */
 #ifdef WITH_WEBSOCKETS
-struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener);
+struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener, int log_level);
 #endif
 void do_disconnect(struct mosquitto_db *db, struct mosquitto *context);
 

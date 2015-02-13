@@ -170,6 +170,16 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
 				break;
+#ifdef WITH_WEBSOCKETS
+			case MOSQ_LOG_WEBSOCKETS:
+				topic = "$SYS/broker/log/WS";
+#ifndef WIN32
+				syslog_priority = LOG_DEBUG;
+#else
+				syslog_priority = EVENTLOG_INFORMATION_TYPE;
+#endif
+				break;
+#endif
 			default:
 				topic = "$SYS/broker/log/E";
 #ifndef WIN32

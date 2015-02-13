@@ -1381,6 +1381,10 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							cr->log_type |= MOSQ_LOG_SUBSCRIBE;
 						}else if(!strcmp(token, "unsubscribe")){
 							cr->log_type |= MOSQ_LOG_UNSUBSCRIBE;
+#ifdef WITH_WEBSOCKETS
+						}else if(!strcmp(token, "websockets")){
+							cr->log_type |= MOSQ_LOG_WEBSOCKETS;
+#endif
 						}else if(!strcmp(token, "all")){
 							cr->log_type = INT_MAX;
 						}else{
@@ -1884,6 +1888,12 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					}
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
+				}else if(!strcmp(token, "websockets_log_level")){
+#ifdef WITH_WEBSOCKETS
+					if(_conf_parse_int(&token, "websockets_log_level", &config->websockets_log_level, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Websockets support not available.");
 #endif
 				}else if(!strcmp(token, "trace_level")
 						|| !strcmp(token, "ffdc_output")

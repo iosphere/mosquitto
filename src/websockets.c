@@ -477,7 +477,14 @@ static int callback_http(struct libwebsocket_context *context,
 	return 0;
 }
 
-struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener)
+static void log_wrap(int level, const char *line)
+{
+	char *l = (char *)line;
+	l[strlen(line)-1] = '\0'; // Remove \n
+	_mosquitto_log_printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
+}
+
+struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener, int log_level)
 {
 	struct lws_context_creation_info info;
 	struct libwebsocket_protocols *p;
@@ -538,7 +545,8 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 	info.user = user;
 	listener->ws_protocol = p;
 
-	lws_set_log_level(0, NULL);
+	printf("log level: %d\n", log_level);
+	lws_set_log_level(log_level, log_wrap);
 
 	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
 	return libwebsocket_create_context(&info);

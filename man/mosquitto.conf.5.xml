@@ -332,9 +332,12 @@
 						<replaceable>warning</replaceable>,
 						<replaceable>notice</replaceable>,
 						<replaceable>information</replaceable>,
+						<replaceable>subscribe</replaceable>,
+						<replaceable>unsubscribe</replaceable>,
+						<replaceable>websockets</replaceable>,
 						<replaceable>none</replaceable>,
-						<replaceable>all</replaceable>.  Defaults to
-						<replaceable>error</replaceable>,
+						<replaceable>all</replaceable>.</para>
+					<para>Defaults to <replaceable>error</replaceable>,
 						<replaceable>warning</replaceable>, <replaceable>notice
 						</replaceable>and
 						<replaceable>information</replaceable>.  This option
@@ -709,6 +712,20 @@
 						<para>See also
 							<option>use_identity_as_username</option>.</para>
 						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>websockets_log_level</option> <replaceable>level</replaceable></term>
+					<listitem>
+						<para>Change the websockets logging level. This is a
+							global option, it is not possible to set per
+							listener. This is an integer that is interpreted by
+							libwebsockets as a bit mask for its lws_log_levels
+							enum. See the libwebsockets documentation for more
+							details.</para>
+						<para>To use this option, <option>log_type
+								websockets</option> must also be enabled.
+							Defaults to 0.</para>
 					</listitem>
 				</varlistentry>
 			</variablelist>
