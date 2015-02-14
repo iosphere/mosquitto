@@ -636,7 +636,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					}
 					key = _mosquitto_strdup(&token[9]);
 					if(!key){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 						return MOSQ_ERR_NOMEM;
 					}else if(strlen(key) == 0){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid auth_opt_ config option.");
@@ -713,7 +713,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->tls_cafile = _mosquitto_strdup(token);
 						if(!cur_bridge->tls_cafile){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -744,7 +744,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->tls_capath = _mosquitto_strdup(token);
 						if(!cur_bridge->tls_capath){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -775,7 +775,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->tls_certfile = _mosquitto_strdup(token);
 						if(!cur_bridge->tls_certfile){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -804,7 +804,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->tls_psk_identity = _mosquitto_strdup(token);
 						if(!cur_bridge->tls_psk_identity){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -849,7 +849,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->tls_keyfile = _mosquitto_strdup(token);
 						if(!cur_bridge->tls_keyfile){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -902,7 +902,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->tls_psk = _mosquitto_strdup(token);
 						if(!cur_bridge->tls_psk){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -927,7 +927,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->tls_version = _mosquitto_strdup(token);
 						if(!cur_bridge->tls_version){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -988,7 +988,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->remote_clientid = _mosquitto_strdup(token);
 						if(!cur_bridge->remote_clientid){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -1216,7 +1216,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->local_clientid = _mosquitto_strdup(token);
 						if(!cur_bridge->local_clientid){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -1240,7 +1240,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->local_password = _mosquitto_strdup(token);
 						if(!cur_bridge->local_password){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -1264,7 +1264,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->local_username = _mosquitto_strdup(token);
 						if(!cur_bridge->local_username){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -1301,7 +1301,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							if(token[0]){
 								config->log_file = _mosquitto_strdup(token);
 								if(!config->log_file){
-									_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+									_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 									return MOSQ_ERR_NOMEM;
 								}
 							}else{
@@ -1475,7 +1475,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->remote_password = _mosquitto_strdup(token);
 						if(!cur_bridge->remote_password){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -1700,7 +1700,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						cur_bridge->topics = _mosquitto_realloc(cur_bridge->topics, 
 								sizeof(struct _mqtt3_bridge_topic)*cur_bridge->topic_count);
 						if(!cur_bridge->topics){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 						cur_topic = &cur_bridge->topics[cur_bridge->topic_count-1];
@@ -1709,7 +1709,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}else{
 							cur_topic->topic = _mosquitto_strdup(token);
 							if(!cur_topic->topic){
-								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 								return MOSQ_ERR_NOMEM;
 							}
 						}
@@ -1753,7 +1753,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 									}
 									cur_topic->local_prefix = _mosquitto_strdup(token);
 									if(!cur_topic->local_prefix){
-										_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+										_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 										return MOSQ_ERR_NOMEM;
 									}
 								}
@@ -1769,7 +1769,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 										}
 										cur_topic->remote_prefix = _mosquitto_strdup(token);
 										if(!cur_topic->remote_prefix){
-											_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+											_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 											return MOSQ_ERR_NOMEM;
 										}
 									}
@@ -1788,7 +1788,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							len = strlen(cur_topic->topic) + strlen(cur_topic->local_prefix)+1;
 							cur_topic->local_topic = _mosquitto_malloc(len+1);
 							if(!cur_topic->local_topic){
-								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 								return MOSQ_ERR_NOMEM;
 							}
 							snprintf(cur_topic->local_topic, len+1, "%s%s", cur_topic->local_prefix, cur_topic->topic);
@@ -1796,14 +1796,14 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}else{
 							cur_topic->local_topic = _mosquitto_strdup(cur_topic->local_prefix);
 							if(!cur_topic->local_topic){
-								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 								return MOSQ_ERR_NOMEM;
 							}
 						}
 					}else{
 						cur_topic->local_topic = _mosquitto_strdup(cur_topic->topic);
 						if(!cur_topic->local_topic){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}
@@ -1813,7 +1813,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							len = strlen(cur_topic->topic) + strlen(cur_topic->remote_prefix)+1;
 							cur_topic->remote_topic = _mosquitto_malloc(len+1);
 							if(!cur_topic->remote_topic){
-								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 								return MOSQ_ERR_NOMEM;
 							}
 							snprintf(cur_topic->remote_topic, len, "%s%s", cur_topic->remote_prefix, cur_topic->topic);
@@ -1821,14 +1821,14 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}else{
 							cur_topic->remote_topic = _mosquitto_strdup(cur_topic->remote_prefix);
 							if(!cur_topic->remote_topic){
-								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 								return MOSQ_ERR_NOMEM;
 							}
 						}
 					}else{
 						cur_topic->remote_topic = _mosquitto_strdup(cur_topic->topic);
 						if(!cur_topic->remote_topic){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}
@@ -1879,7 +1879,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}
 						cur_bridge->remote_username = _mosquitto_strdup(token);
 						if(!cur_bridge->remote_username){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 					}else{
@@ -1969,7 +1969,7 @@ static int _conf_parse_string(char **token, const char *name, char **value, char
 		}
 		*value = _mosquitto_strdup(*token);
 		if(!*value){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory");
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 	}else{
