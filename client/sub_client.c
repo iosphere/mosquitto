@@ -151,10 +151,10 @@ void print_usage(void)
 	printf("                     [--proxy socks-url]\n");
 #endif
 	printf("       mosquitto_sub --help\n\n");
-	printf(" -1 : disconnect and exit after receiving the first message.\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
+	printf(" -C : disconnect and exit after receiving the 'msg_count' messages.\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
 	printf(" -i : id to use for this client. Defaults to mosquitto_sub_ appended with the process id.\n");
