@@ -72,6 +72,18 @@ struct libws_http_data {
 	FILE *fptr;
 };
 
+#ifndef HTTP_STATUS_NOT_FOUND
+	/* This is libwebsockets 1.2.x or earlier, we have to degrade our capabilities.
+	 * Once lws 1.3 is widely available this should be removed. */
+#	define LWS_IS_OLD
+#	define HTTP_STATUS_FORBIDDEN 403
+#	define HTTP_STATUS_NOT_FOUND 404
+#	define HTTP_STATUS_METHOD_NOT_ALLOWED 405
+#	define HTTP_STATUS_REQ_URI_TOO_LONG 414
+#	define HTTP_STATUS_INTERNAL_SERVER_ERROR 500
+#	define libwebsockets_return_http_status(A, B, C, D)
+#endif
+
 static struct libwebsocket_protocols protocols[] = {
 	/* first protocol must always be HTTP handler */
 	{
@@ -79,7 +91,9 @@ static struct libwebsocket_protocols protocols[] = {
 		callback_http,
 		sizeof (struct libws_http_data),
 		0,
+#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
 		0,
+#endif
 		NULL,
 		0
 	},
@@ -88,7 +102,9 @@ static struct libwebsocket_protocols protocols[] = {
 		callback_mqtt,
 		sizeof(struct libws_mqtt_data),
 		0,
+#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
 		1,
+#endif
 		NULL,
 		0
 	},
@@ -97,11 +113,17 @@ static struct libwebsocket_protocols protocols[] = {
 		callback_mqtt,
 		sizeof(struct libws_mqtt_data),
 		0,
+#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
 		1,
+#endif
 		NULL,
 		0
 	},
+#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
 	{ NULL, NULL, 0, 0, 0, NULL, 0}
+#else
+	{ NULL, NULL, 0, 0, NULL, 0}
+#endif
 };
 
 static void easy_address(int sock, struct mosquitto *mosq)
@@ -193,6 +215,10 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					packet->pos += LWS_SEND_BUFFER_PRE_PADDING;
 				}
 				count = libwebsocket_write(wsi, &packet->payload[packet->pos], packet->to_process, LWS_WRITE_BINARY);
+#ifdef LWS_IS_OLD
+				/* lws < 1.3 doesn't return a valid count, assume everything sent. */
+				count = packet->to_process;
+#endif
 				if(count < 0){
 					return 0;
 				}
@@ -215,6 +241,10 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				_mosquitto_free(packet);
 
 				mosq->last_msg_out = mosquitto_time();
+
+				if(mosq->current_out_packet){
+					libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
+				}
 			}
 			if(mosq->current_out_packet){
 				libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
@@ -322,7 +352,10 @@ static int callback_http(struct libwebsocket_context *context,
 	struct libws_http_data *u = (struct libws_http_data *)user;
 	struct libws_mqtt_hack *hack;
 	char *http_dir;
-	size_t buflen, slen, wlen;
+	size_t buflen, slen;
+#ifndef LWS_IS_OLD
+	size_t wlen;
+#endif
 	char *filename, *filename_canonical;
 	unsigned char buf[4096];
 	struct stat filestat;
@@ -342,11 +375,13 @@ static int callback_http(struct libwebsocket_context *context,
 				return -1;
 			}
 
+#ifndef LWS_IS_OLD
 			/* Forbid POST */
 			if(lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI)){
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_METHOD_NOT_ALLOWED, NULL);
 				return -1;
 			}
+#endif
 
 			if(!strcmp((char *)in, "/")){
 				slen = strlen(http_dir) + strlen("/index.html") + 2;
@@ -430,6 +465,7 @@ static int callback_http(struct libwebsocket_context *context,
 			libwebsocket_callback_on_writable(context, wsi);
 			break;
 
+#ifndef LWS_IS_OLD
 		case LWS_CALLBACK_HTTP_BODY:
 			/* For extra POST data? */
 			return -1;
@@ -469,6 +505,7 @@ static int callback_http(struct libwebsocket_context *context,
 			}else{
 				return -1;
 			}
+#endif
 
 		default:
 			return 0;
@@ -516,12 +553,16 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 	info.ssl_ca_filepath = listener->cafile;
 	info.ssl_cert_filepath = listener->certfile;
 	info.ssl_private_key_filepath = listener->keyfile;
+#ifndef LWS_IS_OLD
 	info.ssl_cipher_list = listener->ciphers;
+#endif
 	if(listener->require_certificate){
 		info.options |= LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
 	}
 #endif
+#ifndef LWS_IS_OLD
 	info.options |= LWS_SERVER_OPTION_DISABLE_IPV6;
+#endif
 
 	user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
 	if(!user){
