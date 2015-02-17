@@ -480,7 +480,7 @@ static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	if(db_version == 2){
 		disconnect_t = time(NULL);
 	}else{
-		read_e(db_fptr, &disconnect_t, sizeof(uint32_t));
+		read_e(db_fptr, &disconnect_t, sizeof(time_t));
 	}
 
 	context = _db_find_or_add_context(db, client_id, last_mid);
