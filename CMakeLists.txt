@@ -8,7 +8,8 @@ set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
 project(mosquitto)
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
+cmake_policy(SET CMP0042 NEW)
 
 set (VERSION 1.4)
 
@@ -30,8 +31,8 @@ if (WIN32)
 	set (INCLUDEDIR include)
 	set (DATAROOTDIR share)
 	set (MANDIR man)
-    set (SHAREDEST .)
-    add_definitions("-D_CRT_SECURE_NO_WARNINGS")
+	set (SHAREDEST .)
+	add_definitions("-D_CRT_SECURE_NO_WARNINGS")
 	add_definitions("-D_CRT_NONSTDC_NO_DEPRECATE")
 else (WIN32)
 	set (BINDIR bin)
@@ -43,6 +44,7 @@ else (WIN32)
 	endif (${CMAKE_INSTALL_PREFIX} STREQUAL /usr)
 	
 	set (LIBDIR lib${LIB_SUFFIX})
+	set (CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
 	set (INCLUDEDIR include)
 	set (DATAROOTDIR share)
 	set (MANDIR ${DATAROOTDIR}/man)

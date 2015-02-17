@@ -2,16 +2,6 @@ include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/src
 		${mosquitto_SOURCE_DIR}/lib ${OPENSSL_INCLUDE_DIR}
 		${STDBOOL_H_PATH} ${STDINT_H_PATH})
 
-if (UNIX)
-	if (APPLE)
-		# FIXME - something else needs fixing before this will work.
-		#set (CMAKE_EXE_LINKER_FLAGS "-Wl,-exported_symbols_list -Wl,${mosquitto_SOURCE_DIR}/src/linker-macosx.syms")
-	else (APPLE)
-		set (CMAKE_EXE_LINKER_FLAGS "-Wl,--dynamic-list=${mosquitto_SOURCE_DIR}/src/linker.syms")
-		set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
-	endif (APPLE)
-endif (UNIX)
-
 set (MOSQ_SRCS
 	conf.c
 	context.c
@@ -109,17 +99,26 @@ if (${WITH_WEBSOCKETS} STREQUAL ON)
 endif (${WITH_WEBSOCKETS} STREQUAL ON)
 
 # Simple detect libuuid
-FIND_PATH(UUID_HEADER uuid/uuid.h)
-if (UUID_HEADER)
-	add_definitions(-DWITH_UUID)
-	set (MOSQ_LIBS ${MOSQ_LIBS} uuid)
-endif (UUID_HEADER)
+if(NOT APPLE)
+	FIND_PATH(UUID_HEADER uuid/uuid.h)
+	if (UUID_HEADER)
+		add_definitions(-DWITH_UUID)
+		set (MOSQ_LIBS ${MOSQ_LIBS} uuid)
+	endif (UUID_HEADER)
+endif(NOT APPLE)
 
 target_link_libraries(mosquitto ${MOSQ_LIBS})
 
+if (UNIX)
+	if (APPLE)
+		set_target_properties(mosquitto PROPERTIES LINK_FLAGS "-Wl,-exported_symbols_list -Wl,${mosquitto_SOURCE_DIR}/src/linker-macosx.syms")
+	else (APPLE)
+		set_target_properties(mosquitto PROPERTIES LINK_FLAGS "-Wl,-exported_symbols_list -Wl,${mosquitto_SOURCE_DIR}/src/linker.syms")
+	endif (APPLE)
+endif (UNIX)
+
 install(TARGETS mosquitto RUNTIME DESTINATION ${SBINDIR} LIBRARY DESTINATION ${LIBDIR})
 install(FILES mosquitto_plugin.h DESTINATION ${INCLUDEDIR})
-
 
 if (${WITH_TLS} STREQUAL ON)
 	add_executable(mosquitto_passwd mosquitto_passwd.c)
