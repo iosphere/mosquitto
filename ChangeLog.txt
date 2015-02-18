@@ -2,6 +2,7 @@
 ==============
 
 Important changes:
+- Websockets support in the broker.
 - Bridge behaviour on the local broker has changed due to the introduction of
   the local_* options. This may affect you if you are using authentication
   and/or ACLs with bridges.
@@ -23,6 +24,7 @@ Important changes:
 
 
 Broker:
+- Websockets support in the broker.
 - Add local_clientid, local_username, local_password for bridge connections to
   authenticate to the local broker.
 - Default TLS mode now accepts TLS v1.2, v1.1 and v1.0.

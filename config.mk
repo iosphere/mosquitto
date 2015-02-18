@@ -81,7 +81,7 @@ WITH_SOCKS:=yes
 # =============================================================================
 
 
-# Also bump lib/mosquitto.h, lib/python/setup.py, CMakeLists.txt,
+# Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto-cygwin.nsi
 VERSION=1.4
 TIMESTAMP:=$(shell date "+%F %T%z")
