@@ -1,4 +1,4 @@
-1.4 - xxxxxxxx
+1.4 - 20150218
 ==============
 
 Important changes:
