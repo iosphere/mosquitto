@@ -29,14 +29,11 @@ publish_packet = mosq_test.gen_publish("qos2/timeout/test", qos=2, mid=mid, payl
 publish_dup_packet = mosq_test.gen_publish("qos2/timeout/test", qos=2, mid=mid, payload="timeout-message", dup=True)
 pubrec_packet = mosq_test.gen_pubrec(mid)
 pubrel_packet = mosq_test.gen_pubrel(mid)
-pubrel_dup_packet = mosq_test.gen_pubrel(mid, dup=True)
 pubcomp_packet = mosq_test.gen_pubcomp(mid)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-b2c-timeout-qos2.conf'], stderr=subprocess.PIPE)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__))
 
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
     sock.send(subscribe_packet)
 
@@ -56,7 +53,7 @@ try:
                     # Wait for longer than 5 seconds to get republish with dup set
                     # This is covered by the 8 second timeout
 
-                    if mosq_test.expect_packet(sock, "dup pubrel", pubrel_dup_packet):
+                    if mosq_test.expect_packet(sock, "dup pubrel", pubrel_packet):
                         sock.send(pubcomp_packet)
                         rc = 0
 

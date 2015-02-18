@@ -38,7 +38,6 @@ publish_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=2, mid=mid,
 publish_dup_packet = mosq_test.gen_publish("bridge/disconnect/test", qos=2, mid=mid, payload="disconnect-message", dup=True)
 pubrec_packet = mosq_test.gen_pubrec(mid)
 pubrel_packet = mosq_test.gen_pubrel(mid)
-pubrel_dup_packet = mosq_test.gen_pubrel(mid, True)
 pubcomp_packet = mosq_test.gen_pubcomp(mid)
 
 ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -47,11 +46,9 @@ ssock.settimeout(40)
 ssock.bind(('', 1888))
 ssock.listen(5)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '06-bridge-br2b-disconnect-qos2.conf'], stderr=subprocess.PIPE)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889)
 
 try:
-    time.sleep(0.5)
-
     (bridge, address) = ssock.accept()
     bridge.settimeout(20)
 
@@ -92,7 +89,7 @@ try:
                                     if mosq_test.expect_packet(bridge, "3rd subscribe", subscribe3_packet):
                                         bridge.send(suback3_packet)
 
-                                        if mosq_test.expect_packet(bridge, "2nd pubrel", pubrel_dup_packet):
+                                        if mosq_test.expect_packet(bridge, "2nd pubrel", pubrel_packet):
                                             bridge.send(pubcomp_packet)
                                             rc = 0
 

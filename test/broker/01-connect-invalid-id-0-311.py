@@ -19,11 +19,10 @@ keepalive = 10
 connect_packet = mosq_test.gen_connect("", keepalive=keepalive, proto_ver=4)
 connack_packet = mosq_test.gen_connack(rc=0)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
+cmd = ['../../src/mosquitto', '-p', '1888']
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
 
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
     sock.close()
     rc = 0

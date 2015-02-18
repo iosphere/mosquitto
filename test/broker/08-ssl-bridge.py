@@ -33,11 +33,9 @@ ssock.settimeout(20)
 ssock.bind(('', 1888))
 ssock.listen(5)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-v', '-c', '08-ssl-bridge.conf'], stderr=subprocess.PIPE)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889)
 
 try:
-    time.sleep(0.5)
-
     (bridge, address) = ssock.accept()
     bridge.settimeout(20)
 

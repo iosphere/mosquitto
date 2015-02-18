@@ -43,11 +43,9 @@ suback_packet = mosq_test.gen_suback(mid, 0)
 
 publish_packet = mosq_test.gen_publish(topic="psk/test", payload="message", qos=0)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '08-tls-psk-pub.conf'], stderr=subprocess.PIPE)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889)
 
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=1889, timeout=20)
     sock.send(subscribe_packet)
 

@@ -56,7 +56,7 @@ int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
 		return 1;
 	}
 	BIO_get_mem_ptr(b64, &bptr);
-	*encoded = calloc(bptr->length+1, 1);
+	*encoded = malloc(bptr->length+1);
 	if(!(*encoded)){
 		BIO_free_all(b64);
 		return 1;
@@ -73,7 +73,9 @@ void print_usage(void)
 {
 	printf("mosquitto_passwd is a tool for managing password files for mosquitto.\n\n");
 	printf("Usage: mosquitto_passwd [-c | -D] passwordfile username\n");
+	printf("       mosquitto_passwd -b passwordfile username password\n");
 	printf("       mosquitto_passwd -U passwordfile\n");
+	printf(" -b : run in batch mode to allow passing passwords on the command line.\n");
 	printf(" -c : create a new password file. This will overwrite existing files.\n");
 	printf(" -D : delete the username rather than adding/updating its password.\n");
 	printf(" -U : update a plain text password file to use hashed passwords.\n");
@@ -106,6 +108,7 @@ int output_new_password(FILE *fptr, const char *username, const char *password)
 
 	digest = EVP_get_digestbyname("sha512");
 	if(!digest){
+		if(salt64) free(salt64);
 		fprintf(stderr, "Error: Unable to create openssl digest.\n");
 		return 1;
 	}
@@ -343,8 +346,11 @@ void handle_sigint(int signal)
 
 int main(int argc, char *argv[])
 {
-	char *password_file = NULL;
+	char *password_file_tmp = NULL;
+	char password_file[1024];
 	char *username = NULL;
+	char *password_cmd = NULL;
+	bool batch_mode = false;
 	bool create_new = false;
 	bool delete_user = false;
 	FILE *fptr, *ftmp;
@@ -358,26 +364,40 @@ int main(int argc, char *argv[])
 
 	OpenSSL_add_all_digests();
 
-	if(argc == 4){
+	if(argc == 5){
+		if(!strcmp(argv[1], "-b")){
+			batch_mode = true;
+		}else{
+			fprintf(stderr, "Error: Unknown option '%s'\n", argv[1]);
+		}
+		password_file_tmp = argv[2];
+		username = argv[3];
+		password_cmd = argv[4];
+	}else if(argc == 4){
 		if(!strcmp(argv[1], "-c")){
 			create_new = true;
 		}else if(!strcmp(argv[1], "-D")){
 			delete_user = true;
+		}else{
+			fprintf(stderr, "Error: Unknown option '%s'\n", argv[1]);
+			return 1;
 		}
-		password_file = argv[2];
+		password_file_tmp = argv[2];
 		username = argv[3];
 	}else if(argc == 3){
 		if(!strcmp(argv[1], "-U")){
 			do_update_file = true;
-			password_file = argv[2];
+			password_file_tmp = argv[2];
 		}else{
-			password_file = argv[1];
+			password_file_tmp = argv[1];
 			username = argv[2];
 		}
 	}else{
 		print_usage();
 		return 1;
 	}
+
+	snprintf(password_file, 1024, "%s", password_file_tmp);
 
 	if(create_new){
 		rc = get_password(password, 1024);
@@ -418,16 +438,21 @@ int main(int argc, char *argv[])
 		}else if(do_update_file){
 			rc = update_file(fptr, ftmp);
 		}else{
-			rc = get_password(password, 1024);
-			if(rc){
-				fclose(fptr);
-				fclose(ftmp);
-				unlink(backup_file);
-				free(backup_file);
-				return rc;
+			if(batch_mode){
+				/* Update password for individual user */
+				rc = update_pwuser(fptr, ftmp, username, password_cmd);
+			}else{
+				rc = get_password(password, 1024);
+				if(rc){
+					fclose(fptr);
+					fclose(ftmp);
+					unlink(backup_file);
+					free(backup_file);
+					return rc;
+				}
+				/* Update password for individual user */
+				rc = update_pwuser(fptr, ftmp, username, password);
 			}
-			/* Update password for individual user */
-			rc = update_pwuser(fptr, ftmp, username, password);
 		}
 		if(rc){
 			fclose(fptr);

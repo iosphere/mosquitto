@@ -68,7 +68,6 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	int i;
 	int j;
 	int new_sock = -1;
-	struct mosquitto **tmp_contexts = NULL;
 	struct mosquitto *new_context;
 #ifdef WITH_TLS
 	BIO *bio;
@@ -103,99 +102,76 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 		}
 		COMPAT_CLOSE(new_sock);
 		return -1;
-	}else{
+	}
 #endif
-		new_context = mqtt3_context_init(new_sock);
-		if(!new_context){
-			COMPAT_CLOSE(new_sock);
-			return -1;
-		}
-		for(i=0; i<db->config->listener_count; i++){
-			for(j=0; j<db->config->listeners[i].sock_count; j++){
-				if(db->config->listeners[i].socks[j] == listensock){
-					new_context->listener = &db->config->listeners[i];
-					new_context->listener->client_count++;
-					break;
-				}
+	new_context = mqtt3_context_init(db, new_sock);
+	if(!new_context){
+		COMPAT_CLOSE(new_sock);
+		return -1;
+	}
+	for(i=0; i<db->config->listener_count; i++){
+		for(j=0; j<db->config->listeners[i].sock_count; j++){
+			if(db->config->listeners[i].socks[j] == listensock){
+				new_context->listener = &db->config->listeners[i];
+				new_context->listener->client_count++;
+				break;
 			}
 		}
-		if(!new_context->listener){
-			mqtt3_context_cleanup(NULL, new_context, true);
-			return -1;
-		}
+	}
+	if(!new_context->listener){
+		mqtt3_context_cleanup(db, new_context, true);
+		return -1;
+	}
 
-		if(new_context->listener->max_connections > 0 && new_context->listener->client_count > new_context->listener->max_connections){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
-			mqtt3_context_cleanup(NULL, new_context, true);
-			return -1;
-		}
+	if(new_context->listener->max_connections > 0 && new_context->listener->client_count > new_context->listener->max_connections){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
+		mqtt3_context_cleanup(db, new_context, true);
+		return -1;
+	}
 
 #ifdef WITH_TLS
-		/* TLS init */
-		for(i=0; i<db->config->listener_count; i++){
-			for(j=0; j<db->config->listeners[i].sock_count; j++){
-				if(db->config->listeners[i].socks[j] == listensock){
-					if(db->config->listeners[i].ssl_ctx){
-						new_context->ssl = SSL_new(db->config->listeners[i].ssl_ctx);
-						if(!new_context->ssl){
-							mqtt3_context_cleanup(NULL, new_context, true);
-							return -1;
-						}
-						SSL_set_ex_data(new_context->ssl, tls_ex_index_context, new_context);
-						SSL_set_ex_data(new_context->ssl, tls_ex_index_listener, &db->config->listeners[i]);
-						new_context->want_write = true;
-						bio = BIO_new_socket(new_sock, BIO_NOCLOSE);
-						SSL_set_bio(new_context->ssl, bio, bio);
-						rc = SSL_accept(new_context->ssl);
-						if(rc != 1){
-							rc = SSL_get_error(new_context->ssl, rc);
-							if(rc == SSL_ERROR_WANT_READ){
-								/* We always want to read. */
-							}else if(rc == SSL_ERROR_WANT_WRITE){
-								new_context->want_write = true;
-							}else{
+	/* TLS init */
+	for(i=0; i<db->config->listener_count; i++){
+		for(j=0; j<db->config->listeners[i].sock_count; j++){
+			if(db->config->listeners[i].socks[j] == listensock){
+				if(db->config->listeners[i].ssl_ctx){
+					new_context->ssl = SSL_new(db->config->listeners[i].ssl_ctx);
+					if(!new_context->ssl){
+						mqtt3_context_cleanup(db, new_context, true);
+						return -1;
+					}
+					SSL_set_ex_data(new_context->ssl, tls_ex_index_context, new_context);
+					SSL_set_ex_data(new_context->ssl, tls_ex_index_listener, &db->config->listeners[i]);
+					new_context->want_write = true;
+					bio = BIO_new_socket(new_sock, BIO_NOCLOSE);
+					SSL_set_bio(new_context->ssl, bio, bio);
+					rc = SSL_accept(new_context->ssl);
+					if(rc != 1){
+						rc = SSL_get_error(new_context->ssl, rc);
+						if(rc == SSL_ERROR_WANT_READ){
+							/* We always want to read. */
+						}else if(rc == SSL_ERROR_WANT_WRITE){
+							new_context->want_write = true;
+						}else{
+							e = ERR_get_error();
+							while(e){
+								_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+										"Client connection from %s failed: %s.",
+										new_context->address, ERR_error_string(e, ebuf));
 								e = ERR_get_error();
-								while(e){
-									_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
-											"Client connection from %s failed: %s.",
-											new_context->address, ERR_error_string(e, ebuf));
-									e = ERR_get_error();
-								}
-								mqtt3_context_cleanup(NULL, new_context, true);
-								return -1;
 							}
+							mqtt3_context_cleanup(db, new_context, true);
+							return -1;
 						}
 					}
 				}
 			}
 		}
-#endif
-
-		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
-		for(i=0; i<db->context_count; i++){
-			if(db->contexts[i] == NULL){
-				db->contexts[i] = new_context;
-				break;
-			}
-		}
-		if(i==db->context_count){
-			tmp_contexts = _mosquitto_realloc(db->contexts, sizeof(struct mosquitto*)*(db->context_count+1));
-			if(tmp_contexts){
-				db->context_count++;
-				db->contexts = tmp_contexts;
-				db->contexts[i] = new_context;
-			}else{
-				// Out of memory
-				mqtt3_context_cleanup(NULL, new_context, true);
-				return -1;
-			}
-		}
-		// If we got here then the context's DB index is "i" regardless of how we got here
-		new_context->db_index = i;
-
-#ifdef WITH_WRAP
 	}
 #endif
+
+	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
+
 	return new_sock;
 }
 
@@ -235,17 +211,25 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 	if(!psk_key) return 0;
 
 	if(mosquitto_psk_key_get(db, psk_hint, identity, psk_key, max_psk_len*2) != MOSQ_ERR_SUCCESS){
+		_mosquitto_free(psk_key);
 		return 0;
 	}
 
 	len = _mosquitto_hex2bin(psk_key, psk, max_psk_len);
-	if (len < 0) return 0;
+	if (len < 0){
+		_mosquitto_free(psk_key);
+		return 0;
+	}
 
 	if(listener->use_identity_as_username){
 		context->username = _mosquitto_strdup(identity);
-		if(!context->username) return 0;
+		if(!context->username){
+			_mosquitto_free(psk_key);
+			return 0;
+		}
 	}
 
+	_mosquitto_free(psk_key);
 	return len;
 }
 #endif
@@ -401,6 +385,9 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		}
 
 		if(bind(sock, rp->ai_addr, rp->ai_addrlen) == -1){
+#ifdef WIN32
+			errno = WSAGetLastError();
+#endif
 			strerror_r(errno, buf, 256);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
 			COMPAT_CLOSE(sock);
@@ -408,6 +395,9 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		}
 
 		if(listen(sock, 100) == -1){
+#ifdef WIN32
+			errno = WSAGetLastError();
+#endif
 			strerror_r(errno, buf, 256);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
 			COMPAT_CLOSE(sock);

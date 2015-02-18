@@ -36,30 +36,58 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	uint8_t will = 0;
 	uint8_t byte;
 	int rc;
-	uint8_t version = PROTOCOL_VERSION_v31;
+	uint8_t version;
+	char *clientid, *username, *password;
+	int headerlen;
 
 	assert(mosq);
 	assert(mosq->id);
 
+#if defined(WITH_BROKER) && defined(WITH_BRIDGE)
+	if(mosq->bridge){
+		clientid = mosq->bridge->remote_clientid;
+		username = mosq->bridge->remote_username;
+		password = mosq->bridge->remote_password;
+	}else{
+		clientid = mosq->id;
+		username = mosq->username;
+		password = mosq->password;
+	}
+#else
+	clientid = mosq->id;
+	username = mosq->username;
+	password = mosq->password;
+#endif
+
+	if(mosq->protocol == mosq_p_mqtt31){
+		version = MQTT_PROTOCOL_V31;
+		headerlen = 12;
+	}else if(mosq->protocol == mosq_p_mqtt311){
+		version = MQTT_PROTOCOL_V311;
+		headerlen = 10;
+	}else{
+		return MOSQ_ERR_INVAL;
+	}
+
 	packet = _mosquitto_calloc(1, sizeof(struct _mosquitto_packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
-	payloadlen = 2+strlen(mosq->id);
+	payloadlen = 2+strlen(clientid);
 	if(mosq->will){
 		will = 1;
 		assert(mosq->will->topic);
 
 		payloadlen += 2+strlen(mosq->will->topic) + 2+mosq->will->payloadlen;
 	}
-	if(mosq->username){
-		payloadlen += 2+strlen(mosq->username);
-		if(mosq->password){
-			payloadlen += 2+strlen(mosq->password);
+	if(username){
+		payloadlen += 2+strlen(username);
+		if(password){
+			payloadlen += 2+strlen(password);
 		}
 	}
 
 	packet->command = CONNECT;
-	packet->remaining_length = 12+payloadlen;
+	packet->remaining_length = headerlen+payloadlen;
 	rc = _mosquitto_packet_alloc(packet);
 	if(rc){
 		_mosquitto_free(packet);
@@ -67,7 +95,14 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	}
 
 	/* Variable header */
-	_mosquitto_write_string(packet, PROTOCOL_NAME_v31, strlen(PROTOCOL_NAME_v31));
+	if(version == MQTT_PROTOCOL_V31){
+		_mosquitto_write_string(packet, PROTOCOL_NAME_v31, strlen(PROTOCOL_NAME_v31));
+	}else if(version == MQTT_PROTOCOL_V311){
+		_mosquitto_write_string(packet, PROTOCOL_NAME_v311, strlen(PROTOCOL_NAME_v311));
+	}else{
+		_mosquitto_free(packet);
+		return MOSQ_ERR_INVAL;
+	}
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
 	if(mosq->bridge && mosq->bridge->try_private && mosq->bridge->try_private_accepted){
 		version |= 0x80;
@@ -79,7 +114,7 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	if(will){
 		byte = byte | ((mosq->will->retain&0x1)<<5) | ((mosq->will->qos&0x3)<<3) | ((will&0x1)<<2);
 	}
-	if(mosq->username){
+	if(username){
 		byte = byte | 0x1<<7;
 		if(mosq->password){
 			byte = byte | 0x1<<6;
@@ -89,25 +124,25 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	_mosquitto_write_uint16(packet, keepalive);
 
 	/* Payload */
-	_mosquitto_write_string(packet, mosq->id, strlen(mosq->id));
+	_mosquitto_write_string(packet, clientid, strlen(clientid));
 	if(will){
 		_mosquitto_write_string(packet, mosq->will->topic, strlen(mosq->will->topic));
 		_mosquitto_write_string(packet, (const char *)mosq->will->payload, mosq->will->payloadlen);
 	}
-	if(mosq->username){
-		_mosquitto_write_string(packet, mosq->username, strlen(mosq->username));
-		if(mosq->password){
-			_mosquitto_write_string(packet, mosq->password, strlen(mosq->password));
+	if(username){
+		_mosquitto_write_string(packet, username, strlen(username));
+		if(password){
+			_mosquitto_write_string(packet, password, strlen(password));
 		}
 	}
 
 	mosq->keepalive = keepalive;
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending CONNECT", mosq->id);
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending CONNECT", clientid);
 # endif
 #else
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending CONNECT", mosq->id);
+	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending CONNECT", clientid);
 #endif
 	return _mosquitto_packet_queue(mosq, packet);
 }
@@ -125,7 +160,7 @@ int _mosquitto_send_disconnect(struct mosquitto *mosq)
 	return _mosquitto_send_simple_command(mosq, DISCONNECT);
 }
 
-int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const char *topic, uint8_t topic_qos)
+int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, const char *topic, uint8_t topic_qos)
 {
 	/* FIXME - only deals with a single topic */
 	struct _mosquitto_packet *packet = NULL;
@@ -141,7 +176,7 @@ int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const 
 
 	packetlen = 2 + 2+strlen(topic) + 1;
 
-	packet->command = SUBSCRIBE | (dup<<3) | (1<<1);
+	packet->command = SUBSCRIBE | (1<<1);
 	packet->remaining_length = packetlen;
 	rc = _mosquitto_packet_alloc(packet);
 	if(rc){
@@ -170,7 +205,7 @@ int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const 
 }
 
 
-int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, bool dup, const char *topic)
+int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
 {
 	/* FIXME - only deals with a single topic */
 	struct _mosquitto_packet *packet = NULL;
@@ -186,7 +221,7 @@ int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, bool dup, cons
 
 	packetlen = 2 + 2+strlen(topic);
 
-	packet->command = UNSUBSCRIBE | (dup<<3) | (1<<1);
+	packet->command = UNSUBSCRIBE | (1<<1);
 	packet->remaining_length = packetlen;
 	rc = _mosquitto_packet_alloc(packet);
 	if(rc){

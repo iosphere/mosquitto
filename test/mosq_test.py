@@ -1,5 +1,41 @@
+import errno
+import os
 import socket
+import subprocess
 import struct
+import time
+
+def start_broker(filename, cmd=None, port=1888):
+    delay = 0.1
+    if cmd is None:
+        cmd = ['../../src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
+    if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+        cmd = ['valgrind', '-q', '--log-file='+filename+'.vglog'] + cmd
+        delay = 1
+
+    broker = subprocess.Popen(cmd, stderr=subprocess.PIPE)
+    for i in range(0, 20):
+        time.sleep(delay)
+        c = None
+        try:
+            c = socket.create_connection(("localhost", port))
+        except socket.error as err:
+            if err.errno != errno.ECONNREFUSED:
+                raise
+
+        if c is not None:
+            c.close()
+            time.sleep(delay)
+            return broker
+    raise IOError
+
+def start_client(filename, cmd, env):
+    if cmd is None:
+        raise ValueError
+    if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+        cmd = ['valgrind', '-q', '--log-file='+filename+'.vglog'] + cmd
+
+    return subprocess.Popen(cmd, env=env)
 
 def expect_packet(sock, name, expected):
     if len(expected) > 0:

@@ -33,6 +33,7 @@ Contributors:
 struct mosq_config {
 	char *id;
 	char *id_prefix;
+	int protocol_version;
 	int keepalive;
 	char *host;
 	int port;
@@ -44,7 +45,9 @@ struct mosq_config {
 	long msglen; /* pub */
 	char *topic; /* pub */
 	char *bind_address;
+#ifdef WITH_SRV
 	bool use_srv;
+#endif
 	bool debug;
 	bool quiet;
 	unsigned int max_inflight;
@@ -67,20 +70,26 @@ struct mosq_config {
 	char *psk;
 	char *psk_identity;
 #  endif
+#endif
 	bool clean_session; /* sub */
 	char **topics; /* sub */
 	int topic_count; /* sub */
-	int topic_qos; /* sub */
 	bool no_retain; /* sub */
 	char **filter_outs; /* sub */
 	int filter_out_count; /* sub */
 	bool verbose; /* sub */
 	bool eol; /* sub */
-	bool oneshot; /* sub */
+	int msg_count; /* sub */
+#ifdef WITH_SOCKS
+	char *socks5_host;
+	int socks5_port;
+	char *socks5_username;
+	char *socks5_password;
 #endif
 };
 
 int client_config_load(struct mosq_config *config, int pub_or_sub, int argc, char *argv[]);
+void client_config_cleanup(struct mosq_config *cfg);
 int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg);
 int client_id_generate(struct mosq_config *cfg, const char *id_base);
 int client_connect(struct mosquitto *mosq, struct mosq_config *cfg);

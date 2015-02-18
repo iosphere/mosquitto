@@ -1,9 +1,12 @@
+include ../../config.mk
+
 .PHONY: all clean test
 .NOTPARALLEL:
 
 all :
 
 clean : 
+	-rm -f *.vglog
 	$(MAKE) -C c clean
 
 test-compile : 
@@ -20,7 +23,12 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10
 	./01-connect-anon-denied.py
 	./01-connect-uname-no-password-denied.py
 	./01-connect-uname-password-denied.py
+ifeq ($(WITH_TLS),yes)
 	./01-connect-uname-password-success.py
+else
+	./01-connect-uname-password-success-no-tls.py
+endif
+
 
 02 :
 	./02-subscribe-qos0.py
@@ -64,10 +72,10 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10
 07 :
 	./07-will-qos0.py
 	./07-will-null.py
-	./07-will-acl-denied.py
 	./07-will-null-topic.py
 
 08 :
+ifeq ($(WITH_TLS),yes)
 	./08-ssl-connect-no-auth.py
 	./08-ssl-connect-no-auth-wrong-ca.py
 	./08-ssl-connect-cert-auth.py
@@ -80,6 +88,7 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10
 	./08-ssl-bridge.py
 	./08-tls-psk-pub.py
 	./08-tls-psk-bridge.py
+endif
 
 09 :
 	./09-plugin-auth-unpwd-success.py
@@ -88,6 +97,3 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10
 10 :
 	./10-listener-mount-point.py
 
-# Tests for with WITH_STRICT_PROTOCOL defined
-strict-test : 
-	./01-connect-invalid-id-24.py

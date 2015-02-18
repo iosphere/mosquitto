@@ -26,11 +26,10 @@ publish_fresh_packet = mosq_test.gen_publish("retain/qos0/test", qos=0, payload=
 subscribe_packet = mosq_test.gen_subscribe(mid, "retain/qos0/test", 0)
 suback_packet = mosq_test.gen_suback(mid, 0)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
+cmd = ['../../src/mosquitto', '-p', '1888']
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
 
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
     sock.send(subscribe_packet)
 

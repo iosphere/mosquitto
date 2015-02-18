@@ -41,9 +41,9 @@ int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context)
 		case PINGRESP:
 			return _mosquitto_handle_pingresp(context);
 		case PUBACK:
-			return _mosquitto_handle_pubackcomp(context, "PUBACK");
+			return _mosquitto_handle_pubackcomp(db, context, "PUBACK");
 		case PUBCOMP:
-			return _mosquitto_handle_pubackcomp(context, "PUBCOMP");
+			return _mosquitto_handle_pubackcomp(db, context, "PUBCOMP");
 		case PUBLISH:
 			return mqtt3_handle_publish(db, context);
 		case PUBREC:
@@ -107,10 +107,6 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 		_mosquitto_free(topic);
 		return 1;
 	}
-	if(!strlen(topic)){
-		_mosquitto_free(topic);
-		return 1;
-	}
 #ifdef WITH_BRIDGE
 	if(context->bridge && context->bridge->topics && context->bridge->topic_remapping){
 		for(i=0; i<context->bridge->topic_count; i++){
@@ -142,12 +138,14 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 					if(cur_topic->local_prefix){
 						/* This prefix needs adding. */
 						len = strlen(topic) + strlen(cur_topic->local_prefix)+1;
-						topic_temp = _mosquitto_calloc(len+1, sizeof(char));
+						topic_temp = _mosquitto_malloc(len+1);
 						if(!topic_temp){
 							_mosquitto_free(topic);
 							return MOSQ_ERR_NOMEM;
 						}
 						snprintf(topic_temp, len, "%s%s", cur_topic->local_prefix, topic);
+						topic_temp[len] = '\0';
+
 						_mosquitto_free(topic);
 						topic = topic_temp;
 					}
@@ -157,7 +155,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 #endif
-	if(_mosquitto_topic_wildcard_len_check(topic) != MOSQ_ERR_SUCCESS){
+	if(mosquitto_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
 		/* Invalid publish topic, just swallow it. */
 		_mosquitto_free(topic);
 		return 1;
@@ -176,12 +174,14 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 	if(context->listener && context->listener->mount_point){
 		len = strlen(context->listener->mount_point) + strlen(topic) + 1;
-		topic_mount = _mosquitto_calloc(len, sizeof(char));
+		topic_mount = _mosquitto_malloc(len+1);
 		if(!topic_mount){
 			_mosquitto_free(topic);
 			return MOSQ_ERR_NOMEM;
 		}
 		snprintf(topic_mount, len, "%s%s", context->listener->mount_point, topic);
+		topic_mount[len] = '\0';
+
 		_mosquitto_free(topic);
 		topic = topic_mount;
 	}
@@ -191,7 +191,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 			goto process_bad_message;
 		}
-		payload = _mosquitto_calloc(payloadlen+1, sizeof(uint8_t));
+		payload = _mosquitto_calloc(payloadlen+1, 1);
 		if(!payload){
 			_mosquitto_free(topic);
 			return 1;
@@ -230,10 +230,10 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	switch(qos){
 		case 0:
-			if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, stored)) rc = 1;
+			if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
 			break;
 		case 1:
-			if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, stored)) rc = 1;
+			if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
 			if(_mosquitto_send_puback(context, mid)) rc = 1;
 			break;
 		case 2:

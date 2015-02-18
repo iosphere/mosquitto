@@ -45,34 +45,37 @@ static void _sys_update_clients(struct mosquitto_db *db, char *buf)
 	static unsigned int client_count = -1;
 	static int clients_expired = -1;
 	static unsigned int client_max = -1;
-	static unsigned int inactive_count = -1;
-	static unsigned int active_count = -1;
-	unsigned int value;
-	unsigned int inactive;
-	unsigned int active;
+	static unsigned int disconnected_count = -1;
+	static unsigned int connected_count = -1;
 
-	if(!mqtt3_db_client_count(db, &value, &inactive)){
-		if(client_count != value){
-			client_count = value;
-			snprintf(buf, BUFLEN, "%d", client_count);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/total", 2, strlen(buf), buf, 1);
-		}
-		if(inactive_count != inactive){
-			inactive_count = inactive;
-			snprintf(buf, BUFLEN, "%d", inactive_count);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/inactive", 2, strlen(buf), buf, 1);
-		}
-		active = client_count - inactive;
-		if(active_count != active){
-			active_count = active;
-			snprintf(buf, BUFLEN, "%d", active_count);
-			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/active", 2, strlen(buf), buf, 1);
-		}
-		if(value != client_max){
-			client_max = value;
+	unsigned int count_total, count_by_sock;
+
+	count_total = HASH_CNT(hh_id, db->contexts_by_id);
+	count_by_sock = HASH_CNT(hh_sock, db->contexts_by_sock);
+
+	if(client_count != count_total){
+		client_count = count_total;
+		snprintf(buf, BUFLEN, "%d", client_count);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/total", 2, strlen(buf), buf, 1);
+
+		if(client_count > client_max){
+			client_max = client_count;
 			snprintf(buf, BUFLEN, "%d", client_max);
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/maximum", 2, strlen(buf), buf, 1);
 		}
+	}
+
+	if(disconnected_count != count_total-count_by_sock){
+		disconnected_count = count_total-count_by_sock;
+		snprintf(buf, BUFLEN, "%d", disconnected_count);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/inactive", 2, strlen(buf), buf, 1);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/disconnected", 2, strlen(buf), buf, 1);
+	}
+	if(connected_count != count_by_sock){
+		connected_count = count_by_sock;
+		snprintf(buf, BUFLEN, "%d", connected_count);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/active", 2, strlen(buf), buf, 1);
+		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/clients/connected", 2, strlen(buf), buf, 1);
 	}
 	if(g_clients_expired != clients_expired){
 		clients_expired = g_clients_expired;
@@ -81,7 +84,7 @@ static void _sys_update_clients(struct mosquitto_db *db, char *buf)
 	}
 }
 
-#ifdef WITH_MEMORY_TRACKING
+#ifdef REAL_WITH_MEMORY_TRACKING
 static void _sys_update_memory(struct mosquitto_db *db, char *buf)
 {
 	static unsigned long current_heap = -1;
@@ -265,7 +268,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/retained messages/count", 2, strlen(buf), buf, 1);
 		}
 
-#ifdef WITH_MEMORY_TRACKING
+#ifdef REAL_WITH_MEMORY_TRACKING
 		_sys_update_memory(db, buf);
 #endif
 

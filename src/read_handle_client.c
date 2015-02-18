@@ -36,11 +36,6 @@ int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
 	if(!context){
 		return MOSQ_ERR_INVAL;
 	}
-#ifdef WITH_STRICT_PROTOCOL
-	if(context->in_packet.remaining_length != 2){
-		return MOSQ_ERR_PROTOCOL;
-	}
-#endif
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received CONNACK on connection %s.", context->id);
 	if(_mosquitto_read_byte(&context->in_packet, &byte)) return 1; // Reserved byte, not used
 	if(_mosquitto_read_byte(&context->in_packet, &rc)) return 1;
@@ -57,11 +52,11 @@ int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
 						}
 						mqtt3_db_messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1);
 					}else{
-						notification_topic_len = strlen(context->id)+strlen("$SYS/broker/connection//state");
+						notification_topic_len = strlen(context->bridge->remote_clientid)+strlen("$SYS/broker/connection//state");
 						notification_topic = _mosquitto_malloc(sizeof(char)*(notification_topic_len+1));
 						if(!notification_topic) return MOSQ_ERR_NOMEM;
 
-						snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->id);
+						snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->bridge->remote_clientid);
 						notification_payload = '1';
 						if(_mosquitto_send_real_publish(context, _mosquitto_mid_generate(context),
 								notification_topic, 1, &notification_payload, 1, true, 0)){
@@ -75,15 +70,17 @@ int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
 				}
 				for(i=0; i<context->bridge->topic_count; i++){
 					if(context->bridge->topics[i].direction == bd_in || context->bridge->topics[i].direction == bd_both){
-						if(_mosquitto_send_subscribe(context, NULL, false, context->bridge->topics[i].remote_topic, context->bridge->topics[i].qos)){
+						if(_mosquitto_send_subscribe(context, NULL, context->bridge->topics[i].remote_topic, context->bridge->topics[i].qos)){
 							return 1;
 						}
 					}else{
-						if(_mosquitto_send_unsubscribe(context, NULL, false, context->bridge->topics[i].remote_topic)){
-							/* direction = inwards only. This means we should not be subscribed
-			 				 * to the topic. It is possible that we used to be subscribed to
-			 				 * this topic so unsubscribe. */
-							return 1;
+						if(context->bridge->attempt_unsubscribe){
+							if(_mosquitto_send_unsubscribe(context, NULL, context->bridge->topics[i].remote_topic)){
+								/* direction = inwards only. This means we should not be subscribed
+								* to the topic. It is possible that we used to be subscribed to
+								* this topic so unsubscribe. */
+								return 1;
+							}
 						}
 					}
 				}

@@ -24,7 +24,9 @@ Contributors:
 #endif
 
 #ifdef WITH_TLS
-#include <openssl/ssl.h>
+#  include <openssl/ssl.h>
+#else
+#  include <time.h>
 #endif
 #include <stdlib.h>
 
@@ -54,6 +56,7 @@ Contributors:
 #include "mosquitto.h"
 #include "time_mosq.h"
 #ifdef WITH_BROKER
+#  include "uthash.h"
 struct mosquitto_client_msg;
 #endif
 
@@ -83,7 +86,17 @@ enum mosquitto_client_state {
 	mosq_cs_disconnecting = 2,
 	mosq_cs_connect_async = 3,
 	mosq_cs_connect_pending = 4,
-	mosq_cs_connect_srv = 5
+	mosq_cs_connect_srv = 5,
+	mosq_cs_disconnect_ws = 6,
+	mosq_cs_disconnected = 7,
+	mosq_cs_socks5_new = 8,
+	mosq_cs_socks5_start = 9,
+	mosq_cs_socks5_request = 10,
+	mosq_cs_socks5_reply = 11,
+	mosq_cs_socks5_auth_ok = 12,
+	mosq_cs_socks5_userpass_reply = 13,
+	mosq_cs_socks5_send_userpass = 14,
+	mosq_cs_expiring = 15,
 };
 
 enum _mosquitto_protocol {
@@ -101,17 +114,16 @@ enum _mosquitto_transport {
 };
 
 struct _mosquitto_packet{
-	uint8_t command;
-	uint8_t have_remaining;
-	uint8_t remaining_count;
-	uint16_t mid;
+	uint8_t *payload;
+	struct _mosquitto_packet *next;
 	uint32_t remaining_mult;
 	uint32_t remaining_length;
 	uint32_t packet_length;
 	uint32_t to_process;
 	uint32_t pos;
-	uint8_t *payload;
-	struct _mosquitto_packet *next;
+	uint16_t mid;
+	uint8_t command;
+	uint8_t remaining_count;
 };
 
 struct mosquitto_message_all{
@@ -141,12 +153,11 @@ struct mosquitto {
 	char *username;
 	char *password;
 	uint16_t keepalive;
-	bool clean_session;
+	uint16_t last_mid;
 	enum mosquitto_client_state state;
 	time_t last_msg_in;
 	time_t last_msg_out;
 	time_t ping_t;
-	uint16_t last_mid;
 	struct _mosquitto_packet in_packet;
 	struct _mosquitto_packet *current_out_packet;
 	struct _mosquitto_packet *out_packet;
@@ -159,14 +170,15 @@ struct mosquitto {
 	char *tls_certfile;
 	char *tls_keyfile;
 	int (*tls_pw_callback)(char *buf, int size, int rwflag, void *userdata);
-	int tls_cert_reqs;
 	char *tls_version;
 	char *tls_ciphers;
 	char *tls_psk;
 	char *tls_psk_identity;
+	int tls_cert_reqs;
 	bool tls_insecure;
 #endif
 	bool want_write;
+	bool want_connect;
 #if defined(WITH_THREADING) && !defined(WITH_BROKER)
 	pthread_mutex_t callback_mutex;
 	pthread_mutex_t log_callback_mutex;
@@ -178,7 +190,9 @@ struct mosquitto {
 	pthread_mutex_t out_message_mutex;
 	pthread_t thread_id;
 #endif
+	bool clean_session;
 #ifdef WITH_BROKER
+	bool is_dropping;
 	bool is_bridge;
 	struct _mqtt3_bridge *bridge;
 	struct mosquitto_client_msg *msgs;
@@ -188,11 +202,21 @@ struct mosquitto {
 	struct _mosquitto_acl_user *acl_list;
 	struct _mqtt3_listener *listener;
 	time_t disconnect_t;
-	int pollfd_index;
-	int db_index;
 	struct _mosquitto_packet *out_packet_last;
-	bool is_dropping;
+	struct _mosquitto_subhier **subs;
+	int sub_count;
+	int pollfd_index;
+#  ifdef WITH_WEBSOCKETS
+	struct libwebsocket_context *ws_context;
+	struct libwebsocket *wsi;
+#  endif
 #else
+#  ifdef WITH_SOCKS
+	char *socks5_host;
+	int socks5_port;
+	char *socks5_username;
+	char *socks5_password;
+#  endif
 	void *userdata;
 	bool in_callback;
 	unsigned int message_retry;
@@ -224,6 +248,12 @@ struct mosquitto {
 #  ifdef WITH_SRV
 	ares_channel achan;
 #  endif
+#endif
+
+#ifdef WITH_BROKER
+	UT_hash_handle hh_id;
+	UT_hash_handle hh_sock;
+	struct mosquitto *for_free_next;
 #endif
 };
 

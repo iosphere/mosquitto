@@ -27,18 +27,15 @@ publish_packet = mosq_test.gen_publish("qos2/disconnect/test", qos=2, mid=mid, p
 publish_dup_packet = mosq_test.gen_publish("qos2/disconnect/test", qos=2, mid=mid, payload="disconnect-message", dup=True)
 pubrec_packet = mosq_test.gen_pubrec(mid)
 pubrel_packet = mosq_test.gen_pubrel(mid)
-pubrel_dup_packet = mosq_test.gen_pubrel(mid, dup=True)
 pubcomp_packet = mosq_test.gen_pubcomp(mid)
 
 mid = 3266
 publish2_packet = mosq_test.gen_publish("qos1/outgoing", qos=1, mid=mid, payload="outgoing-message")
 puback2_packet = mosq_test.gen_puback(mid)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-b2c-disconnect-qos2.conf'], stderr=subprocess.PIPE)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__))
 
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
     sock.send(subscribe_packet)
 
@@ -63,7 +60,7 @@ try:
                     sock.close()
 
                     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
-                    if mosq_test.expect_packet(sock, "dup pubrel", pubrel_dup_packet):
+                    if mosq_test.expect_packet(sock, "dup pubrel", pubrel_packet):
                         sock.send(pubcomp_packet)
                         rc = 0
                     sock.close()

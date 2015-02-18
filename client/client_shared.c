@@ -31,6 +31,7 @@ Contributors:
 #include <mosquitto.h>
 #include "client_shared.h"
 
+static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url);
 static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[]);
 
 void init_config(struct mosq_config *cfg)
@@ -41,6 +42,52 @@ void init_config(struct mosq_config *cfg)
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
 	cfg->eol = true;
+	cfg->protocol_version = MQTT_PROTOCOL_V31;
+}
+
+void client_config_cleanup(struct mosq_config *cfg)
+{
+	int i;
+	if(cfg->id) free(cfg->id);
+	if(cfg->id_prefix) free(cfg->id_prefix);
+	if(cfg->host) free(cfg->host);
+	if(cfg->file_input) free(cfg->file_input);
+	if(cfg->message) free(cfg->message);
+	if(cfg->topic) free(cfg->topic);
+	if(cfg->bind_address) free(cfg->bind_address);
+	if(cfg->username) free(cfg->username);
+	if(cfg->password) free(cfg->password);
+	if(cfg->will_topic) free(cfg->will_topic);
+	if(cfg->will_payload) free(cfg->will_payload);
+#ifdef WITH_TLS
+	if(cfg->cafile) free(cfg->cafile);
+	if(cfg->capath) free(cfg->capath);
+	if(cfg->certfile) free(cfg->certfile);
+	if(cfg->keyfile) free(cfg->keyfile);
+	if(cfg->ciphers) free(cfg->ciphers);
+	if(cfg->tls_version) free(cfg->tls_version);
+#  ifdef WITH_TLS_PSK
+	if(cfg->psk) free(cfg->psk);
+	if(cfg->psk_identity) free(cfg->psk_identity);
+#  endif
+#endif
+	if(cfg->topics){
+		for(i=0; i<cfg->topic_count; i++){
+			free(cfg->topics[i]);
+		}
+		free(cfg->topics);
+	}
+	if(cfg->filter_outs){
+		for(i=0; i<cfg->filter_out_count; i++){
+			free(cfg->filter_outs[i]);
+		}
+		free(cfg->filter_outs);
+	}
+#ifdef WITH_SOCKS
+	if(cfg->socks5_host) free(cfg->socks5_host);
+	if(cfg->socks5_username) free(cfg->socks5_username);
+	if(cfg->socks5_password) free(cfg->socks5_password);
+#endif
 }
 
 int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
@@ -49,13 +96,15 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	FILE *fptr;
 	char line[1024];
 	int count;
-#ifndef WIN32
-	char *env;
 	char *loc = NULL;
 	int len;
 	char *args[3];
-#endif
 
+#ifndef WIN32
+	char *env;
+#else
+	char env[1024];
+#endif
 	args[0] = NULL;
 
 	init_config(cfg);
@@ -88,6 +137,22 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		}
 	}
 
+#else
+	rc = GetEnvironmentVariable("USERPROFILE", env, 1024);
+	if(rc > 0 && rc < 1024){
+		len = strlen(env) + strlen("\\mosquitto_pub.conf") + 1;
+		loc = malloc(len);
+		if(pub_or_sub == CLIENT_PUB){
+			snprintf(loc, len, "%s\\mosquitto_pub.conf", env);
+		}else{
+			snprintf(loc, len, "%s\\mosquitto_sub.conf", env);
+		}
+		loc[len-1] = '\0';
+	}else{
+		fprintf(stderr, "Warning: Unable to locate configuration directory, default config not loaded.\n");
+	}
+#endif
+
 	if(loc){
 		fptr = fopen(loc, "rt");
 		if(fptr){
@@ -119,9 +184,6 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		}
 		free(loc);
 	}
-#else
-#warn FIXME - config file support
-#endif
 
 	/* Deal with real argc/argv */
 	rc = client_config_line_proc(cfg, pub_or_sub, argc, argv);
@@ -138,10 +200,13 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	if(cfg->password && !cfg->username){
 		if(!cfg->quiet) fprintf(stderr, "Warning: Not using password since username not set.\n");
 	}
+#ifdef WITH_TLS
 	if((cfg->certfile && !cfg->keyfile) || (cfg->keyfile && !cfg->certfile)){
 		fprintf(stderr, "Error: Both certfile and keyfile must be provided if one of them is.\n");
 		return 1;
 	}
+#endif
+#ifdef WITH_TLS_PSK
 	if((cfg->cafile || cfg->capath) && cfg->psk){
 		if(!cfg->quiet) fprintf(stderr, "Error: Only one of --psk or --cafile/--capath may be used at once.\n");
 		return 1;
@@ -150,6 +215,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		if(!cfg->quiet) fprintf(stderr, "Error: --psk-identity required if --psk used.\n");
 		return 1;
 	}
+#endif
 
 	if(pub_or_sub == CLIENT_SUB){
 		if(cfg->clean_session == false && (cfg->id_prefix || !cfg->id)){
@@ -186,12 +252,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 			}
 			i++;
-		}else if(!strcmp(argv[i], "-1") || !strcmp(argv[i], "--oneshot")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}else{
-				cfg->oneshot = true;
-			}
 		}else if(!strcmp(argv[i], "-A")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -A argument given but no address specified.\n\n");
@@ -200,6 +260,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->bind_address = strdup(argv[i+1]);
 			}
 			i++;
+#ifdef WITH_TLS
 		}else if(!strcmp(argv[i], "--cafile")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --cafile argument given but no file specified.\n\n");
@@ -232,6 +293,23 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->ciphers = strdup(argv[i+1]);
 			}
 			i++;
+#endif
+		}else if(!strcmp(argv[i], "-C")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}else{
+				if(i==argc-1){
+					fprintf(stderr, "Error: -C argument given but no count specified.\n\n");
+					return 1;
+				}else{
+					cfg->msg_count = atoi(argv[i+1]);
+					if(cfg->msg_count < 1){
+						fprintf(stderr, "Error: Invalid message count \"%d\".\n\n", cfg->msg_count);
+						return 1;
+					}
+				}
+				i++;
+			}
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
 			cfg->debug = true;
 		}else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--file")){
@@ -250,7 +328,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--help")){
-			return 1;
+			return 2;
 		}else if(!strcmp(argv[i], "-h") || !strcmp(argv[i], "--host")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -h argument given but no host specified.\n\n");
@@ -259,8 +337,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->host = strdup(argv[i+1]);
 			}
 			i++;
+#ifdef WITH_TLS
 		}else if(!strcmp(argv[i], "--insecure")){
 			cfg->insecure = true;
+#endif
 		}else if(!strcmp(argv[i], "-i") || !strcmp(argv[i], "--id")){
 			if(cfg->id_prefix){
 				fprintf(stderr, "Error: -i and -I argument cannot be used together.\n\n");
@@ -297,6 +377,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 			}
 			i++;
+#ifdef WITH_TLS
 		}else if(!strcmp(argv[i], "--key")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --key argument given but no file specified.\n\n");
@@ -305,6 +386,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->keyfile = strdup(argv[i+1]);
 			}
 			i++;
+#endif
 		}else if(!strcmp(argv[i], "-l") || !strcmp(argv[i], "--stdin-line")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;
@@ -349,6 +431,34 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}else{
 				cfg->pub_mode = MSGMODE_NULL;
 			}
+		}else if(!strcmp(argv[i], "-V") || !strcmp(argv[i], "--protocol-version")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --protocol-version argument given but no version specified.\n\n");
+				return 1;
+			}else{
+				if(!strcmp(argv[i+1], "mqttv31")){
+					cfg->protocol_version = MQTT_PROTOCOL_V31;
+				}else if(!strcmp(argv[i+1], "mqttv311")){
+					cfg->protocol_version = MQTT_PROTOCOL_V311;
+				}else{
+					fprintf(stderr, "Error: Invalid protocol version argument given.\n\n");
+					return 1;
+				}
+				i++;
+			}
+#ifdef WITH_SOCKS
+		}else if(!strcmp(argv[i], "--proxy")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --proxy argument given but no proxy url specified.\n\n");
+				return 1;
+			}else{
+				if(mosquitto__parse_socks_url(cfg, argv[i+1])){
+					return 1;
+				}
+				i++;
+			}
+#endif
+#ifdef WITH_TLS_PSK
 		}else if(!strcmp(argv[i], "--psk")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --psk argument given but no key specified.\n\n");
@@ -365,6 +475,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->psk_identity = strdup(argv[i+1]);
 			}
 			i++;
+#endif
 		}else if(!strcmp(argv[i], "-q") || !strcmp(argv[i], "--qos")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -q argument given but no QoS specified.\n\n");
@@ -404,8 +515,16 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				if(pub_or_sub == CLIENT_PUB){
+					if(mosquitto_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+						fprintf(stderr, "Error: Invalid publish topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
+						return 1;
+					}
 					cfg->topic = strdup(argv[i+1]);
 				}else{
+					if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+						fprintf(stderr, "Error: Invalid subscription topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
+						return 1;
+					}
 					cfg->topic_count++;
 					cfg->topics = realloc(cfg->topics, cfg->topic_count*sizeof(char *));
 					cfg->topics[cfg->topic_count-1] = strdup(argv[i+1]);
@@ -420,11 +539,16 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -T argument given but no topic filter specified.\n\n");
 				return 1;
 			}else{
+				if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+					fprintf(stderr, "Error: Invalid filter topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
+					return 1;
+				}
 				cfg->filter_out_count++;
 				cfg->filter_outs = realloc(cfg->filter_outs, cfg->filter_out_count*sizeof(char *));
 				cfg->filter_outs[cfg->filter_out_count-1] = strdup(argv[i+1]);
 			}
 			i++;
+#ifdef WITH_TLS
 		}else if(!strcmp(argv[i], "--tls-version")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --tls-version argument given but no version specified.\n\n");
@@ -433,6 +557,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->tls_version = strdup(argv[i+1]);
 			}
 			i++;
+#endif
 		}else if(!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -u argument given but no username specified.\n\n");
@@ -477,6 +602,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: --will-topic argument given but no will topic specified.\n\n");
 				return 1;
 			}else{
+				if(mosquitto_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+					fprintf(stderr, "Error: Invalid will topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
+					return 1;
+				}
 				cfg->will_topic = strdup(argv[i+1]);
 			}
 			i++;
@@ -514,6 +643,8 @@ unknown_option:
 
 int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 {
+	int rc;
+
 	if(cfg->will_topic && mosquitto_will_set(mosq, cfg->will_topic,
 				cfg->will_payloadlen, cfg->will_payload, cfg->will_qos,
 				cfg->will_retain)){
@@ -527,6 +658,7 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		mosquitto_lib_cleanup();
 		return 1;
 	}
+#ifdef WITH_TLS
 	if((cfg->cafile || cfg->capath)
 			&& mosquitto_tls_set(mosq, cfg->cafile, cfg->capath, cfg->certfile, cfg->keyfile, NULL)){
 
@@ -539,17 +671,30 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		mosquitto_lib_cleanup();
 		return 1;
 	}
+#  ifdef WITH_TLS_PSK
 	if(cfg->psk && mosquitto_tls_psk_set(mosq, cfg->psk, cfg->psk_identity, NULL)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS-PSK options.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
+#  endif
 	if(cfg->tls_version && mosquitto_tls_opts_set(mosq, 1, cfg->tls_version, cfg->ciphers)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
+#endif
 	mosquitto_max_inflight_messages_set(mosq, cfg->max_inflight);
+#ifdef WITH_SOCKS
+	if(cfg->socks5_host){
+		rc = mosquitto_socks5_set(mosq, cfg->socks5_host, cfg->socks5_port, cfg->socks5_username, cfg->socks5_password);
+		if(rc){
+			mosquitto_lib_cleanup();
+			return rc;
+		}
+	}
+#endif
+	mosquitto_opts_set(mosq, MOSQ_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -591,11 +736,15 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	char err[1024];
 	int rc;
 
+#ifdef WITH_SRV
 	if(cfg->use_srv){
 		rc = mosquitto_connect_srv(mosq, cfg->host, cfg->keepalive, cfg->bind_address);
 	}else{
 		rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
 	}
+#else
+	rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
+#endif
 	if(rc){
 		if(!cfg->quiet){
 			if(rc == MOSQ_ERR_ERRNO){
@@ -614,3 +763,195 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	}
 	return MOSQ_ERR_SUCCESS;
 }
+
+#ifdef WITH_SOCKS
+/* Convert %25 -> %, %3a, %3A -> :, %40 -> @ */
+static int mosquitto__urldecode(char *str)
+{
+	int i, j;
+	int len;
+	if(!str) return 0;
+
+	if(!strchr(str, '%')) return 0;
+
+	len = strlen(str);
+	for(i=0; i<len; i++){
+		if(str[i] == '%'){
+			if(i+2 >= len){
+				return 1;
+			}
+			if(str[i+1] == '2' && str[i+2] == '5'){
+				str[i] = '%';
+				len -= 2;
+				for(j=i+1; j<len; j++){
+					str[j] = str[j+2];
+				}
+				str[j] = '\0';
+			}else if(str[i+1] == '3' && (str[i+2] == 'A' || str[i+2] == 'a')){
+				str[i] = ':';
+				len -= 2;
+				for(j=i+1; j<len; j++){
+					str[j] = str[j+2];
+				}
+				str[j] = '\0';
+			}else if(str[i+1] == '4' && str[i+2] == '0'){
+				str[i] = ':';
+				len -= 2;
+				for(j=i+1; j<len; j++){
+					str[j] = str[j+2];
+				}
+				str[j] = '\0';
+			}else{
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
+{
+	char *str;
+	int i;
+	char *username = NULL, *password = NULL, *host = NULL, *port = NULL;
+	char *username_or_host = NULL;
+	int start;
+	int len;
+	bool have_auth = false;
+	int port_int;
+
+	if(!strncmp(url, "socks5h://", strlen("socks5h://"))){
+		str = url + strlen("socks5h://");
+	}else{
+		fprintf(stderr, "Error: Unsupported proxy protocol: %s\n", url);
+		return 1;
+	}
+
+	// socks5h://username:password@host:1883
+	// socks5h://username:password@host
+	// socks5h://username@host:1883
+	// socks5h://username@host
+	// socks5h://host:1883
+	// socks5h://host
+
+	start = 0;
+	for(i=0; i<strlen(str); i++){
+		if(str[i] == ':'){
+			if(i == start){
+				goto cleanup;
+			}
+			if(have_auth){
+				/* Have already seen a @ , so this must be of form
+				 * socks5h://username[:password]@host:port */
+				if(host){
+					/* Already seen a host, must be malformed. */
+					goto cleanup;
+				}
+				len = i-start;
+				host = malloc(len + 1);
+				memcpy(host, &(str[start]), len);
+				host[len] = '\0';
+				start = i+1;
+			}else if(!username_or_host){
+				/* Haven't seen a @ before, so must be of form
+				 * socks5h://host:port or
+				 * socks5h://username:password@host[:port] */
+				len = i-start;
+				username_or_host = malloc(len + 1);
+				memcpy(username_or_host, &(str[start]), len);
+				username_or_host[len] = '\0';
+				start = i+1;
+			}
+		}else if(str[i] == '@'){
+			if(i == start){
+				goto cleanup;
+			}
+			have_auth = true;
+			if(username_or_host){
+				/* Must be of form socks5h://username:password@... */
+				username = username_or_host;
+				username_or_host = NULL;
+
+				len = i-start;
+				password = malloc(len + 1);
+				memcpy(password, &(str[start]), len);
+				password[len] = '\0';
+				start = i+1;
+			}else{
+				/* Haven't seen a : yet, so must be of form
+				 * socks5h://username@... */
+				if(username){
+					/* Already got a username, must be malformed. */
+					goto cleanup;
+				}
+				len = i-start;
+				username = malloc(len + 1);
+				memcpy(username, &(str[start]), len);
+				username[len] = '\0';
+				start = i+1;
+			}
+		}
+	}
+
+	/* Deal with remainder */
+	if(i > start){
+		len = i-start;
+		if(host){
+			/* Have already seen a @ , so this must be of form
+			 * socks5h://username[:password]@host:port */
+			port = malloc(len + 1);
+			memcpy(port, &(str[start]), len);
+			port[len] = '\0';
+		}else if(username_or_host){
+			/* Haven't seen a @ before, so must be of form
+			 * socks5h://host:port */
+			host = username_or_host;
+			username_or_host = NULL;
+			port = malloc(len + 1);
+			memcpy(port, &(str[start]), len);
+			port[len] = '\0';
+		}else{
+			host = malloc(len + 1);
+			memcpy(host, &(str[start]), len);
+			host[len] = '\0';
+		}
+	}
+
+	if(!host){
+		fprintf(stderr, "Error: Invalid proxy.\n");
+		goto cleanup;
+	}
+
+	if(mosquitto__urldecode(username)){
+		goto cleanup;
+	}
+	if(mosquitto__urldecode(password)){
+		goto cleanup;
+	}
+	if(port){
+		port_int = atoi(port);
+		if(port_int < 1 || port_int > 65535){
+			fprintf(stderr, "Error: Invalid proxy port %d\n", port_int);
+			goto cleanup;
+		}
+		free(port);
+	}else{
+		port_int = 1080;
+	}
+
+	cfg->socks5_username = username;
+	cfg->socks5_password = password;
+	cfg->socks5_host = host;
+	cfg->socks5_port = port_int;
+
+	return 0;
+cleanup:
+	if(username_or_host) free(username_or_host);
+	if(username) free(username);
+	if(password) free(password);
+	if(host) free(host);
+	if(port) free(port);
+	return 1;
+}
+
+#endif

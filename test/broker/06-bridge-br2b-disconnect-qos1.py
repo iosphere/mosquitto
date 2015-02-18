@@ -40,11 +40,9 @@ ssock.settimeout(40)
 ssock.bind(('', 1888))
 ssock.listen(5)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '06-bridge-br2b-disconnect-qos1.conf'], stderr=subprocess.PIPE)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889)
 
 try:
-    time.sleep(0.5)
-
     (bridge, address) = ssock.accept()
     bridge.settimeout(20)
 

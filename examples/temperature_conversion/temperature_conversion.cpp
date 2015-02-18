@@ -13,6 +13,10 @@ mqtt_tempconv::mqtt_tempconv(const char *id, const char *host, int port) : mosqu
 	connect(host, port, keepalive);
 };
 
+mqtt_tempconv::~mqtt_tempconv()
+{
+}
+
 void mqtt_tempconv::on_connect(int rc)
 {
 	printf("Connected with code %d.\n", rc);

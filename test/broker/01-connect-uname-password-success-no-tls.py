@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Test whether a CONNECT with a too-long client id results in the correct CONNACK packet.
+# Test whether a connection is denied if it provides a correct username but
+# incorrect password.
 
 import subprocess
 import socket
@@ -16,14 +17,12 @@ import mosq_test
 
 rc = 1
 keepalive = 10
-connect_packet = mosq_test.gen_connect("connect-invalid-id-test-", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=2)
+connect_packet = mosq_test.gen_connect("connect-uname-pwd-test", keepalive=keepalive, username="user", password="password")
+connack_packet = mosq_test.gen_connack(rc=0)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-p', '1888'], stderr=subprocess.PIPE)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__))
 
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
     sock.close()
     rc = 0

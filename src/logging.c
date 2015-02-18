@@ -19,6 +19,7 @@ Contributors:
 #ifndef WIN32
 #include <syslog.h>
 #endif
+#include <time.h>
 
 #ifndef CMAKE
 #include <config.h>
@@ -26,6 +27,7 @@ Contributors:
 
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
+#include <util_mosq.h>
 
 extern struct mosquitto_db int_db;
 
@@ -48,25 +50,36 @@ HANDLE syslog_h;
 static int log_destinations = MQTT3_LOG_STDERR;
 static int log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
 
-int mqtt3_log_init(int priorities, int destinations)
+int mqtt3_log_init(struct mqtt3_config *config)
 {
 	int rc = 0;
 
-	log_priorities = priorities;
-	log_destinations = destinations;
+	log_priorities = config->log_type;
+	log_destinations = config->log_dest;
 
 	if(log_destinations & MQTT3_LOG_SYSLOG){
 #ifndef WIN32
-		openlog("mosquitto", LOG_PID, LOG_DAEMON);
+		openlog("mosquitto", LOG_PID|LOG_CONS, config->log_facility);
 #else
 		syslog_h = OpenEventLog(NULL, "mosquitto");
 #endif
 	}
 
+	if(log_destinations & MQTT3_LOG_FILE){
+		if(drop_privileges(config, true)){
+			return 1;
+		}
+		config->log_fptr = _mosquitto_fopen(config->log_file, "at");
+		if(!config->log_fptr){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
+			return MOSQ_ERR_INVAL;
+		}
+		restore_privileges();
+	}
 	return rc;
 }
 
-int mqtt3_log_close(void)
+int mqtt3_log_close(struct mqtt3_config *config)
 {
 	if(log_destinations & MQTT3_LOG_SYSLOG){
 #ifndef WIN32
@@ -75,14 +88,19 @@ int mqtt3_log_close(void)
 		CloseEventLog(syslog_h);
 #endif
 	}
-	/* FIXME - do something for all destinations! */
+	if(log_destinations & MQTT3_LOG_FILE){
+		if(config->log_fptr){
+			fclose(config->log_fptr);
+			config->log_fptr = NULL;
+		}
+	}
 
+	/* FIXME - do something for all destinations! */
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
+int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt, va_list va)
 {
-	va_list va;
 	char *s;
 	char *st;
 	int len;
@@ -92,6 +110,7 @@ int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt,
 	const char *topic;
 	int syslog_priority;
 	time_t now = time(NULL);
+	static time_t last_flush = 0;
 
 	if((log_priorities & priority) && log_destinations != MQTT3_LOG_NONE){
 		switch(priority){
@@ -151,6 +170,16 @@ int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt,
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
 				break;
+#ifdef WITH_WEBSOCKETS
+			case MOSQ_LOG_WEBSOCKETS:
+				topic = "$SYS/broker/log/WS";
+#ifndef WIN32
+				syslog_priority = LOG_DEBUG;
+#else
+				syslog_priority = EVENTLOG_INFORMATION_TYPE;
+#endif
+				break;
+#endif
 			default:
 				topic = "$SYS/broker/log/E";
 #ifndef WIN32
@@ -163,9 +192,7 @@ int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt,
 		s = _mosquitto_malloc(len*sizeof(char));
 		if(!s) return MOSQ_ERR_NOMEM;
 
-		va_start(va, fmt);
 		vsnprintf(s, len, fmt, va);
-		va_end(va);
 		s[len-1] = '\0'; /* Ensure string is null terminated. */
 
 		if(log_destinations & MQTT3_LOG_STDOUT){
@@ -189,6 +216,10 @@ int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt,
 				fprintf(int_db.config->log_fptr, "%d: %s\n", (int)now, s);
 			}else{
 				fprintf(int_db.config->log_fptr, "%s\n", s);
+			}
+			if(now - last_flush > 1){
+				fflush(int_db.config->log_fptr);
+				last_flush = now;
 			}
 		}
 		if(log_destinations & MQTT3_LOG_SYSLOG){
@@ -218,5 +249,26 @@ int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt,
 	}
 
 	return MOSQ_ERR_SUCCESS;
+}
+
+int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
+{
+	va_list va;
+	int rc;
+
+	va_start(va, fmt);
+	rc = _mosquitto_log_vprintf(mosq, priority, fmt, va);
+	va_end(va);
+
+	return rc;
+}
+
+void mosquitto_log_printf(int level, const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	_mosquitto_log_vprintf(NULL, level, fmt, va);
+	va_end(va);
 }
 

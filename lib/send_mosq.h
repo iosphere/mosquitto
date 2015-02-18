@@ -30,8 +30,8 @@ int _mosquitto_send_puback(struct mosquitto *mosq, uint16_t mid);
 int _mosquitto_send_pubcomp(struct mosquitto *mosq, uint16_t mid);
 int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup);
 int _mosquitto_send_pubrec(struct mosquitto *mosq, uint16_t mid);
-int _mosquitto_send_pubrel(struct mosquitto *mosq, uint16_t mid, bool dup);
-int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, bool dup, const char *topic, uint8_t topic_qos);
-int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, bool dup, const char *topic);
+int _mosquitto_send_pubrel(struct mosquitto *mosq, uint16_t mid);
+int _mosquitto_send_subscribe(struct mosquitto *mosq, int *mid, const char *topic, uint8_t topic_qos);
+int _mosquitto_send_unsubscribe(struct mosquitto *mosq, int *mid, const char *topic);
 
 #endif

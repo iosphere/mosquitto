@@ -53,7 +53,7 @@ class mosqpp_EXPORT mosquittopp {
 		struct mosquitto *m_mosq;
 	public:
 		mosquittopp(const char *id=NULL, bool clean_session=true);
-		~mosquittopp();
+		virtual ~mosquittopp();
 
 		int reinitialise(const char *id, bool clean_session);
 		int socket();
@@ -78,6 +78,7 @@ class mosqpp_EXPORT mosquittopp {
 		int tls_opts_set(int cert_reqs, const char *tls_version=NULL, const char *ciphers=NULL);
 		int tls_insecure_set(bool value);
 		int tls_psk_set(const char *psk, const char *identity, const char *ciphers=NULL);
+		int opts_set(enum mosq_opt_t option, void *value);
 
 		int loop(int timeout=-1, int max_packets=1);
 		int loop_misc();
@@ -87,6 +88,8 @@ class mosqpp_EXPORT mosquittopp {
 		int loop_start();
 		int loop_stop(bool force=false);
 		bool want_write();
+		int threaded_set(bool threaded=true);
+		int socks5_set(const char *host, int port=1080, const char *username=NULL, const char *password=NULL);
 		
 		virtual void on_connect(int rc) {return;};
 		virtual void on_disconnect(int rc) {return;};

@@ -277,9 +277,6 @@ int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquit
 				}else if(!mosq->in_messages){
 					mosq->in_messages_last = NULL;
 				}
-				if(cur->msg.qos == 2){
-					mosq->inflight_messages--;
-				}
 				found = true;
 				break;
 			}
@@ -326,7 +323,7 @@ void _mosquitto_message_retry_check_actual(struct mosquitto *mosq, struct mosqui
 				case mosq_ms_wait_for_pubcomp:
 					messages->timestamp = now;
 					messages->dup = true;
-					_mosquitto_send_pubrel(mosq, messages->msg.mid, true);
+					_mosquitto_send_pubrel(mosq, messages->msg.mid);
 					break;
 				default:
 					break;

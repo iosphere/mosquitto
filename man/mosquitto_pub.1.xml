@@ -11,7 +11,7 @@
 
 	<refnamediv>
 		<refname>mosquitto_pub</refname>
-		<refpurpose>an MQTT version 3.1 client for publishing simple messages</refpurpose>
+		<refpurpose>an MQTT version 3.1/3.1.1 client for publishing simple messages</refpurpose>
 	</refnamediv>
 
 	<refsynopsisdiv>
@@ -22,6 +22,7 @@
 			<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
 			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
 			<arg><option>-I</option> <replaceable>client id prefix</replaceable></arg>
+			<arg><option>-k</option> <replaceable>keepalive time</replaceable></arg>
 			<arg><option>-p</option> <replaceable>port number</replaceable></arg>
 			<arg><option>-q</option> <replaceable>message QoS</replaceable></arg>
 			<arg><option>--quiet</option></arg>
@@ -63,6 +64,9 @@
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 				</arg>
 			</group>
+			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
+			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
+
 			<arg choice='plain'><option>-t</option> <replaceable>message-topic</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
@@ -206,6 +210,15 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>-k</option></term>
+				<term><option>--keepalive</option></term>
+				<listitem>
+					<para>The number of seconds between sending PING commands
+					to the broker for the purposes of informing it we are still
+					connected and functioning. Defaults to 60 seconds.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>--key</option></term>
 				<listitem>
 					<para>Define the path to a file containing a PEM encoded
@@ -250,6 +263,28 @@
 					the broker. Using this argument without also specifying a
 					username is invalid. This requires a broker that supports
 					MQTT v3.1.  See also the <option>--username</option> option.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--proxy</option></term>
+				<listitem>
+					<para>Specify a SOCKS5 proxy to connect through. "None" and
+						"username" authentication types are supported. The
+						<option>socks-url</option> must be of the form
+						<option>socks5h://[username[:password]@]host[:port]</option>.
+						The protocol prefix <option>socks5h</option> means that
+						hostnames are resolved by the proxy. The symbols %25,
+						%3A and %40 are URL decoded into %, : and @
+						respectively, if present in the username or
+						password.</para>
+					<para>If username is not given, then no authentication is
+						attempted. If the port is not given, then the default
+						of 1080 is used.</para>
+					<para>More SOCKS versions may be available in the future,
+						depending on demand, and will use different protocol
+						prefixes as described in <citerefentry>
+							<refentrytitle>curl</refentrytitle>
+							<manvolnum>1</manvolnum> </citerefentry>.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -338,6 +373,16 @@
 					<para>Provide a username to be used for authenticating with
 					the broker. This requires a broker that supports MQTT v3.1.
 					See also the <option>--pw</option> argument.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-V</option></term>
+				<term><option>--protocol-version</option></term>
+				<listitem>
+					<para>Specify which version of the MQTT protocol should be
+						used when connecting to the rmeote broker. Can be
+						<option>mqttv31</option> or <option>mqttv311</option>.
+						Defaults to <option>mqttv31</option>.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -430,7 +475,7 @@
 
 	<refsect1>
 		<title>Bugs</title>
-		<para><command>mosquitto_pub</command> bug information can be found at <uri type="webpage">http://launchpad.net/mosquitto</uri></para>
+		<para><command>mosquitto_pub</command> bug information can be found at <uri type="webpage">https://bugs.eclipse.org/bugs/describecomponents.cgi?product=Mosquitto</uri></para>
 	</refsect1>
 
 	<refsect1>
@@ -438,31 +483,31 @@
 		<simplelist type="inline">
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mqtt-7.html">mqtt</link></refentrytitle>
+					<refentrytitle><link xlink:href="mqtt-7.php">mqtt</link></refentrytitle>
 					<manvolnum>7</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto_sub-1.html">mosquitto_sub</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto_sub-1.php">mosquitto_sub</link></refentrytitle>
 					<manvolnum>1</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-8.html">mosquitto</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto-8.php">mosquitto</link></refentrytitle>
 					<manvolnum>8</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="libmosquitto-3.html">libmosquitto</link></refentrytitle>
+					<refentrytitle><link xlink:href="libmosquitto-3.php">libmosquitto</link></refentrytitle>
 					<manvolnum>3</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-tls-7.html">mosquitto-tls</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto-tls-7.php">mosquitto-tls</link></refentrytitle>
 					<manvolnum>7</manvolnum>
 				</citerefentry>
 			</member>

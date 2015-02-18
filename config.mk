@@ -1,6 +1,9 @@
 # =============================================================================
 # User configuration section.
 #
+# These options control compilation on all systems apart from Windows and Mac
+# OS X. Use CMake to compile on Windows and Mac.
+#
 # Largely, these are options that are designed to make mosquitto run more
 # easily in restrictive environments by removing features.
 #
@@ -28,15 +31,6 @@ WITH_TLS_PSK:=yes
 # Comment out to disable client client threading support.
 WITH_THREADING:=yes
 
-# Uncomment to compile the broker with strict protocol support. This means that
-# both the client library and the broker will be very strict about protocol
-# compliance on incoming data. Neither of them will return an error on
-# incorrect "remaining length" values if this is commented out. The old
-# behaviour (prior to 0.12) is equivalent to compiling with
-# WITH_STRICT_PROTOCOL defined and means that clients will be immediately
-# disconnected from the broker on non-compliance.
-#WITH_STRICT_PROTOCOL:=yes
-
 # Comment out to remove bridge support from the broker. This allow the broker
 # to connect to other brokers and subscribe/publish to topics. You probably
 # want to leave this included unless you want to save a very small amount of
@@ -63,12 +57,15 @@ WITH_MEMORY_TRACKING:=yes
 # information about the broker state.
 WITH_SYS_TREE:=yes
 
-# Build with Python module. Comment out if Python is not installed, or required
-# Python modules are not available.
-WITH_PYTHON:=yes
-
 # Build with SRV lookup support.
-WITH_SRV:=yes
+WITH_SRV:=no
+
+# Build using libuuid for clientid generation (Linux only - please report if
+# supported on your platform).
+WITH_UUID:=yes
+
+# Build with websockets support on the broker.
+WITH_WEBSOCKETS:=no
 
 # Use elliptic keys in broker
 WITH_EC:=yes
@@ -76,14 +73,17 @@ WITH_EC:=yes
 # Build man page documentation by default.
 WITH_DOCS:=yes
 
+# Build with client support for SOCK5 proxy.
+WITH_SOCKS:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
 
 
-# Also bump lib/mosquitto.h, lib/python/setup.py, CMakeLists.txt,
+# Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto-cygwin.nsi
-VERSION=1.3.5
+VERSION=1.4
 TIMESTAMP:=$(shell date "+%F %T%z")
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
@@ -97,6 +97,7 @@ DB_HTML_XSL=man/html.xsl
 #MANCOUNTRIES=en_GB
 
 UNAME:=$(shell uname -s)
+
 ifeq ($(UNAME),SunOS)
 	ifeq ($(CC),cc)
 		CFLAGS?=-O
@@ -123,7 +124,7 @@ LIB_LIBS:=
 PASSWD_LIBS:=
 
 ifeq ($(UNAME),Linux)
-	BROKER_LIBS:=$(BROKER_LIBS) -lrt
+	BROKER_LIBS:=$(BROKER_LIBS) -lrt -Wl,--dynamic-list=linker.syms
 	LIB_LIBS:=$(LIB_LIBS) -lrt
 endif
 
@@ -180,9 +181,16 @@ ifeq ($(WITH_THREADING),yes)
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_THREADING
 endif
 
-ifeq ($(WITH_STRICT_PROTOCOL),yes)
-	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_STRICT_PROTOCOL
-	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_STRICT_PROTOCOL
+ifeq ($(WITH_SOCKS),yes)
+	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SOCKS
+	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_SOCKS
+endif
+
+ifeq ($(WITH_UUID),yes)
+	ifeq ($(UNAME),Linux)
+		BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_UUID
+		BROKER_LIBS:=$(BROKER_LIBS) -luuid
+	endif
 endif
 
 ifeq ($(WITH_BRIDGE),yes)
@@ -210,6 +218,11 @@ endif
 ifeq ($(WITH_SRV),yes)
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SRV
 	LIB_LIBS:=$(LIB_LIBS) -lcares
+endif
+
+ifeq ($(WITH_WEBSOCKETS),yes)
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_WEBSOCKETS
+	BROKER_LIBS:=$(BROKER_LIBS) -lwebsockets
 endif
 
 ifeq ($(UNAME),SunOS)

@@ -31,6 +31,7 @@ Contributors:
 #include "client_shared.h"
 
 bool process_messages = true;
+int msg_count = 0;
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
@@ -73,9 +74,12 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 			fflush(stdout);
 		}
 	}
-	if(cfg->oneshot){
-		process_messages = false;
-		mosquitto_disconnect(mosq);
+	if(cfg->msg_count>0){
+		msg_count++;
+		if(cfg->msg_count == msg_count){
+			process_messages = false;
+			mosquitto_disconnect(mosq);
+		}
 	}
 }
 
@@ -89,7 +93,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 
 	if(!result){
 		for(i=0; i<cfg->topic_count; i++){
-			mosquitto_subscribe(mosq, NULL, cfg->topics[i], cfg->topic_qos);
+			mosquitto_subscribe(mosq, NULL, cfg->topics[i], cfg->qos);
 		}
 	}else{
 		if(result && !cfg->quiet){
@@ -126,7 +130,7 @@ void print_usage(void)
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] -t topic ...\n");
-	printf("                     [-1] [-T filter_out]\n");
+	printf("                     [-C msg_count] [-T filter_out]\n");
 #ifdef WITH_SRV
 	printf("                     [-A bind_address] [-S]\n");
 #else
@@ -143,11 +147,14 @@ void print_usage(void)
 	printf("                     [--psk hex-key --psk-identity identity [--ciphers ciphers]]\n");
 #endif
 #endif
+#ifdef WITH_SOCKS
+	printf("                     [--proxy socks-url]\n");
+#endif
 	printf("       mosquitto_sub --help\n\n");
-	printf(" -1 : disconnect and exit after receiving the first message.\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
+	printf(" -C : disconnect and exit after receiving the 'msg_count' messages.\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
 	printf(" -i : id to use for this client. Defaults to mosquitto_sub_ appended with the process id.\n");
@@ -156,15 +163,18 @@ void print_usage(void)
 	printf(" -k : keep alive in seconds for this client. Defaults to 60.\n");
 	printf(" -N : do not add an end of line character when printing the payload.\n");
 	printf(" -p : network port to connect to. Defaults to 1883.\n");
+	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
 	printf(" -q : quality of service level to use for the subscription. Defaults to 0.\n");
 	printf(" -R : do not print stale messages (those with retain set).\n");
 #ifdef WITH_SRV
 	printf(" -S : use SRV lookups to determine which host to connect to.\n");
 #endif
 	printf(" -t : mqtt topic to subscribe to. May be repeated multiple times.\n");
+	printf(" -T : topic string to filter out of results. May be repeated.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
 	printf(" -v : print published messages verbosely.\n");
-	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
+	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
+	printf("      Can be mqttv31 or mqttv311. Defaults to mqttv31.\n");
 	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
@@ -192,6 +202,11 @@ void print_usage(void)
 	printf(" --psk-identity : client identity string for TLS-PSK mode.\n");
 #endif
 #endif
+#ifdef WITH_SOCKS
+	printf(" --proxy : SOCKS5 proxy URL of the form:\n");
+	printf("           socks5h://[username[:password]@]hostname[:port]\n");
+	printf("           Only \"none\" and \"username\" authentication is supported.\n");
+#endif
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
@@ -201,8 +216,15 @@ int main(int argc, char *argv[])
 	struct mosquitto *mosq = NULL;
 	int rc;
 	
-	if(client_config_load(&cfg, CLIENT_SUB, argc, argv)){
-		print_usage();
+	rc = client_config_load(&cfg, CLIENT_SUB, argc, argv);
+	if(rc){
+		client_config_cleanup(&cfg);
+		if(rc == 2){
+			/* --help */
+			print_usage();
+		}else{
+			fprintf(stderr, "\nUse 'mosquitto_sub --help' to see usage.\n");
+		}
 		return 1;
 	}
 
@@ -244,7 +266,7 @@ int main(int argc, char *argv[])
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
 
-	if(cfg.oneshot && rc == MOSQ_ERR_NO_CONN){
+	if(cfg.msg_count>0 && rc == MOSQ_ERR_NO_CONN){
 		rc = 0;
 	}
 	if(rc){

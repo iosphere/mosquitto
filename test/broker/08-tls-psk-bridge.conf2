@@ -5,7 +5,6 @@ address localhost:1889
 topic psk/test out
 bridge_identity psk-test
 bridge_psk deadbeef
-bridge_tls_version tlsv1
 
 log_type debug
 log_type error

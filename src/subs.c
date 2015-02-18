@@ -80,20 +80,23 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 		}
 #endif
 		if(hier->retained){
-			hier->retained->ref_count--;
-			/* FIXME - it would be nice to be able to remove the message from the store at this point if ref_count == 0 */
+			mosquitto__db_msg_store_deref(db, &hier->retained);
+#ifdef WITH_SYS_TREE
 			db->retained_count--;
+#endif
 		}
-		if(stored->msg.payloadlen){
+		if(stored->payloadlen){
 			hier->retained = stored;
 			hier->retained->ref_count++;
+#ifdef WITH_SYS_TREE
 			db->retained_count++;
+#endif
 		}else{
 			hier->retained = NULL;
 		}
 	}
 	while(source_id && leaf){
-		if(leaf->context->is_bridge && !strcmp(leaf->context->id, source_id)){
+		if(!leaf->context->id || (leaf->context->is_bridge && !strcmp(leaf->context->id, source_id))){
 			leaf = leaf->next;
 			continue;
 		}
@@ -138,48 +141,52 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 	return rc;
 }
 
+static struct _sub_token *_sub_topic_append(struct _sub_token **tail, struct _sub_token **topics, char *topic)
+{
+	struct _sub_token *new_topic;
+
+	if(!topic){
+		return NULL;
+	}
+	new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
+	if(!new_topic){
+		_mosquitto_free(topic);
+		return NULL;
+	}
+	new_topic->next = NULL;
+	new_topic->topic = topic;
+
+	if(*tail){
+		(*tail)->next = new_topic;
+		*tail = (*tail)->next;
+	}else{
+		*topics = new_topic;
+		*tail = new_topic;
+	}
+	return new_topic;
+}
+
 static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 {
 	struct _sub_token *new_topic, *tail = NULL;
 	int len;
 	int start, stop, tlen;
 	int i;
+	char *topic;
 
 	assert(subtopic);
 	assert(topics);
 
 	if(subtopic[0] != '$'){
-		new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
+		new_topic = _sub_topic_append(&tail, topics, _mosquitto_strdup(""));
 		if(!new_topic) goto cleanup;
-		new_topic->next = NULL;
-		new_topic->topic = _mosquitto_strdup("");
-		if(!new_topic->topic) goto cleanup;
-
-		if(tail){
-			tail->next = new_topic;
-			tail = tail->next;
-		}else{
-			*topics = new_topic;
-			tail = new_topic;
-		}
 	}
 
 	len = strlen(subtopic);
 
 	if(subtopic[0] == '/'){
-		new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
+		new_topic = _sub_topic_append(&tail, topics, _mosquitto_strdup(""));
 		if(!new_topic) goto cleanup;
-		new_topic->next = NULL;
-		new_topic->topic = _mosquitto_strdup("");
-		if(!new_topic->topic) goto cleanup;
-
-		if(tail){
-			tail->next = new_topic;
-			tail = tail->next;
-		}else{
-			*topics = new_topic;
-			tail = new_topic;
-		}
 
 		start = 1;
 	}else{
@@ -190,27 +197,20 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 	for(i=start; i<len+1; i++){
 		if(subtopic[i] == '/' || subtopic[i] == '\0'){
 			stop = i;
-			new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
-			if(!new_topic) goto cleanup;
-			new_topic->next = NULL;
 
 			if(start != stop){
-				tlen = stop-start + 1;
+				tlen = stop-start;
 
-				new_topic->topic = _mosquitto_calloc(tlen, sizeof(char));
-				if(!new_topic->topic) goto cleanup;
-				memcpy(new_topic->topic, &subtopic[start], tlen-1);
+				topic = _mosquitto_malloc(tlen+1);
+				if(!topic) goto cleanup;
+				memcpy(topic, &subtopic[start], tlen);
+				topic[tlen] = '\0';
 			}else{
-				new_topic->topic = _mosquitto_strdup("");
-				if(!new_topic->topic) goto cleanup;
+				topic = _mosquitto_strdup("");
+				if(!topic) goto cleanup;
 			}
-			if(tail){
-				tail->next = new_topic;
-				tail = tail->next;
-			}else{
-				tail = new_topic;
-				*topics = tail;
-			}
+			new_topic = _sub_topic_append(&tail, topics, topic);
+			if(!new_topic) goto cleanup;
 			start = i+1;
 		}
 	}
@@ -229,16 +229,45 @@ cleanup:
 	return 1;
 }
 
+static void _sub_topic_tokens_free(struct _sub_token *tokens)
+{
+	struct _sub_token *tail;
+
+	while(tokens){
+		tail = tokens->next;
+		if(tokens->topic){
+			_mosquitto_free(tokens->topic);
+		}
+		_mosquitto_free(tokens);
+		tokens = tail;
+	}
+}
+
 static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
 {
 	struct _mosquitto_subhier *branch, *last = NULL;
 	struct _mosquitto_subleaf *leaf, *last_leaf;
+	struct _mosquitto_subhier **subs;
+	int i;
 
 	if(!tokens){
-		if(context){
+		if(context && context->id){
 			leaf = subhier->subs;
 			last_leaf = NULL;
 			while(leaf){
+				if(leaf->context && leaf->context->id && !strcmp(leaf->context->id, context->id)){
+					/* Client making a second subscription to same topic. Only
+					 * need to update QoS. Return -1 to indicate this to the
+					 * calling function. */
+					leaf->qos = qos;
+					if(context->protocol == mosq_p_mqtt31){
+						return -1;
+					}else{
+						/* mqttv311 requires retained messages are resent on
+						 * resubscribe. */
+						return 0;
+					}
+				}
 				last_leaf = leaf;
 				leaf = leaf->next;
 			}
@@ -247,6 +276,32 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 			leaf->next = NULL;
 			leaf->context = context;
 			leaf->qos = qos;
+			if(context->subs){
+				for(i=0; i<context->sub_count; i++){
+					if(!context->subs[i]){
+						context->subs[i] = subhier;
+						break;
+					}
+				}
+				if(i == context->sub_count){
+					context->sub_count++;
+					subs = _mosquitto_realloc(context->subs, sizeof(struct _mosquitto_subhier *)*context->sub_count);
+					if(!subs){
+						_mosquitto_free(leaf);
+						return MOSQ_ERR_NOMEM;
+					}
+					context->subs = subs;
+					context->subs[context->sub_count-1] = subhier;
+				}
+			}else{
+				context->sub_count = 1;
+				context->subs = _mosquitto_malloc(sizeof(struct _mosquitto_subhier *)*context->sub_count);
+				if(!context->subs){
+					_mosquitto_free(leaf);
+					return MOSQ_ERR_NOMEM;
+				}
+				context->subs[0] = subhier;
+			}
 			if(last_leaf){
 				last_leaf->next = leaf;
 				leaf->prev = last_leaf;
@@ -254,7 +309,9 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 				subhier->subs = leaf;
 				leaf->prev = NULL;
 			}
+#ifdef WITH_SYS_TREE
 			db->subscription_count++;
+#endif
 		}
 		return MOSQ_ERR_SUCCESS;
 	}
@@ -287,12 +344,15 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 {
 	struct _mosquitto_subhier *branch, *last = NULL;
 	struct _mosquitto_subleaf *leaf;
+	int i;
 
 	if(!tokens){
 		leaf = subhier->subs;
 		while(leaf){
 			if(leaf->context==context){
+#ifdef WITH_SYS_TREE
 				db->subscription_count--;
+#endif
 				if(leaf->prev){
 					leaf->prev->next = leaf->next;
 				}else{
@@ -302,6 +362,17 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 					leaf->next->prev = leaf->prev;
 				}
 				_mosquitto_free(leaf);
+
+				/* Remove the reference to the sub that the client is keeping.
+				 * It would be nice to be able to use the reference directly,
+				 * but that would involve keeping a copy of the topic string in
+				 * each subleaf. Might be worth considering though. */
+				for(i=0; i<context->sub_count; i++){
+					if(context->subs[i] == subhier){
+						context->subs[i] = NULL;
+						break;
+					}
+				}
 				return MOSQ_ERR_SUCCESS;
 			}
 			leaf = leaf->next;
@@ -366,7 +437,7 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 {
 	int rc = 0;
 	struct _mosquitto_subhier *subhier, *child;
-	struct _sub_token *tokens = NULL, *tail;
+	struct _sub_token *tokens = NULL;
 
 	assert(root);
 	assert(sub);
@@ -384,11 +455,13 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 	if(!subhier){
 		child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
 		if(!child){
+			_sub_topic_tokens_free(tokens);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		child->topic = _mosquitto_strdup(tokens->topic);
 		if(!child->topic){
+			_sub_topic_tokens_free(tokens);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
@@ -405,12 +478,8 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 		rc = _sub_add(db, context, qos, child, tokens);
 	}
 
-	while(tokens){
-		tail = tokens->next;
-		_mosquitto_free(tokens->topic);
-		_mosquitto_free(tokens);
-		tokens = tail;
-	}
+	_sub_topic_tokens_free(tokens);
+
 	/* We aren't worried about -1 (already subscribed) return codes. */
 	if(rc == -1) rc = MOSQ_ERR_SUCCESS;
 	return rc;
@@ -420,7 +489,7 @@ int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const c
 {
 	int rc = 0;
 	struct _mosquitto_subhier *subhier;
-	struct _sub_token *tokens = NULL, *tail;
+	struct _sub_token *tokens = NULL;
 
 	assert(root);
 	assert(sub);
@@ -436,26 +505,27 @@ int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const c
 		subhier = subhier->next;
 	}
 
-	while(tokens){
-		tail = tokens->next;
-		_mosquitto_free(tokens->topic);
-		_mosquitto_free(tokens);
-		tokens = tail;
-	}
+	_sub_topic_tokens_free(tokens);
 
 	return rc;
 }
 
-int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
+int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored)
 {
 	int rc = 0;
 	struct _mosquitto_subhier *subhier;
-	struct _sub_token *tokens = NULL, *tail;
+	struct _sub_token *tokens = NULL;
 
 	assert(db);
 	assert(topic);
 
 	if(_sub_topic_tokenise(topic, &tokens)) return 1;
+
+	/* Protect this message until we have sent it to all
+	clients - this is required because websockets client calls
+	mqtt3_db_message_write(), which could remove the message if ref_count==0.
+	*/
+	(*stored)->ref_count++;
 
 	subhier = db->subs.children;
 	while(subhier){
@@ -466,83 +536,52 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 				 */
 				_sub_add(db, NULL, 0, subhier, tokens);
 			}
-			_sub_search(db, subhier, tokens, source_id, topic, qos, retain, stored, true);
+			_sub_search(db, subhier, tokens, source_id, topic, qos, retain, *stored, true);
 		}
 		subhier = subhier->next;
 	}
-	while(tokens){
-		tail = tokens->next;
-		_mosquitto_free(tokens->topic);
-		_mosquitto_free(tokens);
-		tokens = tail;
-	}
+	_sub_topic_tokens_free(tokens);
 
-	return rc;
-}
+	/* Remove our reference and free if needed. */
+	mosquitto__db_msg_store_deref(db, stored);
 
-static int _subs_clean_session(struct mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root)
-{
-	int rc = 0;
-	struct _mosquitto_subhier *child, *last = NULL;
-	struct _mosquitto_subleaf *leaf, *next;
-
-	if(!root) return MOSQ_ERR_SUCCESS;
-
-	leaf = root->subs;
-	while(leaf){
-		if(leaf->context == context){
-			db->subscription_count--;
-			if(leaf->prev){
-				leaf->prev->next = leaf->next;
-			}else{
-				root->subs = leaf->next;
-			}
-			if(leaf->next){
-				leaf->next->prev = leaf->prev;
-			}
-			next = leaf->next;
-			_mosquitto_free(leaf);
-			leaf = next;
-		}else{
-			leaf = leaf->next;
-		}
-	}
-
-	child = root->children;
-	while(child){
-		_subs_clean_session(db, context, child);
-		if(!child->children && !child->subs && !child->retained){
-			if(last){
-				last->next = child->next;
-			}else{
-				root->children = child->next;
-			}
-			_mosquitto_free(child->topic);
-			_mosquitto_free(child);
-			if(last){
-				child = last->next;
-			}else{
-				child = root->children;
-			}
-		}else{
-			last = child;
-			child = child->next;
-		}
-	}
 	return rc;
 }
 
 /* Remove all subscriptions for a client.
  */
-int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *root)
+int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
 {
-	struct _mosquitto_subhier *child;
+	int i;
+	struct _mosquitto_subleaf *leaf;
 
-	child = root->children;
-	while(child){
-		_subs_clean_session(db, context, child);
-		child = child->next;
+	for(i=0; i<context->sub_count; i++){
+		if(context->subs[i] == NULL){
+			continue;
+		}
+		leaf = context->subs[i]->subs;
+		while(leaf){
+			if(leaf->context==context){
+#ifdef WITH_SYS_TREE
+				db->subscription_count--;
+#endif
+				if(leaf->prev){
+					leaf->prev->next = leaf->next;
+				}else{
+					context->subs[i]->subs = leaf->next;
+				}
+				if(leaf->next){
+					leaf->next->prev = leaf->prev;
+				}
+				_mosquitto_free(leaf);
+				break;
+			}
+			leaf = leaf->next;
+		}
 	}
+	_mosquitto_free(context->subs);
+	context->subs = NULL;
+	context->sub_count = 0;
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -584,14 +623,14 @@ static int _retain_process(struct mosquitto_db *db, struct mosquitto_msg_store *
 	int qos;
 	uint16_t mid;
 
-	rc = mosquitto_acl_check(db, context, retained->msg.topic, MOSQ_ACL_READ);
+	rc = mosquitto_acl_check(db, context, retained->topic, MOSQ_ACL_READ);
 	if(rc == MOSQ_ERR_ACL_DENIED){
 		return MOSQ_ERR_SUCCESS;
 	}else if(rc != MOSQ_ERR_SUCCESS){
 		return rc;
 	}
 
-	qos = retained->msg.qos;
+	qos = retained->qos;
 
 	if(qos > sub_qos) qos = sub_qos;
 	if(qos > 0){
@@ -624,7 +663,7 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 			if(branch->children){
 				_retain_search(db, branch, tokens, context, sub, sub_qos, level+1);
 			}
-		}else if(strcmp(branch->topic, "+") && (!strcmp(branch->topic, tokens->topic) || !strcmp(branch->topic, "+"))){
+		}else if(strcmp(branch->topic, "+") && (!strcmp(branch->topic, tokens->topic) || !strcmp(tokens->topic, "+"))){
 			if(tokens->next){
 				if(_retain_search(db, branch, tokens->next, context, sub, sub_qos, level+1) == -1
 						|| (!branch->next && tokens->next && !strcmp(tokens->next->topic, "#") && level>0)){

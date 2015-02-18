@@ -200,7 +200,7 @@ void print_usage(void)
 	mosquitto_lib_version(&major, &minor, &revision);
 	printf("mosquitto_pub is a simple mqtt client that will publish a message on a single topic and exit.\n");
 	printf("mosquitto_pub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
-	printf("Usage: mosquitto_pub [-h host] [-p port] [-q qos] [-r] {-f file | -l | -n | -m message} -t topic\n");
+	printf("Usage: mosquitto_pub [-h host] [-k keepalive] [-p port] [-q qos] [-r] {-f file | -l | -n | -m message} -t topic\n");
 #ifdef WITH_SRV
 	printf("                     [-A bind_address] [-S]\n");
 #else
@@ -218,6 +218,9 @@ void print_usage(void)
 	printf("                     [--psk hex-key --psk-identity identity [--ciphers ciphers]]\n");
 #endif
 #endif
+#ifdef WITH_SOCKS
+	printf("                     [--proxy socks-url]\n");
+#endif
 	printf("       mosquitto_pub --help\n\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
@@ -227,11 +230,13 @@ void print_usage(void)
 	printf(" -i : id to use for this client. Defaults to mosquitto_pub_ appended with the process id.\n");
 	printf(" -I : define the client id as id_prefix appended with the process id. Useful for when the\n");
 	printf("      broker is using the clientid_prefixes option.\n");
+	printf(" -k : keep alive in seconds for this client. Defaults to 60.\n");
 	printf(" -l : read messages from stdin, sending a separate message for each line.\n");
 	printf(" -m : message payload to send.\n");
 	printf(" -M : the maximum inflight messages for QoS 1/2..\n");
 	printf(" -n : send a null (zero length) message.\n");
 	printf(" -p : network port to connect to. Defaults to 1883.\n");
+	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
 	printf(" -q : quality of service level to use for all messages. Defaults to 0.\n");
 	printf(" -r : message should be retained.\n");
 	printf(" -s : read message from stdin, sending the entire input as a message.\n");
@@ -240,7 +245,8 @@ void print_usage(void)
 #endif
 	printf(" -t : mqtt topic to publish to.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
-	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
+	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
+	printf("      Can be mqttv31 or mqttv311. Defaults to mqttv31.\n");
 	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
@@ -263,10 +269,15 @@ void print_usage(void)
 	printf("              hostname. Using this option means that you cannot be sure that the\n");
 	printf("              remote host is the server you wish to connect to and so is insecure.\n");
 	printf("              Do not use this option in a production environment.\n");
-#ifdef WITH_TLS_PSK
+#  ifdef WITH_TLS_PSK
 	printf(" --psk : pre-shared-key in hexadecimal (no leading 0x) to enable TLS-PSK mode.\n");
 	printf(" --psk-identity : client identity string for TLS-PSK mode.\n");
+#  endif
 #endif
+#ifdef WITH_SOCKS
+	printf(" --proxy : SOCKS5 proxy URL of the form:\n");
+	printf("           socks5h://[username[:password]@]hostname[:port]\n");
+	printf("           Only \"none\" and \"username\" authentication is supported.\n");
 #endif
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
@@ -275,13 +286,19 @@ int main(int argc, char *argv[])
 {
 	struct mosq_config cfg;
 	char buf[1024];
-	bool debug = false;
 	struct mosquitto *mosq = NULL;
 	int rc;
 	int rc2;
 
-	if(client_config_load(&cfg, CLIENT_PUB, argc, argv)){
-		print_usage();
+	rc = client_config_load(&cfg, CLIENT_PUB, argc, argv);
+	if(rc){
+		client_config_cleanup(&cfg);
+		if(rc == 2){
+			/* --help */
+			print_usage();
+		}else{
+			fprintf(stderr, "\nUse 'mosquitto_pub --help' to see usage.\n");
+		}
 		return 1;
 	}
 
@@ -333,7 +350,7 @@ int main(int argc, char *argv[])
 		mosquitto_lib_cleanup();
 		return 1;
 	}
-	if(debug){
+	if(cfg.debug){
 		mosquitto_log_callback_set(mosq, my_log_callback);
 	}
 	mosquitto_connect_callback_set(mosq, my_connect_callback);

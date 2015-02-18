@@ -36,6 +36,48 @@ struct mosquitto_auth_opt {
  * gcc -I<path to mosquitto_plugin.h> -fPIC -shared plugin.c -o plugin.so
  */
 
+/* =========================================================================
+ *
+ * Utility Functions
+ *
+ * Use these functions from within your plugin.
+ *
+ * There are also very useful functions in libmosquitto.
+ *
+ * ========================================================================= */
+
+/*
+ * Function: mosquitto_log_printf
+ *
+ * Write a log message using the broker configured logging.
+ *
+ * Parameters:
+ * 	level -    Log message priority. Can currently be one of:
+ *
+ *             MOSQ_LOG_INFO
+ *             MOSQ_LOG_NOTICE
+ *             MOSQ_LOG_WARNING
+ *             MOSQ_LOG_ERR
+ *             MOSQ_LOG_DEBUG
+ *             MOSQ_LOG_SUBSCRIBE (not recommended for use by plugins)
+ *             MOSQ_LOG_UNSUBSCRIBE (not recommended for use by plugins)
+ *
+ *             These values are defined in mosquitto.h.
+ *
+ *	fmt, ... - printf style format and arguments.
+ */
+void mosquitto_log_printf(int level, const char *fmt, ...);
+
+
+
+/* =========================================================================
+ *
+ * Plugin Functions
+ *
+ * You must implement these functions in your plugin.
+ *
+ * ========================================================================= */
+
 /*
  * Function: mosquitto_auth_plugin_version
  *

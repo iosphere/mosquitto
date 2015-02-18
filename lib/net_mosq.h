@@ -40,10 +40,6 @@ struct mosquitto_db;
 #  define COMPAT_EWOULDBLOCK EWOULDBLOCK
 #endif
 
-#ifndef WIN32
-#else
-#endif
-
 /* For when not using winsock libraries. */
 #ifndef INVALID_SOCKET
 #define INVALID_SOCKET -1
@@ -59,8 +55,12 @@ void _mosquitto_net_cleanup(void);
 void _mosquitto_packet_cleanup(struct _mosquitto_packet *packet);
 int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *packet);
 int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);
+#ifdef WITH_BROKER
+int _mosquitto_socket_close(struct mosquitto_db *db, struct mosquitto *mosq);
+#else
 int _mosquitto_socket_close(struct mosquitto *mosq);
-int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking);
+#endif
+int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking);
 int _mosquitto_socket_nonblock(int sock);
 int _mosquitto_socketpair(int *sp1, int *sp2);
 
@@ -86,6 +86,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq);
 
 #ifdef WITH_TLS
 int _mosquitto_socket_apply_tls(struct mosquitto *mosq);
+int mosquitto__socket_connect_tls(struct mosquitto *mosq);
 #endif
 
 #endif

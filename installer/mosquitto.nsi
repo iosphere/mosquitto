@@ -7,7 +7,7 @@
 !define env_hklm 'HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
 
 Name "mosquitto"
-!define VERSION 1.3.5
+!define VERSION 1.4
 OutFile "mosquitto-${VERSION}-install-win32.exe"
 
 InstallDir "$PROGRAMFILES\mosquitto"
@@ -64,11 +64,6 @@ Section "Files" SecInstall
 	File "..\build\lib\cpp\Release\mosquittopp.lib"
 	File "..\src\mosquitto_plugin.h"
 
-	SetOutPath "$INSTDIR\python"
-	File "..\lib\python\mosquitto.py"
-	File "..\lib\python\setup.py"
-	File "..\lib\python\sub.py"
-	
 	WriteUninstaller "$INSTDIR\Uninstall.exe"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "DisplayName" "Mosquitto MQTT broker"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
@@ -112,10 +107,6 @@ Section "Uninstall"
 	Delete "$INSTDIR\devel\mosquittopp.h"
 	Delete "$INSTDIR\devel\mosquittopp.lib"
 	Delete "$INSTDIR\devel\mosquitto_plugin.h"
-
-	Delete "$INSTDIR\python\mosquitto.py"
-	Delete "$INSTDIR\python\setup.py"
-	Delete "$INSTDIR\python\sub.py"
 
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir "$INSTDIR"

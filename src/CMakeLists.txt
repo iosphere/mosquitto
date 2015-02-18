@@ -26,6 +26,7 @@ set (MOSQ_SRCS
 	../lib/time_mosq.c
 	../lib/tls_mosq.c
 	../lib/util_mosq.c ../lib/util_mosq.h
+	websockets.c
 	../lib/will_mosq.c ../lib/will_mosq.h)
 
 option(INC_BRIDGE_SUPPORT
@@ -65,6 +66,12 @@ if (${WITH_SYS_TREE} STREQUAL ON)
 	add_definitions("-DWITH_SYS_TREE")
 endif (${WITH_SYS_TREE} STREQUAL ON)
 
+option(WITH_WEBSOCKETS
+	"Include websockets support?" OFF)
+if (${WITH_WEBSOCKETS} STREQUAL ON)
+	add_definitions("-DWITH_WEBSOCKETS")
+endif (${WITH_WEBSOCKETS} STREQUAL ON)
+
 if (WIN32 OR CYGWIN)
 	set (MOSQ_SRCS ${MOSQ_SRCS} service.c)
 endif (WIN32 OR CYGWIN)
@@ -73,7 +80,7 @@ add_definitions (-DWITH_BROKER)
 
 add_executable(mosquitto ${MOSQ_SRCS})
 
-set (MOSQ_LIBS ${OPENSSL_LIBRARIES})
+set (MOSQ_LIBS ${MOSQ_LIBS} ${OPENSSL_LIBRARIES})
 
 if (UNIX)
 	if (APPLE)
@@ -87,11 +94,31 @@ if (WIN32)
 	set (MOSQ_LIBS ${MOSQ_LIBS} ws2_32)
 endif (WIN32)
 
+if (${WITH_WEBSOCKETS} STREQUAL ON)
+	set (MOSQ_LIBS ${MOSQ_LIBS} websockets)
+endif (${WITH_WEBSOCKETS} STREQUAL ON)
+
+# Simple detect libuuid
+if(NOT APPLE)
+	FIND_PATH(UUID_HEADER uuid/uuid.h)
+	if (UUID_HEADER)
+		add_definitions(-DWITH_UUID)
+		set (MOSQ_LIBS ${MOSQ_LIBS} uuid)
+	endif (UUID_HEADER)
+endif(NOT APPLE)
+
 target_link_libraries(mosquitto ${MOSQ_LIBS})
+
+if (UNIX)
+	if (APPLE)
+		set_target_properties(mosquitto PROPERTIES LINK_FLAGS "-Wl,-exported_symbols_list -Wl,${mosquitto_SOURCE_DIR}/src/linker-macosx.syms")
+	else (APPLE)
+		set_target_properties(mosquitto PROPERTIES LINK_FLAGS "-Wl,-exported_symbols_list -Wl,${mosquitto_SOURCE_DIR}/src/linker.syms")
+	endif (APPLE)
+endif (UNIX)
 
 install(TARGETS mosquitto RUNTIME DESTINATION ${SBINDIR} LIBRARY DESTINATION ${LIBDIR})
 install(FILES mosquitto_plugin.h DESTINATION ${INCLUDEDIR})
-
 
 if (${WITH_TLS} STREQUAL ON)
 	add_executable(mosquitto_passwd mosquitto_passwd.c)

@@ -60,6 +60,13 @@ mosquitto-tls.7 : mosquitto-tls.7.xml
 libmosquitto.3 : libmosquitto.3.xml
 	$(XSLTPROC) $^
 
+html : *.xml
+	set -e; for m in *.xml; \
+		do \
+		hfile=$$(echo $${m} | sed -e 's#\(.*\)\.xml#\1#' | sed -e 's/\./-/g'); \
+		$(XSLTPROC) html.xsl $${m} > $${hfile}.php; \
+	done
+
 potgen :
 	 xml2po -o po/mosquitto/mosquitto.8.pot mosquitto.8.xml
 	 xml2po -o po/mosquitto.conf/mosquitto.conf.5.pot mosquitto.conf.5.xml

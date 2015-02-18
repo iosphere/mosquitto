@@ -4,6 +4,7 @@
 c/*.test
 cpp/*.test
 *.pyc
+*.vglog
 
 client/mosquitto_pub
 client/mosquitto_sub
@@ -34,6 +35,9 @@ lib/libmosquitto.so*
 lib/libmosquitto.a
 
 test/ssl/*.csr
+
+test/lib/c/*.test
+test/lib/cpp/*.test
 
 build/
 dist/

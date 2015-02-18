@@ -99,12 +99,14 @@
 						listed will have access. Topic access is added with
 						lines of the format:</para>
 
-					<para><code>topic [read|write] &lt;topic&gt;</code></para>
+					<para><code>topic [read|write|readwrite] &lt;topic&gt;</code></para>
 
-					<para>The access type is controlled using "read" or
-						"write". This parameter is optional - if not given then
-						the access is read/write.  &lt;topic&gt; can contain
-						the + or # wildcards as in subscriptions.</para>
+					<para>The access type is controlled using "read", "write" or
+						"readwrite". This parameter is optional (unless
+						&lt;topic&gt; includes a space character) - if not
+						given then the access is read/write.  &lt;topic&gt; can
+						contain the + or # wildcards as in
+						subscriptions.</para>
 
 					<para>The first set of topics are applied to anonymous
 						clients, assuming <option>allow_anonymous</option> is
@@ -121,7 +123,7 @@
 						substitution within the topic. The form is the same as
 						for the topic keyword, but using pattern as the
 						keyword.</para>
-					<para><code>pattern [read|write] &lt;topic&gt;</code></para>
+					<para><code>pattern [read|write|readwrite] &lt;topic&gt;</code></para>
 					
 					<para>The patterns available for substition are:</para>
 					<itemizedlist mark="circle">
@@ -301,6 +303,17 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>log_facility</option> <replaceable>local facility</replaceable></term>
+				<listitem>
+					<para>If using syslog logging (not on Windows), messages
+						will be logged to the "daemon" facility by default. Use
+						the <option>log_facility</option> option to choose
+						which of local0 to local7 to log to instead. The option
+						value should be an integer value, e.g. "log_facility 5"
+						to use local5.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>log_timestamp</option> [ true | false ]</term>
 				<listitem>
 					<para>Boolean value, if set to
@@ -319,9 +332,12 @@
 						<replaceable>warning</replaceable>,
 						<replaceable>notice</replaceable>,
 						<replaceable>information</replaceable>,
+						<replaceable>subscribe</replaceable>,
+						<replaceable>unsubscribe</replaceable>,
+						<replaceable>websockets</replaceable>,
 						<replaceable>none</replaceable>,
-						<replaceable>all</replaceable>.  Defaults to
-						<replaceable>error</replaceable>,
+						<replaceable>all</replaceable>.</para>
+					<para>Defaults to <replaceable>error</replaceable>,
 						<replaceable>warning</replaceable>, <replaceable>notice
 						</replaceable>and
 						<replaceable>information</replaceable>.  This option
@@ -443,7 +459,7 @@
 						to persistent clients that will never reconnect. This
 						option allows these clients to be removed.</para>
 					<para>The expiration period should be an integer followed
-						by one of d w m y for day, week, month and year
+						by one of h d w m y for hour, day, week, month and year
 						respectively. For example:</para>
 					<itemizedlist mark="circle">
 						<listitem><para>persistent_client_expiration 2m</para></listitem>
@@ -601,6 +617,18 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>http_dir</option> <replaceable>directory</replaceable></term>
+					<listitem>
+						<para>When a listener is using the websockets protocol,
+							it is possible to serve http data as well. Set
+							<option>http_dir</option> to a directory which
+							contains the files you wish to serve. If this
+							option is not specified, then no normal http
+							connections will be possible.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>listener</option> <replaceable>port</replaceable></term>
 					<listitem>
 						<para>Listen for incoming network connection on the
@@ -649,6 +677,55 @@
 						<para>Set the network port for the default listener to
 							listen on. Defaults to 1883.</para>
 						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>protocol</option> <replaceable>value</replaceable></term>
+					<listitem>
+						<para>Set the protocol to accept for this listener. Can
+							be <option>mqtt</option>, the default, or
+							<option>websockets</option> if available.</para>
+						<para>Websockets support is currently disabled by
+							default at compile time. Certificate based TLS may be used
+							with websockets, except that only the
+							<option>cafile</option>, <option>certfile</option>,
+							<option>keyfile</option> and
+							<option>ciphers</option> options are
+							supported.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>use_username_as_clientid</option> [ true | false ]</term>
+					<listitem>
+						<para>Set <option>use_username_as_clientid</option> to
+							true to replace the clientid that a client
+							connected with with its username. This allows
+							authentication to be tied to the clientid, which
+							means that it is possible to prevent one client
+							disconnecting another by using the same
+							clientid. Defaults to false.</para>
+						<para>If a client connects with no username it will be
+							disconnected as not authorised when this option is
+							set to true. Do not use in conjunction with
+							<option>clientid_prefixes</option>.</para>
+						<para>See also
+							<option>use_identity_as_username</option>.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>websockets_log_level</option> <replaceable>level</replaceable></term>
+					<listitem>
+						<para>Change the websockets logging level. This is a
+							global option, it is not possible to set per
+							listener. This is an integer that is interpreted by
+							libwebsockets as a bit mask for its lws_log_levels
+							enum. See the libwebsockets documentation for more
+							details.</para>
+						<para>To use this option, <option>log_type
+								websockets</option> must also be enabled.
+							Defaults to 0.</para>
 					</listitem>
 				</varlistentry>
 			</variablelist>
@@ -842,6 +919,31 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>bridge_attempt_unsubscribe</option> [ true | false ]</term>
+				<listitem>
+					<para>If a bridge has topics that have "out" direction, the
+						default behaviour is to send an unsubscribe request to
+						the remote broker on that topic. This means that
+						changing a topic direction from "in" to "out" will not
+						keep receiving incoming messages. Sending these
+						unsubscribe requests is not always desirable, setting
+						<option>bridge_attempt_unsubscribe</option> to
+						<replaceable>false</replaceable> will disable sending
+						the unsubscribe request. Defaults to
+						<replaceable>true</replaceable>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>bridge_protocol_version</option> <replaceable>version</replaceable></term>
+				<listitem>
+					<para>Set the version of the MQTT protocol to use with for
+						this bridge. Can be one of
+						<replaceable>mqttv31</replaceable> or
+						<replaceable>mqttv311</replaceable>. Defaults to
+						<replaceable>mqttv31</replaceable>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>cleansession</option> [ true | false ]</term>
 				<listitem>
 					<para>Set the clean session option for this bridge. Setting
@@ -868,15 +970,6 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>clientid</option> <replaceable>id</replaceable></term>
-				<listitem>
-					<para>Set the client id for this bridge connection. If not
-						defined, this defaults to 'name.hostname', where name
-						is the connection name and hostname is the hostname of
-						this computer.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>connection</option> <replaceable>name</replaceable></term>
 				<listitem>
 					<para>This variable marks the start of a new bridge
@@ -891,7 +984,7 @@
 					<para>Set the number of seconds after which the bridge
 						should send a ping if no other traffic has occurred.
 						Defaults to 60. A minimum value of 5 seconds
-						isallowed.</para>
+						is allowed.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -900,6 +993,32 @@
 					<para>Set the amount of time a bridge using the lazy start
 						type must be idle before it will be stopped. Defaults
 						to 60 seconds.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>local_clientid</option> <replaceable>id</replaceable></term>
+				<listitem>
+					<para>Set the clientid to use on the local broker. If not
+						defined, this defaults to
+						<option>local.&lt;clientid&gt;</option>. If you are
+						bridging a broker to itself, it is important that
+						local_clientid and clientid do not match.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>local_password</option> <replaceable>password</replaceable></term>
+				<listitem>
+					<para>Configure the password to be used when connecting
+						this bridge to the local broker. This may be important
+						when authentication and ACLs are being used.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>local_username</option> <replaceable>username</replaceable></term>
+				<listitem>
+					<para>Configure the username to be used when connecting
+						this bridge to the local broker. This may be important
+						when authentication and ACLs are being used.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -927,13 +1046,41 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>password</option> <replaceable>value</replaceable></term>
+				<term><option>remote_clientid</option> <replaceable>id</replaceable></term>
+				<listitem>
+					<para>Set the client id for this bridge connection. If not
+						defined, this defaults to 'name.hostname', where name
+						is the connection name and hostname is the hostname of
+						this computer.</para>
+					<para>This replaces the old "clientid" option to avoid
+						confusion with local/remote sides of the bridge.
+						"clientid" remains valid for the time being.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>remote_password</option> <replaceable>value</replaceable></term>
 				<listitem>
 					<para>Configure a password for the bridge. This is used for
 						authentication purposes when connecting to a broker
-						that support MQTT v3.1 and requires a username and/or
-						password to connect. This option is only valid if a
-						username is also supplied.</para>
+						that supports MQTT v3.1 and up and requires a username
+						and/or password to connect. This option is only valid
+						if a remote_username is also supplied.</para>
+					<para>This replaces the old "password" option to avoid
+						confusion with local/remote sides of the bridge.
+						"password" remains valid for the time being.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>remote_username</option> <replaceable>name</replaceable></term>
+				<listitem>
+					<para>Configure a username for the bridge. This is used for
+						authentication purposes when connecting to a broker
+						that supports MQTT v3.1 and up and requires a username
+						and/or password to connect. See also the
+						<option>remote_password</option> option.</para>
+					<para>This replaces the old "username" option to avoid
+						confusion with local/remote sides of the bridge.
+						"username" remains valid for the time being.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -1111,22 +1258,27 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 					<para>Defaults to <replaceable>true</replaceable>.</para>
 				</listitem>
 			</varlistentry>
-			<varlistentry>
-				<term><option>username</option> <replaceable>name</replaceable></term>
-				<listitem>
-					<para>Configure a <option>username</option> for the bridge.
-						This is used for authentication purposes when
-						connecting to a broker that support MQTT v3.1 and
-						requires a username and/or password to connect. See
-						also the <option>password</option> option.</para>
-				</listitem>
-			</varlistentry>
 		</variablelist>
 		<refsect2>
 			<title>SSL/TLS Support</title>
 			<para>The following options are available for all bridges to
 				configure SSL/TLS support.</para>
 			<variablelist>
+				<varlistentry>
+					<term><option>bridge_attempt_unsubscribe</option> [ true | false ]</term>
+					<listitem>
+						<para>If a bridge has topics that have "out" direction,
+							the default behaviour is to send an unsubscribe
+							request to the remote broker on that topic. This
+							means that changing a topic direction from "in" to
+							"out" will not keep receiving incoming messages.
+							Sending these unsubscribe requests is not always
+							desirable, setting
+							<option>bridge_attempt_unsubscribe</option> to
+							<replaceable>false</replaceable> will disable
+							sending the unsubscribe request.</para>
+					</listitem>
+				</varlistentry>
 				<varlistentry>
 					<term><option>bridge_cafile</option> <replaceable>file path</replaceable></term>
 					<listitem>
@@ -1239,7 +1391,7 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 	<refsect1>
 		<title>Bugs</title>
 		<para><command>mosquitto</command> bug information can be found at <uri
-		type="webpage">http://launchpad.net/mosquitto</uri></para>
+				type="webpage">https://bugs.eclipse.org/bugs/describecomponents.cgi?product=Mosquitto</uri></para>
 	</refsect1>
 
 	<refsect1>
@@ -1247,25 +1399,25 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 		<simplelist type="inline">
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-8.html">mosquitto</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto-8.php">mosquitto</link></refentrytitle>
 					<manvolnum>8</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto_passwd-1.html">mosquitto_passwd</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto_passwd-1.php">mosquitto_passwd</link></refentrytitle>
 					<manvolnum>1</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-tls-7.html">mosquitto-tls</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto-tls-7.php">mosquitto-tls</link></refentrytitle>
 					<manvolnum>7</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mqtt-7.html">mqtt</link></refentrytitle>
+					<refentrytitle><link xlink:href="mqtt-7.php">mqtt</link></refentrytitle>
 					<manvolnum>7</manvolnum>
 				</citerefentry>
 			</member>

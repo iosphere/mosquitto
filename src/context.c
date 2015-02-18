@@ -15,6 +15,7 @@ Contributors:
 */
 
 #include <assert.h>
+#include <time.h>
 
 #include <config.h>
 
@@ -24,7 +25,7 @@ Contributors:
 
 #include "uthash.h"
 
-struct mosquitto *mqtt3_context_init(int sock)
+struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, int sock)
 {
 	struct mosquitto *context;
 	char address[1024];
@@ -57,7 +58,7 @@ struct mosquitto *mqtt3_context_init(int sock)
 	context->current_out_packet = NULL;
 
 	context->address = NULL;
-	if(sock != -1){
+	if((int)sock >= 0){
 		if(!_mosquitto_socket_get_address(sock, address, 1024)){
 			context->address = _mosquitto_strdup(address);
 		}
@@ -76,6 +77,9 @@ struct mosquitto *mqtt3_context_init(int sock)
 	context->ssl = NULL;
 #endif
 
+	if((int)context->sock >= 0){
+		HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
+	}
 	return context;
 }
 
@@ -89,7 +93,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 {
 	struct _mosquitto_packet *packet;
 	struct mosquitto_client_msg *msg, *next;
-	struct _clientid_index_hash *find_cih;
+	int i;
 
 	if(!context) return;
 
@@ -103,55 +107,56 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 	}
 #ifdef WITH_BRIDGE
 	if(context->bridge){
-		if(context->bridge->username){
-			context->bridge->username = NULL;
+		for(i=0; i<db->bridge_count; i++){
+			if(db->bridges[i] == context){
+				db->bridges[i] = NULL;
+			}
 		}
-		if(context->bridge->password){
-			context->bridge->password = NULL;
+		if(context->bridge->local_clientid){
+			_mosquitto_free(context->bridge->local_clientid);
+			context->bridge->local_clientid = NULL;
+		}
+		if(context->bridge->remote_username){
+			context->bridge->remote_username = NULL;
+		}
+		if(context->bridge->remote_password){
+			context->bridge->remote_password = NULL;
+		}
+		if(context->bridge->local_username){
+			context->bridge->local_username = NULL;
+		}
+		if(context->bridge->local_password){
+			context->bridge->local_password = NULL;
+		}
+		if(context->bridge->local_clientid){
+			context->bridge->local_clientid = NULL;
 		}
 	}
 #endif
-#ifdef WITH_TLS
-	if(context->ssl){
-		SSL_free(context->ssl);
-		context->ssl = NULL;
-	}
-#endif
-	if(context->sock != -1){
-		if(context->listener){
-			context->listener->client_count--;
-			assert(context->listener->client_count >= 0);
-		}
-		_mosquitto_socket_close(context);
-		context->listener = NULL;
-	}
-	if(context->clean_session && db){
-		mqtt3_subs_clean_session(db, context, &db->subs);
-		mqtt3_db_messages_delete(context);
+	_mosquitto_socket_close(db, context);
+	if((do_free || context->clean_session) && db){
+		mqtt3_subs_clean_session(db, context);
+		mqtt3_db_messages_delete(db, context);
 	}
 	if(context->address){
 		_mosquitto_free(context->address);
 		context->address = NULL;
 	}
+
 	if(context->id){
 		assert(db); /* db can only be NULL here if the client hasn't sent a
 					   CONNECT and hence wouldn't have an id. */
 
-		// Remove the context's ID from the DB hash
-		HASH_FIND_STR(db->clientid_index_hash, context->id, find_cih);
-		if(find_cih){
-			// FIXME - internal level debug? _mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Found id for client \"%s\", their index was %d.", context->id, find_cih->db_context_index);
-			HASH_DEL(db->clientid_index_hash, find_cih);
-			_mosquitto_free(find_cih);
-		}else{
-			// FIXME - internal level debug? _mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Unable to find id for client \"%s\".", context->id);
-		}
+		HASH_DELETE(hh_id, db->contexts_by_id, context);
 		_mosquitto_free(context->id);
 		context->id = NULL;
 	}
 	_mosquitto_packet_cleanup(&(context->in_packet));
-	_mosquitto_packet_cleanup(context->current_out_packet);
-	context->current_out_packet = NULL;
+	if(context->current_out_packet){
+		_mosquitto_packet_cleanup(context->current_out_packet);
+		_mosquitto_free(context->current_out_packet);
+		context->current_out_packet = NULL;
+	}
 	while(context->out_packet){
 		_mosquitto_packet_cleanup(context->out_packet);
 		packet = context->out_packet;
@@ -168,7 +173,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		msg = context->msgs;
 		while(msg){
 			next = msg->next;
-			msg->store->ref_count--;
+			mosquitto__db_msg_store_deref(db, &msg->store);
 			_mosquitto_free(msg);
 			msg = next;
 		}
@@ -192,12 +197,31 @@ void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 		_mosquitto_free(ctxt->will);
 		ctxt->will = NULL;
 	}
-	if(ctxt->listener){
-		ctxt->listener->client_count--;
-		assert(ctxt->listener->client_count >= 0);
-		ctxt->listener = NULL;
+	ctxt->disconnect_t = time(NULL);
+	_mosquitto_socket_close(db, ctxt);
+}
+
+void mosquitto__add_context_to_disused(struct mosquitto_db *db, struct mosquitto *context)
+{
+	if(db->ll_for_free){
+		context->for_free_next = db->ll_for_free;
+		db->ll_for_free = context;
+	}else{
+		db->ll_for_free = context;
 	}
-	ctxt->disconnect_t = mosquitto_time();
-	_mosquitto_socket_close(ctxt);
+}
+
+void mosquitto__free_disused_contexts(struct mosquitto_db *db)
+{
+	struct mosquitto *context, *next;
+	assert(db);
+
+	context = db->ll_for_free;
+	while(context){
+		next = context->for_free_next;
+		mqtt3_context_cleanup(db, context, true);
+		context = next;
+	}
+	db->ll_for_free = NULL;
 }
 

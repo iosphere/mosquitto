@@ -97,7 +97,12 @@ int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 	assert(mosq);
 	assert(topic);
 
+#if defined(WITH_BROKER) && defined(WITH_WEBSOCKETS)
+	if(mosq->sock == INVALID_SOCKET && !mosq->wsi) return MOSQ_ERR_NO_CONN;
+#else
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+#endif
+
 #ifdef WITH_BROKER
 	if(mosq->listener && mosq->listener->mount_point){
 		len = strlen(mosq->listener->mount_point);
@@ -138,12 +143,13 @@ int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 					if(cur_topic->remote_prefix){
 						/* This prefix needs adding. */
 						len = strlen(mapped_topic) + strlen(cur_topic->remote_prefix)+1;
-						topic_temp = _mosquitto_calloc(len+1, sizeof(char));
+						topic_temp = _mosquitto_malloc(len+1);
 						if(!topic_temp){
 							_mosquitto_free(mapped_topic);
 							return MOSQ_ERR_NOMEM;
 						}
 						snprintf(topic_temp, len, "%s%s", cur_topic->remote_prefix, mapped_topic);
+						cur_topic->remote_prefix[len] = '\0';
 						_mosquitto_free(mapped_topic);
 						mapped_topic = topic_temp;
 					}
@@ -180,14 +186,14 @@ int _mosquitto_send_pubrec(struct mosquitto *mosq, uint16_t mid)
 	return _mosquitto_send_command_with_mid(mosq, PUBREC, mid, false);
 }
 
-int _mosquitto_send_pubrel(struct mosquitto *mosq, uint16_t mid, bool dup)
+int _mosquitto_send_pubrel(struct mosquitto *mosq, uint16_t mid)
 {
 #ifdef WITH_BROKER
 	if(mosq) _mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREL to %s (Mid: %d)", mosq->id, mid);
 #else
 	if(mosq) _mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", mosq->id, mid);
 #endif
-	return _mosquitto_send_command_with_mid(mosq, PUBREL|2, mid, dup);
+	return _mosquitto_send_command_with_mid(mosq, PUBREL|2, mid, false);
 }
 
 /* For PUBACK, PUBCOMP, PUBREC, and PUBREL */

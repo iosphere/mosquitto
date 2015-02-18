@@ -34,15 +34,10 @@ mid = 3266
 publish2_packet = mosq_test.gen_publish("qos1/outgoing", qos=1, mid=mid, payload="outgoing-message")
 puback2_packet = mosq_test.gen_puback(mid)
 
-broker = subprocess.Popen(['../../src/mosquitto', '-c', '03-publish-c2b-disconnect-qos2.conf'], stderr=subprocess.PIPE)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__))
 
 try:
-    time.sleep(0.5)
-
     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
-    #sock.send(subscribe_packet)
-
-    #if mosq_test.expect_packet(sock, "suback", suback_packet):
 
     sock.send(publish_packet)
     if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
