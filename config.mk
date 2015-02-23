@@ -58,7 +58,7 @@ WITH_MEMORY_TRACKING:=yes
 WITH_SYS_TREE:=yes
 
 # Build with SRV lookup support.
-WITH_SRV:=no
+WITH_SRV:=yes
 
 # Build using libuuid for clientid generation (Linux only - please report if
 # supported on your platform).
@@ -218,6 +218,7 @@ endif
 ifeq ($(WITH_SRV),yes)
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SRV
 	LIB_LIBS:=$(LIB_LIBS) -lcares
+	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_SRV
 endif
 
 ifeq ($(WITH_WEBSOCKETS),yes)
