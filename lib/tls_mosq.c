@@ -69,6 +69,33 @@ int _mosquitto_server_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 	}
 }
 
+int mosquitto__cmp_hostname_wildcard(char *certname, const char *hostname)
+{
+	int i;
+	int len;
+
+	if(!certname || !hostname){
+		return 1;
+	}
+
+	if(certname[0] == '*'){
+		if(certname[1] != '.'){
+			return 1;
+		}
+		certname += 2;
+		len = strlen(hostname);
+		for(i=0; i<len-1; i++){
+			if(hostname[i] == '.'){
+				hostname += i+1;
+				break;
+			}
+		}
+		return strcasecmp(certname, hostname);
+	}else{
+		return strcasecmp(certname, hostname);
+	}
+}
+
 /* This code is based heavily on the example provided in "Secure Programming
  * Cookbook for C and C++".
  */
@@ -100,7 +127,7 @@ int _mosquitto_verify_certificate_hostname(X509 *cert, const char *hostname)
 			nval = sk_GENERAL_NAME_value(san, i);
 			if(nval->type == GEN_DNS){
 				data = ASN1_STRING_data(nval->d.dNSName);
-				if(data && !strcasecmp((char *)data, hostname)){
+				if(data && !mosquitto__cmp_hostname_wildcard((char *)data, hostname)){
 					return 1;
 				}
 				have_san_dns = true;
@@ -125,7 +152,7 @@ int _mosquitto_verify_certificate_hostname(X509 *cert, const char *hostname)
 	subj = X509_get_subject_name(cert);
 	if(X509_NAME_get_text_by_NID(subj, NID_commonName, name, sizeof(name)) > 0){
 		name[sizeof(name) - 1] = '\0';
-		if (!strcasecmp(name, hostname)) return 1;
+		if (!mosquitto__cmp_hostname_wildcard(name, hostname)) return 1;
 	}
 	return 0;
 }

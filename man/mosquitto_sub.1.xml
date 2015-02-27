@@ -17,9 +17,9 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>mosquitto_sub</command>
-			<arg><option>-1</option></arg>
 			<arg><option>-A</option> <replaceable>bind_address</replaceable></arg>
 			<arg><option>-c</option></arg>
+			<arg><option>-C</option> <replaceable>msg count</replaceable></arg>
 			<arg><option>-d</option></arg>
 			<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
 			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
@@ -59,9 +59,10 @@
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 				</arg>
 			</group>
+			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
+			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
 			<arg choice='opt' rep='repeat'><option>-T</option> <replaceable>filter-out</replaceable></arg>
 			<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
-			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_sub</command>
@@ -94,19 +95,6 @@
 			<option>#</option> as the first character are treated as comments
 			and not processed any further.</para>
 		<variablelist>
-			<varlistentry>
-				<term><option>-1</option></term>
-				<listitem>
-					<para>Disconnect and exit the program immediately after the
-						first message is received. This may be useful in shell
-						scripts where on a single status value is required, for
-						example.</para>
-					<para>Combine with <option>-R</option> to print only the
-						first fresh message (i.e. that does not have the
-						retained flag set), or with <option>-T</option> to
-						filter which topics are processed.</para>
-				</listitem>
-			</varlistentry>
 			<varlistentry>
 				<term><option>-A</option></term>
 				<listitem>
@@ -167,6 +155,19 @@
 						in the client. See
 						<citerefentry><refentrytitle>ciphers</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 						for more information.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-C</option></term>
+				<listitem>
+					<para>Disconnect and exit the program immediately after
+						the given count of messages have been received. This
+						may be useful in shell scripts where on a single status
+						value is required, for example.</para>
+					<para>Combine with <option>-R</option> to print only the
+						first set of fresh messages (i.e. that does not have
+						the retained flag set), or with <option>-T</option> to
+						filter which topics are processed.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -415,6 +416,16 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>-V</option></term>
+				<term><option>--protocol-version</option></term>
+				<listitem>
+					<para>Specify which version of the MQTT protocol should be
+						used when connecting to the rmeote broker. Can be
+						<option>mqttv31</option> or <option>mqttv311</option>.
+						Defaults to <option>mqttv31</option>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>--will-payload</option></term>
 				<listitem>
 					<para>Specify a message that will be stored by the broker
@@ -498,7 +509,7 @@
 	<refsect1>
 		<title>Bugs</title>
 		<para><command>mosquitto_sub</command> bug information can be found at
-		<uri type="webpage">http://launchpad.net/mosquitto</uri></para>
+			<uri type="webpage">https://bugs.eclipse.org/bugs/describecomponents.cgi?product=Mosquitto</uri></para>
 	</refsect1>
 
 	<refsect1>
@@ -506,31 +517,31 @@
 		<simplelist type="inline">
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mqtt-7.html">mqtt</link></refentrytitle>
+					<refentrytitle><link xlink:href="mqtt-7.php">mqtt</link></refentrytitle>
 					<manvolnum>7</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto_pub-1.html">mosquitto_pub</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto_pub-1.php">mosquitto_pub</link></refentrytitle>
 					<manvolnum>1</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-8.html">mosquitto</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto-8.php">mosquitto</link></refentrytitle>
 					<manvolnum>8</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="libmosquitto-3.html">libmosquitto</link></refentrytitle>
+					<refentrytitle><link xlink:href="libmosquitto-3.php">libmosquitto</link></refentrytitle>
 					<manvolnum>3</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-tls-7.html">mosquitto-tls</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto-tls-7.php">mosquitto-tls</link></refentrytitle>
 					<manvolnum>7</manvolnum>
 				</citerefentry>
 			</member>

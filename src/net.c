@@ -385,6 +385,9 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		}
 
 		if(bind(sock, rp->ai_addr, rp->ai_addrlen) == -1){
+#ifdef WIN32
+			errno = WSAGetLastError();
+#endif
 			strerror_r(errno, buf, 256);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
 			COMPAT_CLOSE(sock);
@@ -392,6 +395,9 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		}
 
 		if(listen(sock, 100) == -1){
+#ifdef WIN32
+			errno = WSAGetLastError();
+#endif
 			strerror_r(errno, buf, 256);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
 			COMPAT_CLOSE(sock);

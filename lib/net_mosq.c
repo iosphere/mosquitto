@@ -133,7 +133,6 @@ void _mosquitto_packet_cleanup(struct _mosquitto_packet *packet)
 
 	/* Free data and reset values */
 	packet->command = 0;
-	packet->have_remaining = 0;
 	packet->remaining_count = 0;
 	packet->remaining_mult = 1;
 	packet->remaining_length = 0;
@@ -372,6 +371,32 @@ int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t po
 	return rc;
 }
 
+#ifdef WITH_TLS
+int mosquitto__socket_connect_tls(struct mosquitto *mosq)
+{
+	int ret;
+
+	ret = SSL_connect(mosq->ssl);
+	if(ret != 1){
+		ret = SSL_get_error(mosq->ssl, ret);
+		if(ret == SSL_ERROR_WANT_READ){
+			mosq->want_connect = true;
+			/* We always try to read anyway */
+		}else if(ret == SSL_ERROR_WANT_WRITE){
+			mosq->want_write = true;
+			mosq->want_connect = true;
+		}else{
+			COMPAT_CLOSE(mosq->sock);
+			mosq->sock = INVALID_SOCKET;
+			return MOSQ_ERR_TLS;
+		}
+	}else{
+		mosq->want_connect = false;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+#endif
+
 /* Create a socket and connect it to 'ip' on port 'port'.
  * Returns -1 on failure (ip is NULL, socket creation/connection error)
  * Returns sock number on success.
@@ -519,18 +544,11 @@ int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 		}
 		SSL_set_bio(mosq->ssl, bio, bio);
 
-		ret = SSL_connect(mosq->ssl);
-		if(ret != 1){
-			ret = SSL_get_error(mosq->ssl, ret);
-			if(ret == SSL_ERROR_WANT_READ){
-				/* We always try to read anyway */
-			}else if(ret == SSL_ERROR_WANT_WRITE){
-				mosq->want_write = true;
-			}else{
-				COMPAT_CLOSE(sock);
-				return MOSQ_ERR_TLS;
-			}
+		mosq->sock = sock;
+		if(mosquitto__socket_connect_tls(mosq)){
+			return MOSQ_ERR_TLS;
 		}
+
 	}
 #endif
 
@@ -590,9 +608,10 @@ int _mosquitto_read_string(struct _mosquitto_packet *packet, char **str)
 
 	if(packet->pos+len > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
 
-	*str = _mosquitto_calloc(len+1, sizeof(char));
+	*str = _mosquitto_malloc(len+1);
 	if(*str){
 		memcpy(*str, &(packet->payload[packet->pos]), len);
+		(*str)[len] = '\0';
 		packet->pos += len;
 	}else{
 		return MOSQ_ERR_NOMEM;
@@ -916,7 +935,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 			}
 		}
 	}
-	if(!mosq->in_packet.have_remaining){
+	if(mosq->in_packet.remaining_count == 0){
 		do{
 			read_length = _mosquitto_net_read(mosq, &byte, 1);
 			if(read_length == 1){
@@ -954,7 +973,6 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 			if(!mosq->in_packet.payload) return MOSQ_ERR_NOMEM;
 			mosq->in_packet.to_process = mosq->in_packet.remaining_length;
 		}
-		mosq->in_packet.have_remaining = 1;
 	}
 	while(mosq->in_packet.to_process>0){
 		read_length = _mosquitto_net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);

@@ -1,6 +1,9 @@
 # =============================================================================
 # User configuration section.
 #
+# These options control compilation on all systems apart from Windows and Mac
+# OS X. Use CMake to compile on Windows and Mac.
+#
 # Largely, these are options that are designed to make mosquitto run more
 # easily in restrictive environments by removing features.
 #
@@ -78,7 +81,7 @@ WITH_SOCKS:=yes
 # =============================================================================
 
 
-# Also bump lib/mosquitto.h, lib/python/setup.py, CMakeLists.txt,
+# Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto-cygwin.nsi
 VERSION=1.4
 TIMESTAMP:=$(shell date "+%F %T%z")
@@ -94,6 +97,7 @@ DB_HTML_XSL=man/html.xsl
 #MANCOUNTRIES=en_GB
 
 UNAME:=$(shell uname -s)
+
 ifeq ($(UNAME),SunOS)
 	ifeq ($(CC),cc)
 		CFLAGS?=-O
@@ -236,7 +240,6 @@ ifeq ($(WITH_DOCS),yes)
 endif
 
 INSTALL?=install
-STRIP?=strip
 prefix=/usr/local
 mandir=${prefix}/share/man
 localedir=${prefix}/share/locale

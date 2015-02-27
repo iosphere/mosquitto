@@ -117,6 +117,9 @@ struct mqtt3_config {
 	bool upgrade_outgoing_qos;
 	char *user;
 	bool verbose;
+#ifdef WITH_WEBSOCKETS
+	int websockets_log_level;
+#endif
 #ifdef WITH_BRIDGE
 	struct _mqtt3_bridge *bridges;
 	int bridge_count;
@@ -286,6 +289,7 @@ struct _mqtt3_bridge{
 	struct _mqtt3_bridge_topic *topics;
 	int topic_count;
 	bool topic_remapping;
+	enum _mosquitto_protocol protocol_version;
 	time_t restart_t;
 	char *remote_clientid;
 	char *remote_username;
@@ -300,6 +304,7 @@ struct _mqtt3_bridge{
 	int restart_timeout;
 	int threshold;
 	bool lazy_reconnect;
+	bool attempt_unsubscribe;
 #ifdef WITH_TLS
 	char *tls_cafile;
 	char *tls_capath;
@@ -346,6 +351,9 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 int mqtt3_config_read(struct mqtt3_config *config, bool reload);
 /* Free all config data. */
 void mqtt3_config_cleanup(struct mqtt3_config *config);
+
+int drop_privileges(struct mqtt3_config *config, bool temporary);
+int restore_privileges(void);
 
 /* ============================================================
  * Server send functions
@@ -425,8 +433,8 @@ void mosquitto__free_disused_contexts(struct mosquitto_db *db);
 /* ============================================================
  * Logging functions
  * ============================================================ */
-int mqtt3_log_init(int level, int destinations, int facility);
-int mqtt3_log_close(void);
+int mqtt3_log_init(struct mqtt3_config *config);
+int mqtt3_log_close(struct mqtt3_config *config);
 int _mosquitto_log_printf(struct mosquitto *mosq, int level, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
 
 /* ============================================================
@@ -471,7 +479,7 @@ void service_run(void);
  * Websockets related functions
  * ============================================================ */
 #ifdef WITH_WEBSOCKETS
-struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener);
+struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener, int log_level);
 #endif
 void do_disconnect(struct mosquitto_db *db, struct mosquitto *context);
 

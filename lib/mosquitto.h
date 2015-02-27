@@ -58,6 +58,7 @@ extern "C" {
 #define MOSQ_LOG_DEBUG 0x10
 #define MOSQ_LOG_SUBSCRIBE 0x20
 #define MOSQ_LOG_UNSUBSCRIBE 0x40
+#define MOSQ_LOG_WEBSOCKETS 0x80
 #define MOSQ_LOG_ALL 0xFFFF
 
 /* Error values */
@@ -82,8 +83,16 @@ enum mosq_err_t {
 	MOSQ_ERR_PROXY = 16
 };
 
+/* Error values */
+enum mosq_opt_t {
+	MOSQ_OPT_PROTOCOL_VERSION = 1,
+};
+
 /* MQTT specification restricts client ids to a maximum of 23 characters */
 #define MOSQ_MQTT_ID_MAX_LENGTH 23
+
+#define MQTT_PROTOCOL_V31 3
+#define MQTT_PROTOCOL_V311 4
 
 struct mosquitto_message{
 	int mid;
@@ -917,6 +926,25 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
  *  threaded - true if your application is using threads, false otherwise.
  */
 libmosq_EXPORT int mosquitto_threaded_set(struct mosquitto *mosq, bool threaded);
+
+/*
+ * Function: mosquitto_opts_set
+ *
+ * Used to set options for the client.
+ *
+ * Parameters:
+ *	mosq -   a valid mosquitto instance.
+ *	option - the option to set.
+ *	value -  the option specific value.
+ *
+ * Options:
+ *	MOSQ_OPT_PROTOCOL_VERSION - value must be an int, set to either
+ *	                            MQTT_PROTOCOL_V31 or MQTT_PROTOCOL_V311. Must
+ *	                            be set before the client connects. Defaults to
+ *	                            MQTT_PROTOCOL_V31.
+ */
+libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *value);
+
 
 /*
  * Function: mosquitto_tls_set

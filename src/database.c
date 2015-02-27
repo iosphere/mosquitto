@@ -42,8 +42,10 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	db->contexts_by_id = NULL;
 	db->contexts_by_sock = NULL;
 	db->contexts_for_free = NULL;
+#ifdef WITH_BRIDGE
 	db->bridges = NULL;
 	db->bridge_count = 0;
+#endif
 
 	// Initialize the hashtable
 	db->clientid_index_hash = NULL;
@@ -186,7 +188,7 @@ void mosquitto__db_msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg
 	(*store)->ref_count--;
 	if((*store)->ref_count == 0){
 		mosquitto__db_msg_store_remove(db, *store);
-		store = NULL;
+		*store = NULL;
 	}
 }
 
@@ -483,7 +485,7 @@ int mqtt3_db_messages_easy_queue(struct mosquitto_db *db, struct mosquitto *cont
 
 	if(!topic) return MOSQ_ERR_INVAL;
 
-	if(context){
+	if(context && context->id){
 		source_id = context->id;
 	}else{
 		source_id = "";

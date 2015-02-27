@@ -143,12 +143,13 @@ int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 					if(cur_topic->remote_prefix){
 						/* This prefix needs adding. */
 						len = strlen(mapped_topic) + strlen(cur_topic->remote_prefix)+1;
-						topic_temp = _mosquitto_calloc(len+1, sizeof(char));
+						topic_temp = _mosquitto_malloc(len+1);
 						if(!topic_temp){
 							_mosquitto_free(mapped_topic);
 							return MOSQ_ERR_NOMEM;
 						}
 						snprintf(topic_temp, len, "%s%s", cur_topic->remote_prefix, mapped_topic);
+						cur_topic->remote_prefix[len] = '\0';
 						_mosquitto_free(mapped_topic);
 						mapped_topic = topic_temp;
 					}

@@ -86,6 +86,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq);
 
 #ifdef WITH_TLS
 int _mosquitto_socket_apply_tls(struct mosquitto *mosq);
+int mosquitto__socket_connect_tls(struct mosquitto *mosq);
 #endif
 
 #endif

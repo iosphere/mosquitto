@@ -36,8 +36,9 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	uint8_t will = 0;
 	uint8_t byte;
 	int rc;
-	uint8_t version = PROTOCOL_VERSION_v31;
+	uint8_t version;
 	char *clientid, *username, *password;
+	int headerlen;
 
 	assert(mosq);
 	assert(mosq->id);
@@ -58,6 +59,16 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	password = mosq->password;
 #endif
 
+	if(mosq->protocol == mosq_p_mqtt31){
+		version = MQTT_PROTOCOL_V31;
+		headerlen = 12;
+	}else if(mosq->protocol == mosq_p_mqtt311){
+		version = MQTT_PROTOCOL_V311;
+		headerlen = 10;
+	}else{
+		return MOSQ_ERR_INVAL;
+	}
+
 	packet = _mosquitto_calloc(1, sizeof(struct _mosquitto_packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
@@ -76,7 +87,7 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	}
 
 	packet->command = CONNECT;
-	packet->remaining_length = 12+payloadlen;
+	packet->remaining_length = headerlen+payloadlen;
 	rc = _mosquitto_packet_alloc(packet);
 	if(rc){
 		_mosquitto_free(packet);
@@ -84,7 +95,14 @@ int _mosquitto_send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	}
 
 	/* Variable header */
-	_mosquitto_write_string(packet, PROTOCOL_NAME_v31, strlen(PROTOCOL_NAME_v31));
+	if(version == MQTT_PROTOCOL_V31){
+		_mosquitto_write_string(packet, PROTOCOL_NAME_v31, strlen(PROTOCOL_NAME_v31));
+	}else if(version == MQTT_PROTOCOL_V311){
+		_mosquitto_write_string(packet, PROTOCOL_NAME_v311, strlen(PROTOCOL_NAME_v311));
+	}else{
+		_mosquitto_free(packet);
+		return MOSQ_ERR_INVAL;
+	}
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
 	if(mosq->bridge && mosq->bridge->try_private && mosq->bridge->try_private_accepted){
 		version |= 0x80;

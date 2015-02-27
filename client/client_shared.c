@@ -42,6 +42,7 @@ void init_config(struct mosq_config *cfg)
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
 	cfg->eol = true;
+	cfg->protocol_version = MQTT_PROTOCOL_V31;
 }
 
 void client_config_cleanup(struct mosq_config *cfg)
@@ -251,12 +252,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 			}
 			i++;
-		}else if(!strcmp(argv[i], "-1") || !strcmp(argv[i], "--oneshot")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}else{
-				cfg->oneshot = true;
-			}
 		}else if(!strcmp(argv[i], "-A")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -A argument given but no address specified.\n\n");
@@ -299,6 +294,22 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			i++;
 #endif
+		}else if(!strcmp(argv[i], "-C")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}else{
+				if(i==argc-1){
+					fprintf(stderr, "Error: -C argument given but no count specified.\n\n");
+					return 1;
+				}else{
+					cfg->msg_count = atoi(argv[i+1]);
+					if(cfg->msg_count < 1){
+						fprintf(stderr, "Error: Invalid message count \"%d\".\n\n", cfg->msg_count);
+						return 1;
+					}
+				}
+				i++;
+			}
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
 			cfg->debug = true;
 		}else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--file")){
@@ -419,6 +430,21 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				cfg->pub_mode = MSGMODE_NULL;
+			}
+		}else if(!strcmp(argv[i], "-V") || !strcmp(argv[i], "--protocol-version")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --protocol-version argument given but no version specified.\n\n");
+				return 1;
+			}else{
+				if(!strcmp(argv[i+1], "mqttv31")){
+					cfg->protocol_version = MQTT_PROTOCOL_V31;
+				}else if(!strcmp(argv[i+1], "mqttv311")){
+					cfg->protocol_version = MQTT_PROTOCOL_V311;
+				}else{
+					fprintf(stderr, "Error: Invalid protocol version argument given.\n\n");
+					return 1;
+				}
+				i++;
 			}
 #ifdef WITH_SOCKS
 		}else if(!strcmp(argv[i], "--proxy")){
@@ -668,6 +694,7 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		}
 	}
 #endif
+	mosquitto_opts_set(mosq, MOSQ_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
 	return MOSQ_ERR_SUCCESS;
 }
 

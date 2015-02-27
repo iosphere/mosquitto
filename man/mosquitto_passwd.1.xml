@@ -124,7 +124,7 @@
 	<refsect1>
 		<title>Bugs</title>
 		<para><command>mosquitto_passwd</command> bug information can be found at
-		<uri type="webpage">http://launchpad.net/mosquitto</uri></para>
+			<uri type="webpage">https://bugs.eclipse.org/bugs/describecomponents.cgi?product=Mosquitto</uri></para>
 	</refsect1>
 
 	<refsect1>
@@ -132,19 +132,19 @@
 		<simplelist type="inline">
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-8.html">mosquitto</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto-8.php">mosquitto</link></refentrytitle>
 					<manvolnum>8</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-conf-5.html">mosquitto.conf</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto-conf-5.php">mosquitto.conf</link></refentrytitle>
 					<manvolnum>5</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mqtt-7.html">mqtt</link></refentrytitle>
+					<refentrytitle><link xlink:href="mqtt-7.php">mqtt</link></refentrytitle>
 					<manvolnum>7</manvolnum>
 				</citerefentry>
 			</member>

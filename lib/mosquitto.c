@@ -139,6 +139,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	}else{
 		mosq->userdata = mosq;
 	}
+	mosq->protocol = mosq_p_mqtt31;
 	mosq->sock = INVALID_SOCKET;
 	mosq->sockpairR = INVALID_SOCKET;
 	mosq->sockpairW = INVALID_SOCKET;
@@ -199,6 +200,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->ssl = NULL;
 	mosq->tls_cert_reqs = SSL_VERIFY_PEER;
 	mosq->tls_insecure = false;
+	mosq->want_write = false;
 #endif
 #ifdef WITH_THREADING
 	pthread_mutex_init(&mosq->callback_mutex, NULL);
@@ -838,11 +840,21 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 		pthread_mutex_lock(&mosq->out_packet_mutex);
 		if(mosq->out_packet || mosq->current_out_packet){
 			FD_SET(mosq->sock, &writefds);
-#ifdef WITH_TLS
-		}else if(mosq->ssl && mosq->want_write){
-			FD_SET(mosq->sock, &writefds);
-#endif
 		}
+#ifdef WITH_TLS
+		if(mosq->ssl){
+			if(mosq->want_write){
+				FD_SET(mosq->sock, &writefds);
+				mosq->want_write = false;
+			}else if(mosq->want_connect){
+				/* Remove possible FD_SET from above, we don't want to check
+				 * for writing if we are still connecting, unless want_write is
+				 * definitely set. The presence of outgoing packets does not
+				 * matter yet. */
+				FD_CLR(mosq->sock, &writefds);
+			}
+		}
+#endif
 		pthread_mutex_unlock(&mosq->out_packet_mutex);
 		pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 	}else{
@@ -906,9 +918,17 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	}else{
 		if(mosq->sock != INVALID_SOCKET){
 			if(FD_ISSET(mosq->sock, &readfds)){
-				rc = mosquitto_loop_read(mosq, max_packets);
-				if(rc || mosq->sock == INVALID_SOCKET){
-					return rc;
+#ifdef WITH_TLS
+				if(mosq->want_connect){
+					rc = mosquitto__socket_connect_tls(mosq);
+					if(rc) return rc;
+				}else
+#endif
+				{
+					rc = mosquitto_loop_read(mosq, max_packets);
+					if(rc || mosq->sock == INVALID_SOCKET){
+						return rc;
+					}
 				}
 			}
 			if(mosq->sockpairR >= 0 && FD_ISSET(mosq->sockpairR, &readfds)){
@@ -924,9 +944,17 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 				FD_SET(mosq->sock, &writefds);
 			}
 			if(FD_ISSET(mosq->sock, &writefds)){
-				rc = mosquitto_loop_write(mosq, max_packets);
-				if(rc || mosq->sock == INVALID_SOCKET){
-					return rc;
+#ifdef WITH_TLS
+				if(mosq->want_connect){
+					rc = mosquitto__socket_connect_tls(mosq);
+					if(rc) return rc;
+				}else
+#endif
+				{
+					rc = mosquitto_loop_write(mosq, max_packets);
+					if(rc || mosq->sock == INVALID_SOCKET){
+						return rc;
+					}
 				}
 			}
 		}
@@ -971,10 +999,11 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			case MOSQ_ERR_AUTH:
 			case MOSQ_ERR_ACL_DENIED:
 			case MOSQ_ERR_UNKNOWN:
-			case MOSQ_ERR_ERRNO:
 			case MOSQ_ERR_EAI:
 			case MOSQ_ERR_PROXY:
 				return rc;
+			case MOSQ_ERR_ERRNO:
+				break;
 		}
 		if(errno == EPROTO){
 			return rc;
@@ -1152,6 +1181,30 @@ bool mosquitto_want_write(struct mosquitto *mosq)
 		return false;
 	}
 }
+
+int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *value)
+{
+	int ival;
+
+	if(!mosq || !value) return MOSQ_ERR_INVAL;
+
+	switch(option){
+		case MOSQ_OPT_PROTOCOL_VERSION:
+			ival = *((int *)value);
+			if(ival == MQTT_PROTOCOL_V31){
+				mosq->protocol = mosq_p_mqtt31;
+			}else if(ival == MQTT_PROTOCOL_V311){
+				mosq->protocol = mosq_p_mqtt311;
+			}else{
+				return MOSQ_ERR_INVAL;
+			}
+			break;
+		default:
+			return MOSQ_ERR_INVAL;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
 
 void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(struct mosquitto *, void *, int))
 {

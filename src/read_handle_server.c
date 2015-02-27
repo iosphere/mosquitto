@@ -93,8 +93,8 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	struct mosquitto *found_context;
 	int slen;
 	struct _mosquitto_subleaf *leaf;
-#ifdef WITH_TLS
 	int i;
+#ifdef WITH_TLS
 	X509 *client_cert = NULL;
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
@@ -525,7 +525,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	msg_prev = NULL;
 	while(msg_tail){
 		if(msg_tail->direction == mosq_md_out){
-			if(mosquitto_acl_check(db, context, msg_tail->store->topic, MOSQ_ACL_READ) == MOSQ_ERR_ACL_DENIED){
+			if(mosquitto_acl_check(db, context, msg_tail->store->topic, MOSQ_ACL_READ) != MOSQ_ERR_SUCCESS){
 				mosquitto__db_msg_store_deref(db, &msg_tail->store);
 				if(msg_prev){
 					msg_prev->next = msg_tail->next;

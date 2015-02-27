@@ -56,7 +56,7 @@ int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
 		return 1;
 	}
 	BIO_get_mem_ptr(b64, &bptr);
-	*encoded = calloc(bptr->length+1, 1);
+	*encoded = malloc(bptr->length+1);
 	if(!(*encoded)){
 		BIO_free_all(b64);
 		return 1;

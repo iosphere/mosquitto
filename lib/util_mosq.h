@@ -20,6 +20,10 @@ Contributors:
 
 #include "tls_mosq.h"
 #include "mosquitto.h"
+#include "mosquitto_internal.h"
+#ifdef WITH_BROKER
+#  include "mosquitto_broker.h"
+#endif
 
 int _mosquitto_packet_alloc(struct _mosquitto_packet *packet);
 #ifdef WITH_BROKER

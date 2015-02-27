@@ -87,6 +87,11 @@
 		only sent once per client on subscription. All other topics are updated
 		every <option>sys_interval</option> seconds. If
 		<option>sys_interval</option> is 0, then updates are not sent.</para>
+		<para>Note that if you are using a command line client to interact with the
+			$SYS topics and your shell interprets $ as an environment variable,
+			you need to place the topic in single quotes '$SYS/...' or to
+			escape the dollar symbol: \$SYS/... otherwise the $SYS will be
+			treated as an environment variable.</para>
 		<variablelist>
 			<varlistentry>
 				<term><option>$SYS/broker/bytes/received</option></term>
@@ -468,7 +473,7 @@
 
 	<refsect1>
 		<title>Bugs</title>
-		<para><command>mosquitto</command> bug information can be found at <uri type="webpage">http://launchpad.net/mosquitto</uri></para>
+		<para><command>mosquitto</command> bug information can be found at <uri type="webpage">https://bugs.eclipse.org/bugs/describecomponents.cgi?product=Mosquitto</uri></para>
 	</refsect1>
 
 	<refsect1>
@@ -476,19 +481,19 @@
 		<simplelist type="inline">
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mqtt-7.html">mqtt</link></refentrytitle>
+					<refentrytitle><link xlink:href="mqtt-7.php">mqtt</link></refentrytitle>
 					<manvolnum>7</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-tls-7.html">mosquitto-tls</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto-tls-7.php">mosquitto-tls</link></refentrytitle>
 					<manvolnum>7</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-conf-5.html">mosquitto.conf</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto-conf-5.php">mosquitto.conf</link></refentrytitle>
 					<manvolnum>5</manvolnum>
 				</citerefentry>
 			</member>
@@ -500,25 +505,25 @@
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto_passwd-1.html">mosquitto_passwd</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto_passwd-1.php">mosquitto_passwd</link></refentrytitle>
 					<manvolnum>1</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto_pub-1.html">mosquitto_pub</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto_pub-1.php">mosquitto_pub</link></refentrytitle>
 					<manvolnum>1</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto_sub-1.html">mosquitto_sub</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto_sub-1.php">mosquitto_sub</link></refentrytitle>
 					<manvolnum>1</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="libmosquitto-3.html">libmosquitto</link></refentrytitle>
+					<refentrytitle><link xlink:href="libmosquitto-3.php">libmosquitto</link></refentrytitle>
 					<manvolnum>3</manvolnum>
 				</citerefentry>
 			</member>

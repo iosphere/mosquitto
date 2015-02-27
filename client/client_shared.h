@@ -33,6 +33,7 @@ Contributors:
 struct mosq_config {
 	char *id;
 	char *id_prefix;
+	int protocol_version;
 	int keepalive;
 	char *host;
 	int port;
@@ -73,13 +74,12 @@ struct mosq_config {
 	bool clean_session; /* sub */
 	char **topics; /* sub */
 	int topic_count; /* sub */
-	int topic_qos; /* sub */
 	bool no_retain; /* sub */
 	char **filter_outs; /* sub */
 	int filter_out_count; /* sub */
 	bool verbose; /* sub */
 	bool eol; /* sub */
-	bool oneshot; /* sub */
+	int msg_count; /* sub */
 #ifdef WITH_SOCKS
 	char *socks5_host;
 	int socks5_port;

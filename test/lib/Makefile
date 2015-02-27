@@ -1,3 +1,5 @@
+include ../../config.mk
+
 .PHONY: all test test-compile test-compile-c test-compile-cpp c cpp
 .NOTPARALLEL:
 
@@ -36,11 +38,13 @@ c cpp : test-compile
 	./03-publish-b2c-qos1.py $@/03-publish-b2c-qos1.test
 	./03-publish-b2c-qos2.py $@/03-publish-b2c-qos2.test
 	./04-retain-qos0.py $@/04-retain-qos0.test
+ifeq ($(WITH_TLS),yes)
 	./08-ssl-connect-no-auth.py $@/08-ssl-connect-no-auth.test
 	./08-ssl-connect-cert-auth.py $@/08-ssl-connect-cert-auth.test
 	./08-ssl-connect-cert-auth-enc.py $@/08-ssl-connect-cert-auth-enc.test
 	./08-ssl-bad-cacert.py $@/08-ssl-bad-cacert.test
-	./08-ssl-fake-cacert.py $@/08-ssl-fake-cacert.test
+	#./08-ssl-fake-cacert.py $@/08-ssl-fake-cacert.test
+endif
 	./09-util-topic-matching.py $@/09-util-topic-matching.test
 	./09-util-topic-tokenise.py $@/09-util-topic-tokenise.test
 
