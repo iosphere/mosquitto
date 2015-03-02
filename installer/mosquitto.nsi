@@ -18,6 +18,10 @@ InstallDir "$PROGRAMFILES\mosquitto"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
+
+!define MUI_FINISHPAGE_TEXT "mosquitto has been installed on your computer.\n\nTo complete the installation you must install the dependencies described in the following readme.\n\nClick Finish to close this wizard."
+!define MUI_FINISHPAGE_SHOWREADME $INSTDIR\readme-windows.txt
+!define MUI_FINISHPAGE_SHOWREADME_TEXT "Show dependencies readme"
 !insertmacro MUI_PAGE_FINISH
 
 
@@ -30,7 +34,7 @@ InstallDir "$PROGRAMFILES\mosquitto"
 
 ;--------------------------------
 ; Languages
-
+1
 !insertmacro MUI_LANGUAGE "English"
 
 ;--------------------------------
@@ -51,11 +55,11 @@ Section "Files" SecInstall
 	File "..\pwfile.example"
 	File "..\readme.txt"
 	File "..\readme-windows.txt"
-	File "C:\pthreads\Pre-built.2\dll\x86\pthreadVC2.dll"
-	File "C:\OpenSSL-Win32\libeay32.dll"
-	File "C:\OpenSSL-Win32\ssleay32.dll"
-	File "..\LICENSE.txt"
-	File "..\LICENSE-3rd-party.txt"
+	;File "C:\pthreads\Pre-built.2\dll\x86\pthreadVC2.dll"
+	;File "C:\OpenSSL-Win32\libeay32.dll"
+	;File "C:\OpenSSL-Win32\ssleay32.dll"
+	File "..\edl-v10"
+	File "..\epl-v10"
 
 	SetOutPath "$INSTDIR\devel"
 	File "..\lib\mosquitto.h"
@@ -96,11 +100,11 @@ Section "Uninstall"
 	Delete "$INSTDIR\pwfile.example"
 	Delete "$INSTDIR\readme.txt"
 	Delete "$INSTDIR\readme-windows.txt"
-	Delete "$INSTDIR\pthreadVC2.dll"
-	Delete "$INSTDIR\libeay32.dll"
-	Delete "$INSTDIR\ssleay32.dll"
-	Delete "$INSTDIR\LICENSE.txt"
-	Delete "$INSTDIR\LICENSE-3rd-party.txt"
+	;Delete "$INSTDIR\pthreadVC2.dll"
+	;Delete "$INSTDIR\libeay32.dll"
+	;Delete "$INSTDIR\ssleay32.dll"
+	Delete "$INSTDIR\edl-v10"
+	Delete "$INSTDIR\epl-v10"
 
 	Delete "$INSTDIR\devel\mosquitto.h"
 	Delete "$INSTDIR\devel\mosquitto.lib"

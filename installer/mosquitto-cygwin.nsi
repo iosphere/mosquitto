@@ -18,8 +18,11 @@ InstallDir "$PROGRAMFILES\mosquitto"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
-!insertmacro MUI_PAGE_FINISH
 
+!define MUI_FINISHPAGE_TEXT "mosquitto has been installed on your computer.\n\nTo complete the installation you must install the dependencies described in the following readme.\n\nClick Finish to close this wizard."
+!define MUI_FINISHPAGE_SHOWREADME $INSTDIR\readme-dependencies-cygwin.txt
+!define MUI_FINISHPAGE_SHOWREADME_TEXT "Show dependencies readme"
+!insertmacro MUI_PAGE_FINISH
 
 ;--------------------------------
 ; Uninstaller pages
@@ -39,11 +42,11 @@ InstallDir "$PROGRAMFILES\mosquitto"
 Section "Files" SecInstall
 	SectionIn RO
 	SetOutPath "$INSTDIR"
-	File "c:\cygwin\bin\cygwin1.dll"
-	File "c:\cygwin\bin\cyggcc_s-1.dll"
-	File "c:\cygwin\bin\cygcrypto-1.0.0.dll"
-	File "c:\cygwin\bin\cygssl-1.0.0.dll"
-	File "c:\cygwin\bin\cygz.dll"
+	;File "c:\cygwin\bin\cygwin1.dll"
+	;File "c:\cygwin\bin\cyggcc_s-1.dll"
+	;File "c:\cygwin\bin\cygcrypto-1.0.0.dll"
+	;File "c:\cygwin\bin\cygssl-1.0.0.dll"
+	;File "c:\cygwin\bin\cygz.dll"
 	File "..\src\mosquitto.exe"
 	File "..\build\src\Release\mosquitto_passwd.exe"
 	File "..\build\client\Release\mosquitto_pub.exe"
@@ -56,11 +59,11 @@ Section "Files" SecInstall
 	File "..\pwfile.example"
 	File "..\readme.txt"
 	File "..\readme-windows.txt"
-	File "C:\pthreads\Pre-built.2\dll\x86\pthreadVC2.dll"
-	File "C:\OpenSSL-Win32\libeay32.dll"
-	File "C:\OpenSSL-Win32\ssleay32.dll"
-	File "..\LICENSE.txt"
-	File "..\LICENSE-3rd-party.txt"
+	;File "C:\pthreads\Pre-built.2\dll\x86\pthreadVC2.dll"
+	;File "C:\OpenSSL-Win32\libeay32.dll"
+	;File "C:\OpenSSL-Win32\ssleay32.dll"
+	File "..\edl-v10"
+	File "..\epl-v10"
 
 	SetOutPath "$INSTDIR\devel"
 	File "..\lib\mosquitto.h"
@@ -70,14 +73,14 @@ Section "Files" SecInstall
 	File "..\src\mosquitto_plugin.h"
 
 	WriteUninstaller "$INSTDIR\Uninstall.exe"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "DisplayName" "Mosquitto MQTT broker"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "QuietUninstallString" "$\"$INSTDIR\Uninstall.exe$\" /S"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "HelpLink" "http://mosquitto.org/"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "URLInfoAbout" "http://mosquitto.org/"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "DisplayVersion" "${VERSION}"
-	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "NoModify" "1"
-	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "NoRepair" "1"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MosquittoCygwin" "DisplayName" "Mosquitto MQTT broker"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MosquittoCygwin" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MosquittoCygwin" "QuietUninstallString" "$\"$INSTDIR\Uninstall.exe$\" /S"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MosquittoCygwin" "HelpLink" "http://mosquitto.org/"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MosquittoCygwin" "URLInfoAbout" "http://mosquitto.org/"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MosquittoCygwin" "DisplayVersion" "${VERSION}"
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MosquittoCygwin" "NoModify" "1"
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MosquittoCygwin" "NoRepair" "1"
 
 	WriteRegExpandStr ${env_hklm} MOSQUITTO_DIR $INSTDIR
 	SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
@@ -89,11 +92,11 @@ SectionEnd
 
 Section "Uninstall"
 	ExecWait '"$INSTDIR\mosquitto.exe" uninstall'
-	Delete "$INSTDIR\cygwin1.dll"
-	Delete "$INSTDIR\cyggcc_s-1.dll"
-	Delete "$INSTDIR\cygcrypto-1.0.0.dll"
-	Delete "$INSTDIR\cygssl-1.0.0.dll"
-	Delete "$INSTDIR\cygz.dll"
+	;Delete "$INSTDIR\cygwin1.dll"
+	;Delete "$INSTDIR\cyggcc_s-1.dll"
+	;Delete "$INSTDIR\cygcrypto-1.0.0.dll"
+	;Delete "$INSTDIR\cygssl-1.0.0.dll"
+	;Delete "$INSTDIR\cygz.dll"
 	Delete "$INSTDIR\mosquitto.exe"
 	Delete "$INSTDIR\mosquitto_passwd.exe"
 	Delete "$INSTDIR\mosquitto_pub.exe"
@@ -106,11 +109,11 @@ Section "Uninstall"
 	Delete "$INSTDIR\pwfile.example"
 	Delete "$INSTDIR\readme.txt"
 	Delete "$INSTDIR\readme-windows.txt"
-	Delete "$INSTDIR\pthreadVC2.dll"
-	Delete "$INSTDIR\libeay32.dll"
-	Delete "$INSTDIR\ssleay32.dll"
-	Delete "$INSTDIR\LICENSE.txt"
-	Delete "$INSTDIR\LICENSE-3rd-party.txt"
+	;Delete "$INSTDIR\pthreadVC2.dll"
+	;Delete "$INSTDIR\libeay32.dll"
+	;Delete "$INSTDIR\ssleay32.dll"
+	Delete "$INSTDIR\edl-v10"
+	Delete "$INSTDIR\epl-v10"
 
 	Delete "$INSTDIR\devel\mosquitto.h"
 	Delete "$INSTDIR\devel\mosquitto.lib"
@@ -120,16 +123,15 @@ Section "Uninstall"
 
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir "$INSTDIR"
-	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto"
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MosquittoCygwin"
 
 	DeleteRegValue ${env_hklm} MOSQUITTO_DIR
 	SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 SectionEnd
 
 LangString DESC_SecInstall ${LANG_ENGLISH} "The main installation."
-LangString DESC_SecService ${LANG_ENGLISH} "Install mosquitto as a Windows service?"
+LangString DESC_SecService ${LANG_ENGLISH} "Install mosquitto as a Windows service (needs all dependencies installed)?"
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecInstall} $(DESC_SecInstall)
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecService} $(DESC_SecService)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
-
