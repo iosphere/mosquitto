@@ -17,13 +17,15 @@ build_script:
   - cd build
   - cmake %CMAKE_ARGS% ..
   - cmake --build .
+  - cd ..
 
 after_build:
-  - '%NSIS_ROOT%\makensis installer/mosquitto.nsi'
+  - cd installer
+  - '%NSIS_ROOT%\makensis mosquitto.nsi'
 
 artifacts:
   - name: Installer
-    path: 'mosquitto-*-install-win32.exe'
+    path: 'installer/mosquitto-*-install-win32.exe'
   #- path: build\src\Release\mosquitto.exe
   #- path: build\src\Release\mosquitto_passwd.exe
   #- path: build\lib\Release\mosquitto.dll
