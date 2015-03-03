@@ -34,7 +34,6 @@ InstallDir "$PROGRAMFILES\mosquitto"
 
 ;--------------------------------
 ; Languages
-1
 !insertmacro MUI_LANGUAGE "English"
 
 ;--------------------------------
