@@ -1,5 +1,6 @@
 environment:
   CMAKE_ARGS: ""
+  NSIS_ROOT: C:\nsis
 
 install:
   - appveyor DownloadFile http://slproweb.com/download/Win32OpenSSL-1_0_2.exe
@@ -7,6 +8,8 @@ install:
   - appveyor DownloadFile ftp://sourceware.org/pub/pthreads-win32/pthreads-w32-2-9-1-release.zip
   - md C:\pthreads
   - 7z -y x pthreads-w32-2-9-1-release.zip -oC:\pthreads
+  - appveyor DownloadFile "http://sunet.dl.sourceforge.net/project/nsis/NSIS 2/2.46/nsis-2.46-setup.exe" -FileName nsissetup.exe
+  - nsissetup /S /D=%NSIS_ROOT%
 
 build:
 
@@ -15,6 +18,20 @@ build_script:
   - cd build
   - cmake %CMAKE_ARGS% ..
   - cmake --build .
+
+after_build:
+  - '%NSIS_ROOT%\makensis installer/mosquitto.nsi'
+
+artifacts:
+  - name: Installer
+    path: 'mosquitto-*-install-win32.exe'
+  #- path: build\src\Release\mosquitto.exe
+  #- path: build\src\Release\mosquitto_passwd.exe
+  #- path: build\lib\Release\mosquitto.dll
+  #- path: build\lib\Release\mosquitto.lib
+  #- path: build\client\Release\mosquitto_pub.exe
+  #- path: build\client\Release\mosquitto_sub.exe
+  #- path: build\src\Release\mosquitto.exe
 
 cache:
   - C:\OpenSSL-Win32
