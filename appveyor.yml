@@ -18,7 +18,7 @@ build:
 build_script:
   - md build
   - cd build
-  - cmake %CMAKE_ARGS% ..
+  - cmake -DCMAKE_BUILD_TYPE=Release ..
   - cmake --build .
   - cd ..
 
