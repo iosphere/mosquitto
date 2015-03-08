@@ -121,11 +121,11 @@ void _mosquitto_message_queue(struct mosquitto *mosq, struct mosquitto_message_a
 			mosq->out_messages = message;
 		}
 		mosq->out_messages_last = message;
-	}else{
-		mosq->in_queue_len++;
 		if(message->msg.qos > 0 && (mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages)){
 			mosq->inflight_messages++;
 		}
+	}else{
+		mosq->in_queue_len++;
 		message->next = NULL;
 		if(mosq->in_messages_last){
 			mosq->in_messages_last->next = message;

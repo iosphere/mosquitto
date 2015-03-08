@@ -1,6 +1,9 @@
 Broker:
 - Fix possible crash when using pattern ACLs.
 
+Client library:
+- Inflight limits should only apply to outgoing messages. Closes #461620.
+
 
 1.4 - 20150218
 ==============
