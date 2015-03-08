@@ -136,6 +136,8 @@ int _add_acl(struct mosquitto_db *db, const char *user, const char *topic, int a
 	acl->access = access;
 	acl->topic = local_topic;
 	acl->next = NULL;
+	acl->ccount = 0;
+	acl->ucount = 0;
 
 	/* Add acl to user acl list */
 	if(acl_user->acl){
@@ -196,7 +198,7 @@ int _add_acl_pattern(struct mosquitto_db *db, const char *topic, int access)
 		}
 	}
 
-	acl->ccount = 0;
+	acl->ucount = 0;
 	s = local_topic;
 	while(s){
 		s = strstr(s, "%u");

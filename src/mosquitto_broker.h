@@ -102,7 +102,7 @@ struct mqtt3_config {
 	bool log_timestamp;
 	char *log_file;
 	FILE *log_fptr;
-	int message_size_limit;
+	uint32_t message_size_limit;
 	char *password_file;
 	bool persistence;
 	char *persistence_location;
