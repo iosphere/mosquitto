@@ -1967,6 +1967,10 @@ static int _conf_parse_string(char **token, const char *name, char **value, char
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate %s value in configuration.", name);
 			return MOSQ_ERR_INVAL;
 		}
+		/* Deal with multiple spaces at the beginning of the string. */
+		while((*token)[0] == ' '){
+			(*token)++;
+		}
 		*value = _mosquitto_strdup(*token);
 		if(!*value){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
