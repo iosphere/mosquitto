@@ -369,6 +369,10 @@ static int _aclfile_parse(struct mosquitto_db *db)
 				token = strtok_r(NULL, "", &saveptr);
 				if(token){
 					topic = token;
+					/* Ignore duplicate spaces */
+					while(topic[0] == ' '){
+						topic++;
+					}
 				}else{
 					topic = access_s;
 					access_s = NULL;
@@ -401,6 +405,10 @@ static int _aclfile_parse(struct mosquitto_db *db)
 			}else if(!strcmp(token, "user")){
 				token = strtok_r(NULL, "", &saveptr);
 				if(token){
+					/* Ignore duplicate spaces */
+					while(token[0] == ' '){
+						token++;
+					}
 					if(user) _mosquitto_free(user);
 					user = _mosquitto_strdup(token);
 					if(!user){
