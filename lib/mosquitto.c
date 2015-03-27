@@ -931,7 +931,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 					}
 				}
 			}
-			if(mosq->sockpairR >= 0 && FD_ISSET(mosq->sockpairR, &readfds)){
+			if(mosq->sockpairR != INVALID_SOCKET && FD_ISSET(mosq->sockpairR, &readfds)){
 #ifndef WIN32
 				if(read(mosq->sockpairR, &pairbuf, 1) == 0){
 				}

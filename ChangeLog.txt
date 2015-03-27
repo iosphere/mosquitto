@@ -6,6 +6,7 @@ Broker:
 
 Client library:
 - Inflight limits should only apply to outgoing messages. Closes #461620.
+- Fix reconnect bug on Windows. Closes #463000.
 
 
 1.4 - 20150218
