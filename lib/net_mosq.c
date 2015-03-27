@@ -109,7 +109,6 @@ void _mosquitto_net_init(void)
 void _mosquitto_net_cleanup(void)
 {
 #ifdef WITH_TLS
-	sk_SSL_COMP_free(SSL_COMP_get_compression_methods());
 	ERR_remove_state(0);
 	ENGINE_cleanup();
 	CONF_modules_unload(1);

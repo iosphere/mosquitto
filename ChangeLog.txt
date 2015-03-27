@@ -10,6 +10,8 @@ Client library:
 - Inflight limits should only apply to outgoing messages. Closes #461620.
 - Fix reconnect bug on Windows. Closes #463000.
 - Return -1 on error from mosquitto_socket(). Closes #461705.
+- Fix crash on multiple calls to mosquitto_lib_init/mosquitto_lib_cleanup.
+  Closes #462780.
 
 
 1.4 - 20150218
