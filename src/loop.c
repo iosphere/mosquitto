@@ -59,6 +59,36 @@ extern int g_clients_expired;
 static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds);
 static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds);
 
+#ifdef WITH_WEBSOCKETS
+static void temp__expire_websockets_clients(struct mosquitto_db *db)
+{
+	struct mosquitto *context, *ctxt_tmp;
+	static time_t last_check = 0;
+	time_t now = mosquitto_time();
+	char *id;
+
+	if(now - last_check > 60){
+		HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
+			if(context->wsi && context->sock != INVALID_SOCKET){
+				if(context->keepalive && now - context->last_msg_in > (time_t)(context->keepalive)*3/2){
+					if(db->config->connection_messages == true){
+						if(context->id){
+							id = context->id;
+						}else{
+							id = "<unknown>";
+						}
+						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+					}
+					/* Client has exceeded keepalive*1.5 */
+					do_disconnect(db, context);
+				}
+			}
+		}
+		last_check = mosquitto_time();
+	}
+}
+#endif
+
 int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock_count, int listener_max)
 {
 #ifdef WITH_SYS_TREE
@@ -343,6 +373,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			if(db->config->listeners[i].ws_context){
 				libwebsocket_service(db->config->listeners[i].ws_context, 0);
 			}
+		}
+		if(db->config->have_websockets_listener){
+			temp__expire_websockets_clients(db);
 		}
 #endif
 	}

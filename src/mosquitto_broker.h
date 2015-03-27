@@ -119,6 +119,7 @@ struct mqtt3_config {
 	bool verbose;
 #ifdef WITH_WEBSOCKETS
 	int websockets_log_level;
+	bool have_websockets_listener;
 #endif
 #ifdef WITH_BRIDGE
 	struct _mqtt3_bridge *bridges;

@@ -1557,6 +1557,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}else if(!strcmp(token, "websockets")){
 #ifdef WITH_WEBSOCKETS
 							cur_listener->protocol = mp_websockets;
+							config->have_websockets_listener = true;
 #else
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Websockets support not available.");
 							return MOSQ_ERR_INVAL;
