@@ -381,7 +381,7 @@ void mosquitto_destroy(struct mosquitto *mosq)
 
 int mosquitto_socket(struct mosquitto *mosq)
 {
-	if(!mosq) return MOSQ_ERR_INVAL;
+	if(!mosq) return -1;
 	return mosq->sock;
 }
 
