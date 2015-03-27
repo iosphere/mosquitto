@@ -1,3 +1,6 @@
+1.4.1 - 2015xxxx
+================
+
 Broker:
 - Fix possible crash under heavy network load. Closes #463241.
 - Fix possible crash when using pattern ACLs.
@@ -12,6 +15,7 @@ Client library:
 - Return -1 on error from mosquitto_socket(). Closes #461705.
 - Fix crash on multiple calls to mosquitto_lib_init/mosquitto_lib_cleanup.
   Closes #462780.
+- Allow longer paths on Windows. Closes #462781.
 
 
 1.4 - 20150218
