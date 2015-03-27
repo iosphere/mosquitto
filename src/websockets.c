@@ -270,7 +270,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						return -1;
 					}
 				}
-				if(mosq->in_packet.remaining_count == 0){
+				if(mosq->in_packet.remaining_count <= 0){
 					do{
 						if(pos == len){
 							return 0;
@@ -278,17 +278,18 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						byte = buf[pos];
 						pos++;
 
-						mosq->in_packet.remaining_count++;
+						mosq->in_packet.remaining_count--;
 						/* Max 4 bytes length for remaining length as defined by protocol.
 						* Anything more likely means a broken/malicious client.
 						*/
-						if(mosq->in_packet.remaining_count > 4){
+						if(mosq->in_packet.remaining_count < -4){
 							return -1;
 						}
 
 						mosq->in_packet.remaining_length += (byte & 127) * mosq->in_packet.remaining_mult;
 						mosq->in_packet.remaining_mult *= 128;
 					}while((byte & 128) != 0);
+					mosq->in_packet.remaining_count *= -1;
 
 					if(mosq->in_packet.remaining_length > 0){
 						mosq->in_packet.payload = _mosquitto_malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));

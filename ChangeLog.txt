@@ -1,4 +1,5 @@
 Broker:
+- Fix possible crash under heavy network load. Closes #463241.
 - Fix possible crash when using pattern ACLs.
 - Fix problems parsing config strings with multiple leading spaces. Closes
   #462154.

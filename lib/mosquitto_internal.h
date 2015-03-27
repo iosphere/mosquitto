@@ -123,7 +123,7 @@ struct _mosquitto_packet{
 	uint32_t pos;
 	uint16_t mid;
 	uint8_t command;
-	uint8_t remaining_count;
+	int8_t remaining_count;
 };
 
 struct mosquitto_message_all{

@@ -935,15 +935,24 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 			}
 		}
 	}
-	if(mosq->in_packet.remaining_count == 0){
+	/* remaining_count is the number of bytes that the remaining_length
+	 * parameter occupied in this incoming packet. We don't use it here as such
+	 * (it is used when allocating an outgoing packet), but we must be able to
+	 * determine whether all of the remaining_length parameter has been read.
+	 * remaining_count has three states here:
+	 *   0 means that we haven't read any remaining_length bytes
+	 *   <0 means we have read some remaining_length bytes but haven't finished
+	 *   >0 means we have finished reading the remaining_length bytes.
+	 */
+	if(mosq->in_packet.remaining_count <= 0){
 		do{
 			read_length = _mosquitto_net_read(mosq, &byte, 1);
 			if(read_length == 1){
-				mosq->in_packet.remaining_count++;
+				mosq->in_packet.remaining_count--;
 				/* Max 4 bytes length for remaining length as defined by protocol.
 				 * Anything more likely means a broken/malicious client.
 				 */
-				if(mosq->in_packet.remaining_count > 4) return MOSQ_ERR_PROTOCOL;
+				if(mosq->in_packet.remaining_count < -4) return MOSQ_ERR_PROTOCOL;
 
 #if defined(WITH_BROKER) && defined(WITH_SYS_TREE)
 				g_bytes_received++;
@@ -967,6 +976,9 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 				}
 			}
 		}while((byte & 128) != 0);
+		/* We have finished reading remaining_length, so make remaining_count
+		 * positive. */
+		mosq->in_packet.remaining_count *= -1;
 
 		if(mosq->in_packet.remaining_length > 0){
 			mosq->in_packet.payload = _mosquitto_malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
