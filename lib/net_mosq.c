@@ -266,7 +266,7 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 }
 #endif
 
-int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking)
+int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking)
 {
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
@@ -402,7 +402,7 @@ int mosquitto__socket_connect_tls(struct mosquitto *mosq)
  */
 int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking)
 {
-	int sock = INVALID_SOCKET;
+	mosq_sock_t sock = INVALID_SOCKET;
 	int rc;
 #ifdef WITH_TLS
 	int ret;
@@ -1043,7 +1043,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	return rc;
 }
 
-int _mosquitto_socket_nonblock(int sock)
+int _mosquitto_socket_nonblock(mosq_sock_t sock)
 {
 #ifndef WIN32
 	int opt;
@@ -1070,7 +1070,7 @@ int _mosquitto_socket_nonblock(int sock)
 
 
 #ifndef WITH_BROKER
-int _mosquitto_socketpair(int *pairR, int *pairW)
+int _mosquitto_socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 {
 #ifdef WIN32
 	int family[2] = {AF_INET, AF_INET6};
@@ -1079,12 +1079,12 @@ int _mosquitto_socketpair(int *pairR, int *pairW)
 	struct sockaddr_in *sa = (struct sockaddr_in *)&ss;
 	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)&ss;
 	socklen_t ss_len;
-	int spR, spW;
+	mosq_sock_t spR, spW;
 
-	int listensock;
+	mosq_sock_t listensock;
 
-	*pairR = -1;
-	*pairW = -1;
+	*pairR = INVALID_SOCKET;
+	*pairW = INVALID_SOCKET;
 
 	for(i=0; i<2; i++){
 		memset(&ss, 0, sizeof(ss));

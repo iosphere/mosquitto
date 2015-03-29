@@ -55,7 +55,7 @@ struct _mqtt3_listener {
 	uint16_t port;
 	int max_connections;
 	char *mount_point;
-	int *socks;
+	mosq_sock_t *socks;
 	int sock_count;
 	int client_count;
 	enum mosquitto_protocol protocol;
@@ -335,7 +335,7 @@ struct libws_mqtt_data {
 /* ============================================================
  * Main functions
  * ============================================================ */
-int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock_count, int listener_max);
+int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count, int listener_max);
 struct mosquitto_db *_mosquitto_get_db(void);
 
 /* ============================================================
@@ -365,9 +365,9 @@ int _mosquitto_send_suback(struct mosquitto *context, uint16_t mid, uint32_t pay
 /* ============================================================
  * Network functions
  * ============================================================ */
-int mqtt3_socket_accept(struct mosquitto_db *db, int listensock);
+int mqtt3_socket_accept(struct mosquitto_db *db, mosq_sock_t listensock);
 int mqtt3_socket_listen(struct _mqtt3_listener *listener);
-int _mosquitto_socket_get_address(int sock, char *buf, int len);
+int _mosquitto_socket_get_address(mosq_sock_t sock, char *buf, int len);
 
 /* ============================================================
  * Read handling functions
@@ -425,7 +425,7 @@ int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
 /* ============================================================
  * Context functions
  * ============================================================ */
-struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, int sock);
+struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, mosq_sock_t sock);
 void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, bool do_free);
 void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *context);
 void mosquitto__add_context_to_disused(struct mosquitto_db *db, struct mosquitto *context);

@@ -183,7 +183,7 @@ void handle_sigusr2(int signal)
 
 int main(int argc, char *argv[])
 {
-	int *listensock = NULL;
+	mosq_sock_t *listensock = NULL;
 	int listensock_count = 0;
 	int listensock_index = 0;
 	struct mqtt3_config config;
@@ -306,7 +306,7 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 			listensock_count += config.listeners[i].sock_count;
-			listensock = _mosquitto_realloc(listensock, sizeof(int)*listensock_count);
+			listensock = _mosquitto_realloc(listensock, sizeof(mosq_sock_t)*listensock_count);
 			if(!listensock){
 				mqtt3_db_close(&int_db);
 				if(config.pid_file){

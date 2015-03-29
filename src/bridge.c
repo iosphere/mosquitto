@@ -146,7 +146,7 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
 
 	context->state = mosq_cs_new;
-	context->sock = -1;
+	context->sock = INVALID_SOCKET;
 	context->last_msg_in = mosquitto_time();
 	context->last_msg_out = mosquitto_time();
 	context->keepalive = context->bridge->keepalive;

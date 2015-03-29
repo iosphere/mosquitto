@@ -60,6 +60,12 @@ Contributors:
 struct mosquitto_client_msg;
 #endif
 
+#ifdef WIN32
+typedef SOCKET mosq_sock_t;
+#else
+typedef int mosq_sock_t;
+#endif
+
 enum mosquitto_msg_direction {
 	mosq_md_in = 0,
 	mosq_md_out = 1
@@ -136,16 +142,9 @@ struct mosquitto_message_all{
 };
 
 struct mosquitto {
-#ifndef WIN32
-	int sock;
-#  ifndef WITH_BROKER
-	int sockpairR, sockpairW;
-#  endif
-#else
-	SOCKET sock;
-#  ifndef WITH_BROKER
-	SOCKET sockpairR, sockpairW;
-#  endif
+	mosq_sock_t sock;
+#ifndef WITH_BROKER
+	mosq_sock_t sockpairR, sockpairW;
 #endif
 	enum _mosquitto_protocol protocol;
 	char *address;

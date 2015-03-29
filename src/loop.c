@@ -89,7 +89,7 @@ static void temp__expire_websockets_clients(struct mosquitto_db *db)
 }
 #endif
 
-int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock_count, int listener_max)
+int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count, int listener_max)
 {
 #ifdef WITH_SYS_TREE
 	time_t start_time = mosquitto_time();
@@ -110,7 +110,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	int pollfd_count = 0;
 	int pollfd_index;
 #ifdef WITH_BRIDGE
-	int bridge_sock;
+	mosq_sock_t bridge_sock;
 	int rc;
 #endif
 	int context_count;
@@ -282,7 +282,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 		now_time = time(NULL);
 		if(db->config->persistent_client_expiration > 0 && now_time > expiration_check_time){
 			HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
-				if(context->sock == -1 && context->clean_session == 0){
+				if(context->sock == INVALID_SOCKET && context->clean_session == 0){
 					/* This is a persistent client, check to see if the
 					 * last time it connected was longer than
 					 * persistent_client_expiration seconds ago. If so,

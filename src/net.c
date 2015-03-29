@@ -63,11 +63,11 @@ static int tls_ex_index_listener = -1;
 extern unsigned int g_socket_connections;
 #endif
 
-int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
+int mqtt3_socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 {
 	int i;
 	int j;
-	int new_sock = -1;
+	mosq_sock_t new_sock = INVALID_SOCKET;
 	struct mosquitto *new_context;
 #ifdef WITH_TLS
 	BIO *bio;
@@ -321,7 +321,7 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
  */
 int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 {
-	int sock = -1;
+	mosq_sock_t sock = INVALID_SOCKET;
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
 	char service[10];
@@ -360,13 +360,13 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		}
 
 		sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-		if(sock == -1){
+		if(sock == INVALID_SOCKET){
 			strerror_r(errno, buf, 256);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: %s", buf);
 			continue;
 		}
 		listener->sock_count++;
-		listener->socks = _mosquitto_realloc(listener->socks, sizeof(int)*listener->sock_count);
+		listener->socks = _mosquitto_realloc(listener->socks, sizeof(mosq_sock_t)*listener->sock_count);
 		if(!listener->socks){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
@@ -500,7 +500,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	}
 }
 
-int _mosquitto_socket_get_address(int sock, char *buf, int len)
+int _mosquitto_socket_get_address(mosq_sock_t sock, char *buf, int len)
 {
 	struct sockaddr_storage addr;
 	socklen_t addrlen;
