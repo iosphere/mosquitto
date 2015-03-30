@@ -8,6 +8,7 @@ Broker:
   #462154.
 - Websockets clients are now periodically disconnected if they have not
   maintained their keepalive timer. Closes #461619.
+- Fix possible minor memory leak on acl parsing.
 
 Client library:
 - Inflight limits should only apply to outgoing messages. Closes #461620.
