@@ -187,6 +187,7 @@ struct mosquitto {
 	pthread_mutex_t state_mutex;
 	pthread_mutex_t in_message_mutex;
 	pthread_mutex_t out_message_mutex;
+	pthread_mutex_t mid_mutex;
 	pthread_t thread_id;
 #endif
 	bool clean_session;

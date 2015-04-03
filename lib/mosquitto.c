@@ -211,6 +211,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	pthread_mutex_init(&mosq->msgtime_mutex, NULL);
 	pthread_mutex_init(&mosq->in_message_mutex, NULL);
 	pthread_mutex_init(&mosq->out_message_mutex, NULL);
+	pthread_mutex_init(&mosq->mid_mutex, NULL);
 	mosq->thread_id = pthread_self();
 #endif
 
@@ -293,6 +294,7 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 		pthread_mutex_destroy(&mosq->msgtime_mutex);
 		pthread_mutex_destroy(&mosq->in_message_mutex);
 		pthread_mutex_destroy(&mosq->out_message_mutex);
+		pthread_mutex_destroy(&mosq->mid_mutex);
 	}
 #endif
 	if(mosq->sock != INVALID_SOCKET){

@@ -17,6 +17,7 @@ Client library:
 - Fix crash on multiple calls to mosquitto_lib_init/mosquitto_lib_cleanup.
   Closes #462780.
 - Allow longer paths on Windows. Closes #462781.
+- Make _mosquitto_mid_generate() thread safe. Closes #463479.
 
 
 1.4 - 20150218
