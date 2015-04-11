@@ -5,7 +5,7 @@ link_directories(${mosquitto_BINARY_DIR}/lib)
 add_library(mosquittopp SHARED
 	mosquittopp.cpp mosquittopp.h)
 
-target_link_libraries(mosquittopp mosquitto)
+target_link_libraries(mosquittopp libmosquitto)
 set_target_properties(mosquittopp PROPERTIES
 	VERSION ${VERSION}
 	SOVERSION 1

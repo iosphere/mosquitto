@@ -9,6 +9,7 @@ Client library:
 - Inflight message count wasn't being decreased for outgoing messages using
   QoS 2, meaning that only up to 20 QoS 2 messages could be sent. This has
   been fixed. Closes #464436.
+- Fix CMake dependencies for C++ wrapper building. Closes #463884.
 
 
 1.4.1 - 20150403
