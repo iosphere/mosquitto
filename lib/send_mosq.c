@@ -149,7 +149,7 @@ int _mosquitto_send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 							return MOSQ_ERR_NOMEM;
 						}
 						snprintf(topic_temp, len, "%s%s", cur_topic->remote_prefix, mapped_topic);
-						cur_topic->remote_prefix[len] = '\0';
+						topic_temp[len] = '\0';
 						_mosquitto_free(mapped_topic);
 						mapped_topic = topic_temp;
 					}

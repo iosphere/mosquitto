@@ -1,10 +1,15 @@
 1.4.2 - 201504xx
 ================
 
+Broker:
+- Fix bridge prefixes only working for the first outgoing message. Closes
+  #464437.
+
 Client library:
 - Inflight message count wasn't being decreased for outgoing messages using
   QoS 2, meaning that only up to 20 QoS 2 messages could be sent. This has
   been fixed. Closes #464436.
+
 
 1.4.1 - 20150403
 ================
