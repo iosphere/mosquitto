@@ -7,7 +7,7 @@
 !define env_hklm 'HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
 
 Name "mosquitto"
-!define VERSION 1.4.1
+!define VERSION 1.4.2
 OutFile "mosquitto-${VERSION}-install-win32.exe"
 
 InstallDir "$PROGRAMFILES\mosquitto"
