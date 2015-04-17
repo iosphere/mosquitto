@@ -4,6 +4,7 @@
 Broker:
 - Fix bridge prefixes only working for the first outgoing message. Closes
   #464437.
+- Fix incorrect bridge connection notifications on local broker.
 
 Client library:
 - Inflight message count wasn't being decreased for outgoing messages using
