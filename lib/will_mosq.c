@@ -14,28 +14,12 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#include <assert.h>
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef WIN32
-#include <sys/select.h>
-#include <unistd.h>
-#else
-#include <winsock2.h>
-typedef int ssize_t;
-#endif
 
-#include <mosquitto.h>
 #include <mosquitto_internal.h>
-#include <logging_mosq.h>
-#include <messages_mosq.h>
 #include <memory_mosq.h>
 #include <mqtt3_protocol.h>
-#include <net_mosq.h>
-#include <read_handle.h>
-#include <send_mosq.h>
-#include <util_mosq.h>
 
 int _mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
