@@ -13,6 +13,9 @@ Client library:
   QoS 2, meaning that only up to 20 QoS 2 messages could be sent. This has
   been fixed. Closes #464436.
 - Fix CMake dependencies for C++ wrapper building. Closes #463884.
+- Fix possibility of select() being called with a socket that is >FD_SETSIZE.
+  This is a fix for #464632 that will be followed up by removing the select()
+  call in a future version.
 
 
 1.4.1 - 20150403

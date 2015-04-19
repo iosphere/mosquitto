@@ -831,6 +831,9 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	int maxfd = 0;
 
 	if(!mosq || max_packets < 1) return MOSQ_ERR_INVAL;
+	if(mosq->sock >= FD_SETSIZE || mosq->sockpairR >= FD_SETSIZE){
+		return MOSQ_ERR_INVAL;
+	}
 
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
