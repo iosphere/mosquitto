@@ -7,6 +7,7 @@ Broker:
 - Fix incorrect bridge connection notifications on local broker.
 - Fix persistent db writing on Windows. Closes #464779.
 - ACLs are now checked before sending a will message.
+- Fix possible crash when using bridges on Windows. Closes #465384.
 
 Client library:
 - Inflight message count wasn't being decreased for outgoing messages using

@@ -453,11 +453,7 @@ static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
 static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds)
 {
 	struct mosquitto *context, *ctxt_tmp;
-#ifdef WIN32
-	char err;
-#else
 	int err;
-#endif
 	socklen_t len;
 
 	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
@@ -475,7 +471,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #endif
 			if(context->state == mosq_cs_connect_pending){
 				len = sizeof(int);
-				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, &err, &len)){
+				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
 					if(err == 0){
 						context->state = mosq_cs_new;
 					}
