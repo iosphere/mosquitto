@@ -643,6 +643,9 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						return MOSQ_ERR_INVAL;
 					}
 					token += 9+strlen(key)+1;
+					while(token[0] == ' ' || token[0] == '\t'){
+						token++;
+					}
 					if(token[0]){
 						config->auth_option_count++;
 						config->auth_options = _mosquitto_realloc(config->auth_options, config->auth_option_count*sizeof(struct mosquitto_auth_opt));
@@ -1295,7 +1298,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							}
 							/* Get remaining string. */
 							token = &token[strlen(token)+1];
-							while(token[0] == ' '){
+							while(token[0] == ' ' || token[0] == '\t'){
 								token++;
 							}
 							if(token[0]){
@@ -1969,7 +1972,7 @@ static int _conf_parse_string(char **token, const char *name, char **value, char
 			return MOSQ_ERR_INVAL;
 		}
 		/* Deal with multiple spaces at the beginning of the string. */
-		while((*token)[0] == ' '){
+		while((*token)[0] == ' ' || (*token)[0] == '\t'){
 			(*token)++;
 		}
 		*value = _mosquitto_strdup(*token);
