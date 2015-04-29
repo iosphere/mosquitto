@@ -429,7 +429,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 #endif
 
 #ifdef WITH_WEBSOCKETS
-	if(context->wsi){
+	if(context->wsi && rc == 0){
 		return mqtt3_db_message_write(db, context);
 	}else{
 		return rc;
