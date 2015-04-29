@@ -18,6 +18,7 @@ Client library:
 - Fix possibility of select() being called with a socket that is >FD_SETSIZE.
   This is a fix for #464632 that will be followed up by removing the select()
   call in a future version.
+- Fix calls to mosquitto_connect*_async() not completing.
 
 
 1.4.1 - 20150403

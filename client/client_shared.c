@@ -745,7 +745,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 #else
 	rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
 #endif
-	if(rc){
+	if(rc>0){
 		if(!cfg->quiet){
 			if(rc == MOSQ_ERR_ERRNO){
 #ifndef WIN32

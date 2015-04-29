@@ -517,7 +517,7 @@ static int _mosquitto_reconnect(struct mosquitto *mosq, bool blocking)
 	{
 		rc = _mosquitto_socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
 	}
-	if(rc){
+	if(rc>0){
 		return rc;
 	}
 
