@@ -9,6 +9,8 @@ Broker:
 - ACLs are now checked before sending a will message.
 - Fix possible crash when using bridges on Windows. Closes #465384.
 - Fix parsing of auth_opt_ arguments with extra spaces/tabs.
+- Broker will return CONNACK rc=5 when a username/password is not authorised.
+  This was being incorrectly set as rc=4.
 
 Client library:
 - Inflight message count wasn't being decreased for outgoing messages using
