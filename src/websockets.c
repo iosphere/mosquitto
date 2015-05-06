@@ -299,7 +299,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						mosq->in_packet.to_process = mosq->in_packet.remaining_length;
 					}
 				}
-				while(mosq->in_packet.to_process>0){
+				if(mosq->in_packet.to_process>0){
 					if(len - pos >= mosq->in_packet.to_process){
 						memcpy(&mosq->in_packet.payload[mosq->in_packet.pos], &buf[pos], mosq->in_packet.to_process);
 						mosq->in_packet.pos += mosq->in_packet.to_process;
@@ -309,10 +309,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						memcpy(&mosq->in_packet.payload[mosq->in_packet.pos], &buf[pos], len-pos);
 						mosq->in_packet.pos += len-pos;
 						mosq->in_packet.to_process -= len-pos;
-						break;
+						return 0;
 					}
 				}
-
 				/* All data for this packet is read. */
 				mosq->in_packet.pos = 0;
 #ifdef WITH_SYS_TREE

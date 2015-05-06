@@ -11,6 +11,7 @@ Broker:
 - Fix parsing of auth_opt_ arguments with extra spaces/tabs.
 - Broker will return CONNACK rc=5 when a username/password is not authorised.
   This was being incorrectly set as rc=4.
+- Fix handling of payload lengths>4096 with websockets.
 
 Client library:
 - Inflight message count wasn't being decreased for outgoing messages using
