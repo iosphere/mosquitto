@@ -1,6 +1,8 @@
 ; NSIS installer script for mosquitto
 
-!include "MUI.nsh"
+!include "MUI2.nsh"
+!include "nsDialogs.nsh"
+!include "LogicLib.nsh"
 
 ; For environment variable code
 !include "WinMessages.nsh"
@@ -15,13 +17,11 @@ InstallDir "$PROGRAMFILES\mosquitto"
 ;--------------------------------
 ; Installer pages
 !insertmacro MUI_PAGE_WELCOME
+
+Page custom DependencyPage
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
-
-!define MUI_FINISHPAGE_TEXT "mosquitto has been installed on your computer.\n\nTo complete the installation you must install the dependencies described in the following readme.\n\nClick Finish to close this wizard."
-!define MUI_FINISHPAGE_SHOWREADME $INSTDIR\readme-windows.txt
-!define MUI_FINISHPAGE_SHOWREADME_TEXT "Show dependencies readme"
 !insertmacro MUI_PAGE_FINISH
 
 
@@ -126,3 +126,38 @@ LangString DESC_SecService ${LANG_ENGLISH} "Install mosquitto as a Windows servi
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecService} $(DESC_SecService)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
+Var Dialog
+Var OSSLLink
+Var PTHLink
+
+Function DependencyPage
+	nsDialogs::Create 1018
+	Pop $Dialog
+
+	${If} $Dialog == error
+		Abort
+	${EndIf}
+
+	${NSD_CreateLabel} 0 0 100% 12u "OpenSSL - install 'Win32 OpenSSL vXXXXX Light' then copy dlls to the mosquitto directory"
+	${NSD_CreateLink} 13u 13u 100% 12u "http://slproweb.com/products/Win32OpenSSL.html"
+	Pop $OSSLLink
+	${NSD_OnClick} $OSSLLink OnClick_OSSL
+
+	${NSD_CreateLabel} 0 26u 100% 12u "pthreads - copy 'pthreadVC2.dll' to the mosquitto directory"
+	${NSD_CreateLink} 13u 39u 100% 12u "ftp://sources.redhat.com/pub/pthreads-win32/dll-latest/dll/x86/"
+	Pop $PTHLink
+	${NSD_OnClick} $PTHLink OnClick_PTH
+
+	!insertmacro MUI_HEADER_TEXT_PAGE "Dependencies" "This page lists packages that must be installed if not already present"
+	nsDialogs::Show
+FunctionEnd
+
+Function OnClick_OSSL
+	Pop $0
+	ExecShell "open" "http://slproweb.com/products/Win32OpenSSL.html"
+FunctionEnd
+
+Function OnClick_PTH
+	Pop $0
+	ExecShell "open" "ftp://sources.redhat.com/pub/pthreads-win32/dll-latest/dll/x86/"
+FunctionEnd
