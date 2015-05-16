@@ -306,6 +306,7 @@ struct _mqtt3_bridge{
 	int threshold;
 	bool lazy_reconnect;
 	bool attempt_unsubscribe;
+	bool initial_notification_done;
 #ifdef WITH_TLS
 	char *tls_cafile;
 	char *tls_capath;
