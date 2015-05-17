@@ -1425,8 +1425,6 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 				}else if(!strcmp(token, "message_size_limit")){
 					if(_conf_parse_int(&token, "message_size_limit", (int *)&config->message_size_limit, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->message_size_limit > MQTT_MAX_PAYLOAD){
-						y
-						l
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid message_size_limit value (%d).", config->message_size_limit);
 						return MOSQ_ERR_INVAL;
 					}
