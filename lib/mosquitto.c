@@ -44,6 +44,8 @@ typedef int ssize_t;
 #include <util_mosq.h>
 #include <will_mosq.h>
 
+#include "config.h"
+
 #if !defined(WIN32) && !defined(__SYMBIAN32__)
 #define HAVE_PSELECT
 #endif

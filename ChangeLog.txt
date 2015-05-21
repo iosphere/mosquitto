@@ -1,4 +1,5 @@
 - Fix incorrect bridge notification on initial connection. Closes #467096.
+- Build fixes for OpenBSD.
 
 1.4.2 - 20150507
 ================
