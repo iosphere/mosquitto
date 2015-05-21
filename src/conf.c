@@ -452,6 +452,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 	int rc = MOSQ_ERR_SUCCESS;
 	struct config_recurse cr;
 	int lineno;
+	int len;
 #ifdef WITH_BRIDGE
 	int i;
 #endif
@@ -485,9 +486,10 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 			_mosquitto_free(config->persistence_filepath);
 		}
 		if(config->persistence_location && strlen(config->persistence_location)){
-			config->persistence_filepath = _mosquitto_malloc(strlen(config->persistence_location) + strlen(config->persistence_file) + 1);
+			len = strlen(config->persistence_location) + strlen(config->persistence_file) + 1;
+			config->persistence_filepath = _mosquitto_malloc(len);
 			if(!config->persistence_filepath) return MOSQ_ERR_NOMEM;
-			sprintf(config->persistence_filepath, "%s%s", config->persistence_location, config->persistence_file);
+			snprintf(config->persistence_filepath, len, "%s%s", config->persistence_location, config->persistence_file);
 		}else{
 			config->persistence_filepath = _mosquitto_strdup(config->persistence_file);
 			if(!config->persistence_filepath) return MOSQ_ERR_NOMEM;
