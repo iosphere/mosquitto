@@ -128,15 +128,20 @@ int load_stdin(void)
 {
 	long pos = 0, rlen;
 	char buf[1024];
+	char *aux_message = NULL;
 
 	mode = MSGMODE_STDIN_FILE;
 
 	while(!feof(stdin)){
 		rlen = fread(buf, 1, 1024, stdin);
-		message = realloc(message, pos+rlen);
-		if(!message){
+		aux_message = realloc(message, pos+rlen);
+		if(!aux_message){
 			if(!quiet) fprintf(stderr, "Error: Out of memory.\n");
+			free(message);
 			return 1;
+		} else
+		{
+			message = aux_message;
 		}
 		memcpy(&(message[pos]), buf, rlen);
 		pos += rlen;
