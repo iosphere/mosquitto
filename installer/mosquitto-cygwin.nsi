@@ -57,7 +57,7 @@ Section "Files" SecInstall
 	File "..\ChangeLog.txt"
 	File "..\mosquitto.conf"
 	File "..\pwfile.example"
-	File "..\readme.txt"
+	File "..\readme.md"
 	File "..\readme-windows.txt"
 	;File "C:\pthreads\Pre-built.2\dll\x86\pthreadVC2.dll"
 	;File "C:\OpenSSL-Win32\libeay32.dll"
