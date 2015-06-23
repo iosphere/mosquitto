@@ -1,5 +1,12 @@
+Broker:
 - Fix incorrect bridge notification on initial connection. Closes #467096.
 - Build fixes for OpenBSD.
+
+Client library:
+- Add missing error strings to mosquitto_strerror.
+
+Clients:
+- Report error string on connection failure rather than error code.
 
 1.4.2 - 20150507
 ================

@@ -1273,6 +1273,8 @@ void mosquitto_user_data_set(struct mosquitto *mosq, void *userdata)
 const char *mosquitto_strerror(int mosq_errno)
 {
 	switch(mosq_errno){
+		case MOSQ_ERR_CONN_PENDING:
+			return "Connection pending.";
 		case MOSQ_ERR_SUCCESS:
 			return "No error.";
 		case MOSQ_ERR_NOMEM:
@@ -1303,6 +1305,8 @@ const char *mosquitto_strerror(int mosq_errno)
 			return "Unknown error.";
 		case MOSQ_ERR_ERRNO:
 			return strerror(errno);
+		case MOSQ_ERR_EAI:
+			return "Lookup error.";
 		case MOSQ_ERR_PROXY:
 			return "Proxy error.";
 		default:

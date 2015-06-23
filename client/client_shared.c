@@ -755,7 +755,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 #endif
 				fprintf(stderr, "Error: %s\n", err);
 			}else{
-				fprintf(stderr, "Unable to connect (%d).\n", rc);
+				fprintf(stderr, "Unable to connect (%s).\n", mosquitto_strerror(rc));
 			}
 		}
 		mosquitto_lib_cleanup();
