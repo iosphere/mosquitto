@@ -18,6 +18,7 @@ Bob Blackrock
 Brad Stancel
 Brett Francis
 Chris Willing
+Christian Sampaio
 Christoph Krey
 Craig Hollabaugh
 Cristian Manuel Vertiz Fernandez
@@ -78,6 +79,7 @@ Tammo Besemann
 Thomas Hilbig
 Tobias Assarsson
 Toby Jaffey
+Tomas Novotny
 Vicente Ruiz
 Wayne Ingram
 Yuvraaj Kelkar
