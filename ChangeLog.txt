@@ -4,6 +4,7 @@ Broker:
 
 Client library:
 - Add missing error strings to mosquitto_strerror.
+- Handle fragmented TLS packets without a delay. Closes #470660.
 
 Clients:
 - Report error string on connection failure rather than error code.

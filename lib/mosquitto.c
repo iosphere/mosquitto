@@ -933,10 +933,12 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 				}else
 #endif
 				{
-					rc = mosquitto_loop_read(mosq, max_packets);
-					if(rc || mosq->sock == INVALID_SOCKET){
-						return rc;
-					}
+					do{
+						rc = mosquitto_loop_read(mosq, max_packets);
+						if(rc || mosq->sock == INVALID_SOCKET){
+							return rc;
+						}
+					}while(SSL_DATA_PENDING(mosq));
 				}
 			}
 			if(mosq->sockpairR != INVALID_SOCKET && FD_ISSET(mosq->sockpairR, &readfds)){

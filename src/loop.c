@@ -498,10 +498,12 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #else
 		if(pollfds[context->pollfd_index].revents & POLLIN){
 #endif
-			if(_mosquitto_packet_read(db, context)){
-				do_disconnect(db, context);
-				continue;
-			}
+			do{
+				if(_mosquitto_packet_read(db, context)){
+					do_disconnect(db, context);
+					continue;
+				}
+			}while(SSL_DATA_PENDING(context));
 		}
 	}
 }
