@@ -5,6 +5,8 @@ Broker:
 Client library:
 - Add missing error strings to mosquitto_strerror.
 - Handle fragmented TLS packets without a delay. Closes #470660.
+- Fix incorrect loop timeout being chosen when using threaded interface and
+  keepalive = 0. Closes #471334.
 
 Clients:
 - Report error string on connection failure rather than error code.
