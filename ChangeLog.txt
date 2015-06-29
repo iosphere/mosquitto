@@ -1,6 +1,8 @@
 Broker:
 - Fix incorrect bridge notification on initial connection. Closes #467096.
 - Build fixes for OpenBSD.
+- Fix incorrect behaviour for autosave_interval, most noticable for
+  autosave_interval=1. Closes #465438.
 
 Client library:
 - Add missing error strings to mosquitto_strerror.

@@ -331,7 +331,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #ifdef WITH_PERSISTENCE
 		if(db->config->persistence && db->config->autosave_interval){
 			if(db->config->autosave_on_changes){
-				if(db->persistence_changes > db->config->autosave_interval){
+				if(db->persistence_changes >= db->config->autosave_interval){
 					mqtt3_db_backup(db, false);
 					db->persistence_changes = 0;
 				}
