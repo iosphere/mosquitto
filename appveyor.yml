@@ -24,7 +24,7 @@ build_script:
 
 after_build:
   - cd installer
-  - '%PROGRAMFILES(x86)%\makensis mosquitto.nsi'
+  - '"%PROGRAMFILES(x86)%\NSIS\makensis" mosquitto.nsi'
 
 artifacts:
   - name: Installer
