@@ -1,7 +1,7 @@
 environment:
   CMAKE_ARGS: -DCMAKE_BUILD_TYPE=Release
   NSIS_ROOT: C:\nsis
-  SSL_VER: 1_0_2a
+  SSL_VER: 1_0_2c
 
 configuration:
   - Release
@@ -11,8 +11,7 @@ install:
   - Win32OpenSSL-%SSL_VER%.exe /silent /verysilent /sp- /suppressmsgboxes
   - appveyor DownloadFile ftp://sourceware.org/pub/pthreads-win32/pthreads-w32-2-9-1-release.zip
   - 7z -y x pthreads-w32-2-9-1-release.zip -oC:\pthreads\
-  - appveyor DownloadFile "http://sunet.dl.sourceforge.net/project/nsis/NSIS 2/2.46/nsis-2.46-setup.exe" -FileName nsissetup.exe
-  - nsissetup /S /D=%NSIS_ROOT%
+  - cinst -y nsis
 
 build:
 
@@ -25,7 +24,7 @@ build_script:
 
 after_build:
   - cd installer
-  - '%NSIS_ROOT%\makensis mosquitto.nsi'
+  - '%PROGRAMFILES(x86)%\makensis mosquitto.nsi'
 
 artifacts:
   - name: Installer
