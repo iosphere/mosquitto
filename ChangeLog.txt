@@ -3,6 +3,8 @@ Broker:
 - Build fixes for OpenBSD.
 - Fix incorrect behaviour for autosave_interval, most noticable for
   autosave_interval=1. Closes #465438.
+- Fix handling of outgoing QoS>0 messages for bridges that could not be sent
+  because the bridge connection was down.
 
 Client library:
 - Add missing error strings to mosquitto_strerror.
