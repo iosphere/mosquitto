@@ -244,6 +244,7 @@ static void _sub_topic_tokens_free(struct _sub_token *tokens)
 }
 
 static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
+	/* FIXME - this function has the potential to leak subhier, audit calling functions. */
 {
 	struct _mosquitto_subhier *branch, *last = NULL;
 	struct _mosquitto_subleaf *leaf, *last_leaf;
@@ -276,31 +277,21 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 			leaf->next = NULL;
 			leaf->context = context;
 			leaf->qos = qos;
-			if(context->subs){
-				for(i=0; i<context->sub_count; i++){
-					if(!context->subs[i]){
-						context->subs[i] = subhier;
-						break;
-					}
+			for(i=0; i<context->sub_count; i++){
+				if(!context->subs[i]){
+					context->subs[i] = subhier;
+					break;
 				}
-				if(i == context->sub_count){
-					context->sub_count++;
-					subs = _mosquitto_realloc(context->subs, sizeof(struct _mosquitto_subhier *)*context->sub_count);
-					if(!subs){
-						_mosquitto_free(leaf);
-						return MOSQ_ERR_NOMEM;
-					}
-					context->subs = subs;
-					context->subs[context->sub_count-1] = subhier;
-				}
-			}else{
-				context->sub_count = 1;
-				context->subs = _mosquitto_malloc(sizeof(struct _mosquitto_subhier *)*context->sub_count);
-				if(!context->subs){
+			}
+			if(i == context->sub_count){
+				subs = _mosquitto_realloc(context->subs, sizeof(struct _mosquitto_subhier *)*(context->sub_count + 1));
+				if(!subs){
 					_mosquitto_free(leaf);
 					return MOSQ_ERR_NOMEM;
 				}
-				context->subs[0] = subhier;
+				context->subs = subs;
+				context->sub_count++;
+				context->subs[context->sub_count-1] = subhier;
 			}
 			if(last_leaf){
 				last_leaf->next = leaf;
@@ -464,6 +455,7 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 		child->topic = _mosquitto_strdup(tokens->topic);
 		if(!child->topic){
 			_sub_topic_tokens_free(tokens);
+			_mosquitto_free(child);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
