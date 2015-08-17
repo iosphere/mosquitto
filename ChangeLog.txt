@@ -11,6 +11,7 @@ Client library:
 - Handle fragmented TLS packets without a delay. Closes #470660.
 - Fix incorrect loop timeout being chosen when using threaded interface and
   keepalive = 0. Closes #471334.
+- Increment inflight messages count correctly. Closes #474935.
 
 Clients:
 - Report error string on connection failure rather than error code.

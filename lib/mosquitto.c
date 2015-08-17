@@ -549,6 +549,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 {
 	struct mosquitto_message_all *message;
 	uint16_t local_mid;
+	int queue_status;
 
 	if(!mosq || !topic || qos<0 || qos>2) return MOSQ_ERR_INVAL;
 	if(strlen(topic) == 0) return MOSQ_ERR_INVAL;
@@ -594,8 +595,8 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		message->dup = false;
 
 		pthread_mutex_lock(&mosq->out_message_mutex);
-		_mosquitto_message_queue(mosq, message, mosq_md_out);
-		if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
+		queue_status = _mosquitto_message_queue(mosq, message, mosq_md_out);
+		if(queue_status == 0){
 			if(qos == 1){
 				message->state = mosq_ms_wait_for_puback;
 			}else if(qos == 2){
