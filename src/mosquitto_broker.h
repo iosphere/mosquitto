@@ -138,6 +138,7 @@ struct _mosquitto_subleaf {
 };
 
 struct _mosquitto_subhier {
+	struct _mosquitto_subhier *parent;
 	struct _mosquitto_subhier *children;
 	struct _mosquitto_subhier *next;
 	struct _mosquitto_subleaf *subs;

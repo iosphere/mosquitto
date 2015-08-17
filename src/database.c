@@ -59,6 +59,7 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
+	child->parent = NULL;
 	child->next = NULL;
 	child->topic = _mosquitto_strdup("");
 	if(!child->topic){
@@ -75,6 +76,7 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
+	child->parent = NULL;
 	child->next = NULL;
 	child->topic = _mosquitto_strdup("$SYS");
 	if(!child->topic){

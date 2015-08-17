@@ -327,6 +327,7 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 	/* Not found */
 	branch = _mosquitto_calloc(1, sizeof(struct _mosquitto_subhier));
 	if(!branch) return MOSQ_ERR_NOMEM;
+	branch->parent = subhier;
 	branch->topic = _mosquitto_strdup(tokens->topic);
 	if(!branch->topic){
 		_mosquitto_free(branch);
@@ -459,6 +460,7 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
+		child->parent = root;
 		child->topic = _mosquitto_strdup(tokens->topic);
 		if(!child->topic){
 			_sub_topic_tokens_free(tokens);
@@ -548,12 +550,56 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 	return rc;
 }
 
+
+/* Remove a subhier element, and return its parent if that needs freeing as well. */
+static struct _mosquitto_subhier *tmp_remove_subs(struct _mosquitto_subhier *sub)
+{
+	struct _mosquitto_subhier *parent;
+	struct _mosquitto_subhier *hier;
+	struct _mosquitto_subhier *last = NULL;
+
+	if(!sub || !sub->parent){
+		return NULL;
+	}
+	if(sub->children || sub->subs || sub->next){
+		return NULL;
+	}
+
+	parent = sub->parent;
+	hier = sub->parent->children;
+	while(hier){
+		if(hier == sub){
+			if(last){
+				last->next = sub->next;
+			}else{
+				parent->children = NULL;
+			}
+			if(sub->topic) _mosquitto_free(sub->topic);
+			_mosquitto_free(sub);
+			break;
+		}
+		last = hier;
+		hier = hier->next;
+	}
+	if(parent->subs == NULL
+			&& parent->children == NULL
+			&& parent->retained == NULL
+			&& parent->parent){
+
+		return parent;
+	}else{
+		return NULL;
+	}
+}
+
+
 /* Remove all subscriptions for a client.
  */
 int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int i;
 	struct _mosquitto_subleaf *leaf;
+	struct _mosquitto_subhier *hier;
 
 	for(i=0; i<context->sub_count; i++){
 		if(context->subs[i] == NULL){
@@ -577,6 +623,17 @@ int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
 				break;
 			}
 			leaf = leaf->next;
+		}
+		if(context->subs[i]->subs == NULL
+				&& context->subs[i]->children == NULL
+				&& context->subs[i]->retained == NULL
+				&& context->subs[i]->parent){
+
+			hier = context->subs[i];
+			context->subs[i] = NULL;
+			do{
+				hier = tmp_remove_subs(hier);
+			}while(hier);
 		}
 	}
 	_mosquitto_free(context->subs);

@@ -5,6 +5,7 @@ Broker:
   autosave_interval=1. Closes #465438.
 - Fix handling of outgoing QoS>0 messages for bridges that could not be sent
   because the bridge connection was down.
+- Free unused topic tree elements. Closes #468987.
 
 Client library:
 - Add missing error strings to mosquitto_strerror.

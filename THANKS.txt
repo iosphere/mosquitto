@@ -37,6 +37,7 @@ Fang Chong
 Frank Hansen
 Gary Koh
 Gianfranco Costamagna
+Guido Hinderberger
 Hiram van Paassen
 Jan-Piet Mens
 Joan Zapata
@@ -44,11 +45,13 @@ Joe McIlvain
 Karl Palsson
 Larry Lendo
 Martin Assarsson
+Martin Rauscher
 Martin van Wingerden
 Marty Lee
 Matt Daubney
 Michael C
 Michael Frisch
+Michael Hekel
 Michael Laing
 Michael Rushton
 Mike Bush
