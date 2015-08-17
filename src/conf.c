@@ -640,7 +640,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					if(!key){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 						return MOSQ_ERR_NOMEM;
-					}else if(strlen(key) == 0){
+					}else if(STREMPTY(key)){
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid auth_opt_ config option.");
 						return MOSQ_ERR_INVAL;
 					}

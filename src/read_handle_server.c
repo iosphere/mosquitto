@@ -236,7 +236,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = 1;
 			goto handle_connect_error;
 		}
-		if(strlen(will_topic) == 0){
+		if(STREMPTY(will_topic)){
 			rc = 1;
 			goto handle_connect_error;
 		}

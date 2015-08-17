@@ -257,4 +257,6 @@ struct mosquitto {
 #endif
 };
 
+#define STREMPTY(str) (str[0] == '\0')
+
 #endif

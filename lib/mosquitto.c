@@ -150,7 +150,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->last_retry_check = 0;
 	mosq->clean_session = clean_session;
 	if(id){
-		if(strlen(id) == 0){
+		if(STREMPTY(id)){
 			return MOSQ_ERR_INVAL;
 		}
 		mosq->id = _mosquitto_strdup(id);
@@ -552,7 +552,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 	int queue_status;
 
 	if(!mosq || !topic || qos<0 || qos>2) return MOSQ_ERR_INVAL;
-	if(strlen(topic) == 0) return MOSQ_ERR_INVAL;
+	if(STREMPTY(topic)) return MOSQ_ERR_INVAL;
 	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
 
 	if(mosquitto_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){

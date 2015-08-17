@@ -102,7 +102,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	retain = (header & 0x01);
 
 	if(_mosquitto_read_string(&context->in_packet, &topic)) return 1;
-	if(strlen(topic) == 0){
+	if(STREMPTY(topic)){
 		/* Invalid publish topic, disconnect client. */
 		_mosquitto_free(topic);
 		return 1;
