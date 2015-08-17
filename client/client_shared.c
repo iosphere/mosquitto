@@ -48,27 +48,27 @@ void init_config(struct mosq_config *cfg)
 void client_config_cleanup(struct mosq_config *cfg)
 {
 	int i;
-	if(cfg->id) free(cfg->id);
-	if(cfg->id_prefix) free(cfg->id_prefix);
-	if(cfg->host) free(cfg->host);
-	if(cfg->file_input) free(cfg->file_input);
-	if(cfg->message) free(cfg->message);
-	if(cfg->topic) free(cfg->topic);
-	if(cfg->bind_address) free(cfg->bind_address);
-	if(cfg->username) free(cfg->username);
-	if(cfg->password) free(cfg->password);
-	if(cfg->will_topic) free(cfg->will_topic);
-	if(cfg->will_payload) free(cfg->will_payload);
+	free(cfg->id);
+	free(cfg->id_prefix);
+	free(cfg->host);
+	free(cfg->file_input);
+	free(cfg->message);
+	free(cfg->topic);
+	free(cfg->bind_address);
+	free(cfg->username);
+	free(cfg->password);
+	free(cfg->will_topic);
+	free(cfg->will_payload);
 #ifdef WITH_TLS
-	if(cfg->cafile) free(cfg->cafile);
-	if(cfg->capath) free(cfg->capath);
-	if(cfg->certfile) free(cfg->certfile);
-	if(cfg->keyfile) free(cfg->keyfile);
-	if(cfg->ciphers) free(cfg->ciphers);
-	if(cfg->tls_version) free(cfg->tls_version);
+	free(cfg->cafile);
+	free(cfg->capath);
+	free(cfg->certfile);
+	free(cfg->keyfile);
+	free(cfg->ciphers);
+	free(cfg->tls_version);
 #  ifdef WITH_TLS_PSK
-	if(cfg->psk) free(cfg->psk);
-	if(cfg->psk_identity) free(cfg->psk_identity);
+	free(cfg->psk);
+	free(cfg->psk_identity);
 #  endif
 #endif
 	if(cfg->topics){
@@ -84,9 +84,9 @@ void client_config_cleanup(struct mosq_config *cfg)
 		free(cfg->filter_outs);
 	}
 #ifdef WITH_SOCKS
-	if(cfg->socks5_host) free(cfg->socks5_host);
-	if(cfg->socks5_username) free(cfg->socks5_username);
-	if(cfg->socks5_password) free(cfg->socks5_password);
+	free(cfg->socks5_host);
+	free(cfg->socks5_username);
+	free(cfg->socks5_password);
 #endif
 }
 
