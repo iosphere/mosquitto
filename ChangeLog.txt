@@ -1,3 +1,6 @@
+1.4.3 - 20150818
+================
+
 Broker:
 - Fix incorrect bridge notification on initial connection. Closes #467096.
 - Build fixes for OpenBSD.
