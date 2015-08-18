@@ -7,6 +7,7 @@ Broker:
   because the bridge connection was down.
 - Free unused topic tree elements. Closes #468987.
 - Fix some potential memory leaks. Closes #470253.
+- Fix potential crash on libwebsockets error.
 
 Client library:
 - Add missing error strings to mosquitto_strerror.

@@ -364,6 +364,10 @@ static int callback_http(struct libwebsocket_context *context,
 
 	switch (reason) {
 		case LWS_CALLBACK_HTTP:
+			if(!u){
+				return -1;
+			}
+
 			hack = (struct libws_mqtt_hack *)libwebsocket_context_user(context);
 			if(!hack){
 				return -1;
@@ -480,7 +484,7 @@ static int callback_http(struct libwebsocket_context *context,
 
 		case LWS_CALLBACK_HTTP_WRITEABLE:
 			/* Send our data here */
-			if(u->fptr){
+			if(u && u->fptr){
 				do{
 					buflen = fread(buf, 1, sizeof(buf), u->fptr);
 					if(buflen < 1){
