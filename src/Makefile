@@ -90,7 +90,7 @@ util_mosq.o : ../lib/util_mosq.c ../lib/util_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 websockets.o : websockets.c mosquitto_broker.h
-	${CC} $(BROKER_CFLAGS) -c $< -o $@
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 will_mosq.o : ../lib/will_mosq.c ../lib/will_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
