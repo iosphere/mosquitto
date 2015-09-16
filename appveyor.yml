@@ -1,7 +1,7 @@
 environment:
   CMAKE_ARGS: -DCMAKE_BUILD_TYPE=Release
   NSIS_ROOT: C:\nsis
-  SSL_VER: 1_0_2c
+  SSL_VER: 1_0_2d
 
 configuration:
   - Release
