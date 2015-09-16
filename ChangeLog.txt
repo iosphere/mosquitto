@@ -1,3 +1,11 @@
+1.x.x - 2015xxxx
+================
+
+Broker:
+- Don't leak sockets when outgoing bridge with multiple addresses cannot
+  connect. Closes #477571.
+
+
 1.4.3 - 20150818
 ================
 
@@ -21,6 +29,7 @@ Client library:
 
 Clients:
 - Report error string on connection failure rather than error code.
+
 
 1.4.2 - 20150507
 ================
