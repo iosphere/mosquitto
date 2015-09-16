@@ -6,6 +6,7 @@ Broker:
   connect. Closes #477571.
 - Fix cross compiling of websockets. Closes #475807.
 - Fix memory free related crashes on openwrt. Closes #475707.
+- Fix excessive calls to message retry check.
 
 
 1.4.3 - 20150818

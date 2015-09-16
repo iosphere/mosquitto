@@ -115,6 +115,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #endif
 	int context_count;
 	time_t expiration_check_time = 0;
+	time_t last_timeout_check = 0;
 	char *id;
 
 #ifndef WIN32
@@ -307,7 +308,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 			expiration_check_time = time(NULL) + 3600;
 		}
 
-		mqtt3_db_message_timeout_check(db, db->config->retry_interval);
+		if(last_timeout_check < mosquitto_time()){
+			/* Only check at most once per second. */
+			mqtt3_db_message_timeout_check(db, db->config->retry_interval);
+			last_timeout_check = mosquitto_time();
+		}
 
 #ifndef WIN32
 		sigprocmask(SIG_SETMASK, &sigblock, &origsig);
