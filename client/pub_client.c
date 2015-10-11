@@ -290,11 +290,22 @@ void print_usage(void)
 int main(int argc, char *argv[])
 {
 	struct mosq_config cfg;
-	char buf[1024];
 	struct mosquitto *mosq = NULL;
 	int rc;
 	int rc2;
+	char *buf;
+	int buf_len = 1024;
+	int buf_len_actual;
+	int read_len;
+	int pos;
 
+	buf = malloc(buf_len);
+	if(!buf){
+		fprintf(stderr, "Error: Out of memory.\n");
+		return 1;
+	}
+
+	memset(&cfg, 0, sizeof(struct mosq_config));
 	rc = client_config_load(&cfg, CLIENT_PUB, argc, argv);
 	if(rc){
 		client_config_cleanup(&cfg);
@@ -375,14 +386,30 @@ int main(int argc, char *argv[])
 	do{
 		if(mode == MSGMODE_STDIN_LINE){
 			if(status == STATUS_CONNACK_RECVD){
-				if(fgets(buf, 1024, stdin)){
-					buf[strlen(buf)-1] = '\0';
-					rc2 = mosquitto_publish(mosq, &mid_sent, topic, strlen(buf), buf, qos, retain);
-					if(rc2){
-						if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
-						mosquitto_disconnect(mosq);
+				pos = 0;
+				read_len = buf_len;
+				while(fgets(&buf[pos], read_len, stdin)){
+					buf_len_actual = strlen(buf);
+					if(buf[buf_len_actual-1] == '\n'){
+						buf[buf_len_actual-1] = '\0';
+						rc2 = mosquitto_publish(mosq, &mid_sent, topic, buf_len_actual, buf, qos, retain);
+						if(rc2){
+							if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
+							mosquitto_disconnect(mosq);
+						}
+						break;
+					}else{
+						buf_len += 1024;
+						pos += 1023;
+						read_len = 1024;
+						buf = realloc(buf, buf_len);
+						if(!buf){
+							fprintf(stderr, "Error: Out of memory.\n");
+							return 1;
+						}
 					}
-				}else if(feof(stdin)){
+				}
+				if(feof(stdin)){
 					last_mid = mid_sent;
 					status = STATUS_WAITING;
 				}
