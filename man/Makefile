@@ -64,7 +64,7 @@ html : *.xml
 	set -e; for m in *.xml; \
 		do \
 		hfile=$$(echo $${m} | sed -e 's#\(.*\)\.xml#\1#' | sed -e 's/\./-/g'); \
-		$(XSLTPROC) html.xsl $${m} > $${hfile}.php; \
+		$(XSLTPROC) html.xsl $${m} > $${hfile}.html; \
 	done
 
 potgen :
