@@ -47,6 +47,10 @@ There are further details at
 
 - <https://wiki.eclipse.org/Development_Resources/Handling_Git_Contributions>
 
+If your contribution is a fix for a bug, please use the 'fixes' branch as the
+base for your work. If you are proposing new behaviour/features please use the
+'develop' branch.
+
 Once the patch is pushed back to Gerrit, the project committers will be
 informed and they will undertake a review of the code. The patch may need
 modifying for some reason. In order to make amending commits more
