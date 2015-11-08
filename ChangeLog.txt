@@ -1,3 +1,16 @@
+1.4.5 - 20151108
+================
+
+Broker:
+- Fix possible memory leak if bridge using SSL attempts to connect to a
+  host that is not up.
+- Free unused topic tree elements (fix in 1.4.3 was incomplete). Closes
+  #468987.
+
+Clients:
+- "mosquitto_pub -l" now no longer limited to 1024 byte lines. Closes #478917.
+
+
 1.4.4 - 20150916
 ================
 

@@ -553,20 +553,22 @@ static struct _mosquitto_subhier *tmp_remove_subs(struct _mosquitto_subhier *sub
 	if(!sub || !sub->parent){
 		return NULL;
 	}
-	if(sub->children || sub->subs || sub->next){
+
+	if(sub->children || sub->subs){
 		return NULL;
 	}
 
 	parent = sub->parent;
 	hier = sub->parent->children;
+
 	while(hier){
 		if(hier == sub){
 			if(last){
-				last->next = sub->next;
+				last->next = hier->next;
 			}else{
-				parent->children = NULL;
+				parent->children = hier->next;
 			}
-			if(sub->topic) _mosquitto_free(sub->topic);
+			_mosquitto_free(sub->topic);
 			_mosquitto_free(sub);
 			break;
 		}
