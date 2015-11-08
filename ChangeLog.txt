@@ -1,3 +1,6 @@
+1.4.5 - 20151108
+================
+
 Broker:
 - Fix possible memory leak if bridge using SSL attempts to connect to a
   host that is not up.
