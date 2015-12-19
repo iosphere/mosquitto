@@ -29,6 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_WEBSOCKETS
 
+#include <lws_config.h>
 #include <libwebsockets.h>
 #include "mosquitto_internal.h"
 #include "mosquitto_broker.h"
@@ -49,13 +50,22 @@ extern unsigned long g_pub_msgs_sent;
 #endif
 extern struct mosquitto_db int_db;
 
+#if defined(LWS_LIBRARY_VERSION_NUMBER)
+static int callback_mqtt(
+#else
 static int callback_mqtt(struct libwebsocket_context *context,
+#endif
 		struct libwebsocket *wsi,
 		enum libwebsocket_callback_reasons reason,
 		void *user,
 		void *in,
 		size_t len);
+
+#if defined(LWS_LIBRARY_VERSION_NUMBER)
+static int callback_http(
+#else
 static int callback_http(struct libwebsocket_context *context,
+#endif
 	struct libwebsocket *wsi,
 	enum libwebsocket_callback_reasons reason,
 	void *user,
@@ -95,7 +105,9 @@ static struct libwebsocket_protocols protocols[] = {
 		0,
 #endif
 		NULL,
+#if !defined(LWS_LIBRARY_VERSION_NUMBER)
 		0
+#endif
 	},
 	{
 		"mqtt",
@@ -106,7 +118,9 @@ static struct libwebsocket_protocols protocols[] = {
 		1,
 #endif
 		NULL,
+#if !defined(LWS_LIBRARY_VERSION_NUMBER)
 		0
+#endif
 	},
 	{
 		"mqttv3.1",
@@ -117,10 +131,16 @@ static struct libwebsocket_protocols protocols[] = {
 		1,
 #endif
 		NULL,
+#if !defined(LWS_LIBRARY_VERSION_NUMBER)
 		0
+#endif
 	},
 #ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
+#  if defined(LWS_LIBRARY_VERSION_NUMBER)
+	{ NULL, NULL, 0, 0, 0, NULL}
+#  else
 	{ NULL, NULL, 0, 0, 0, NULL, 0}
+#  endif
 #else
 	{ NULL, NULL, 0, 0, NULL, 0}
 #endif
@@ -135,7 +155,11 @@ static void easy_address(int sock, struct mosquitto *mosq)
 	}
 }
 
+#if defined(LWS_LIBRARY_VERSION_NUMBER)
+static int callback_mqtt(
+#else
 static int callback_mqtt(struct libwebsocket_context *context,
+#endif
 		struct libwebsocket *wsi,
 		enum libwebsocket_callback_reasons reason,
 		void *user,
@@ -158,7 +182,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 		case LWS_CALLBACK_ESTABLISHED:
 			mosq = mqtt3_context_init(db, WEBSOCKET_CLIENT);
 			if(mosq){
+#if !defined(LWS_LIBRARY_VERSION_NUMBER)
 				mosq->ws_context = context;
+#endif
 				mosq->wsi = wsi;
 				u->mosq = mosq;
 			}else{
@@ -342,7 +368,11 @@ static int callback_mqtt(struct libwebsocket_context *context,
 }
 
 
+#if defined(LWS_LIBRARY_VERSION_NUMBER)
+static int callback_http(
+#else
 static int callback_http(struct libwebsocket_context *context,
+#endif
 		struct libwebsocket *wsi,
 		enum libwebsocket_callback_reasons reason,
 		void *user,
@@ -368,7 +398,11 @@ static int callback_http(struct libwebsocket_context *context,
 				return -1;
 			}
 
+#if defined(LWS_LIBRARY_VERSION_NUMBER)
+			hack = (struct libws_mqtt_hack *)lws_context_user(lws_get_context(wsi));
+#else
 			hack = (struct libws_mqtt_hack *)libwebsocket_context_user(context);
+#endif
 			if(!hack){
 				return -1;
 			}

@@ -207,8 +207,12 @@ struct mosquitto {
 	int sub_count;
 	int pollfd_index;
 #  ifdef WITH_WEBSOCKETS
+#    if defined(LWS_LIBRARY_VERSION_NUMBER)
+	struct lws *wsi;
+#    else
 	struct libwebsocket_context *ws_context;
 	struct libwebsocket *wsi;
+#    endif
 #  endif
 #else
 #  ifdef WITH_SOCKS
