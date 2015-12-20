@@ -1,3 +1,18 @@
+1.4.6 - 20151220
+================
+
+Broker:
+- Add support for libwebsockets 1.6.
+
+Client library:
+- Fix _mosquitto_socketpair() on Windows, reducing the chance of delays when
+  publishing. Closes #483979.
+
+Clients:
+- Fix "mosquitto_pub -l" stripping the final character on a line. Closes
+  #483981.
+
+
 1.4.5 - 20151108
 ================
 

@@ -32,7 +32,8 @@ Contributors:
 #endif
 
 #ifdef WITH_WEBSOCKETS
-#include <libwebsockets.h>
+#  include <lws_config.h>
+#  include <libwebsockets.h>
 #endif
 
 #ifdef WITH_SYS_TREE

@@ -392,7 +392,7 @@ int main(int argc, char *argv[])
 					buf_len_actual = strlen(buf);
 					if(buf[buf_len_actual-1] == '\n'){
 						buf[buf_len_actual-1] = '\0';
-						rc2 = mosquitto_publish(mosq, &mid_sent, topic, buf_len_actual, buf, qos, retain);
+						rc2 = mosquitto_publish(mosq, &mid_sent, topic, buf_len_actual-1, buf, qos, retain);
 						if(rc2){
 							if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
 							mosquitto_disconnect(mosq);

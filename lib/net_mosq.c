@@ -68,6 +68,7 @@ Contributors:
    extern unsigned long g_pub_msgs_sent;
 #  endif
 #  ifdef WITH_WEBSOCKETS
+#    include <lws_config.h>
 #    include <libwebsockets.h>
 #  endif
 #else
@@ -1125,10 +1126,6 @@ int _mosquitto_socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 			continue;
 		}
 
-		if(_mosquitto_socket_nonblock(listensock)){
-			continue;
-		}
-
 		if(family[i] == AF_INET){
 			sa->sin_family = family[i];
 			sa->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -1145,6 +1142,7 @@ int _mosquitto_socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 			continue;
 		}
 		if(_mosquitto_socket_nonblock(spR)){
+			COMPAT_CLOSE(spR);
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -1172,6 +1170,7 @@ int _mosquitto_socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 
 		if(_mosquitto_socket_nonblock(spW)){
 			COMPAT_CLOSE(spR);
+			COMPAT_CLOSE(spW);
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
