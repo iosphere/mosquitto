@@ -68,7 +68,6 @@ Contributors:
    extern unsigned long g_pub_msgs_sent;
 #  endif
 #  ifdef WITH_WEBSOCKETS
-#    include <lws_config.h>
 #    include <libwebsockets.h>
 #  endif
 #else

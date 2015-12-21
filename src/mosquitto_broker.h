@@ -21,7 +21,6 @@ Contributors:
 #include <stdio.h>
 
 #ifdef WITH_WEBSOCKETS
-#  include <lws_config.h>
 #  include <libwebsockets.h>
 
 #  if defined(LWS_LIBRARY_VERSION_NUMBER)
