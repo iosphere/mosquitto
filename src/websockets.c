@@ -29,7 +29,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_WEBSOCKETS
 
-#include <lws_config.h>
 #include <libwebsockets.h>
 #include "mosquitto_internal.h"
 #include "mosquitto_broker.h"

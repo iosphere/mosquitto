@@ -37,7 +37,6 @@ Contributors:
 #include <time.h>
 
 #ifdef WITH_WEBSOCKETS
-#  include <lws_config.h>
 #  include <libwebsockets.h>
 #endif
 
