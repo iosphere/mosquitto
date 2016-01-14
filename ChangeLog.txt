@@ -1,3 +1,6 @@
+Broker:
+- Fix detection of broken connections on Windows. Closes #485143.
+
 Client library:
 - mosq->want_write should be cleared immediately before a call to SSL_write,
   to allow clients using mosquitto_want_write() to get accurate results.
