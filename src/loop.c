@@ -449,7 +449,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 		}
 
 		assert(pollfds[context->pollfd_index].fd == context->sock);
-		if(pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL)){
+		if(pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
 			do_disconnect(db, context);
 			continue;
 		}
