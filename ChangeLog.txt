@@ -1,4 +1,9 @@
 Broker:
+- Wills published by clients connected to a listener with mount_point defined
+  now correctly obey the mount point. This was a potential security risk
+  because it allowed clients to publish messages outside of their restricted
+  mount point. This is only affects brokers where the mount_point option is in
+  use. Closes #487178.
 - Fix detection of broken connections on Windows. Closes #485143.
 
 Client library:
