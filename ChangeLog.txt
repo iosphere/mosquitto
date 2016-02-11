@@ -5,6 +5,7 @@ Broker:
   mount point. This is only affects brokers where the mount_point option is in
   use. Closes #487178.
 - Fix detection of broken connections on Windows. Closes #485143.
+- Close stdin etc. when daemonised. Closes #485589.
 
 Client library:
 - mosq->want_write should be cleared immediately before a call to SSL_write,
