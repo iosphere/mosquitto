@@ -6,6 +6,7 @@ Broker:
   use. Closes #487178.
 - Fix detection of broken connections on Windows. Closes #485143.
 - Close stdin etc. when daemonised. Closes #485589.
+- Fix incorrect detection of FreeBSD and OpenBSD. Closes #485131.
 
 Client library:
 - mosq->want_write should be cleared immediately before a call to SSL_write,
