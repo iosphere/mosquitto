@@ -1,3 +1,6 @@
+1.4.8 - 20150214
+================
+
 Broker:
 - Wills published by clients connected to a listener with mount_point defined
   now correctly obey the mount point. This was a potential security risk
@@ -11,6 +14,7 @@ Broker:
 Client library:
 - mosq->want_write should be cleared immediately before a call to SSL_write,
   to allow clients using mosquitto_want_write() to get accurate results.
+
 
 1.4.7 - 20151221
 ================
