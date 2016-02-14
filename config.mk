@@ -83,7 +83,7 @@ WITH_SOCKS:=yes
 
 # Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto-cygwin.nsi
-VERSION=1.4.7
+VERSION=1.4.8
 TIMESTAMP:=$(shell date "+%F %T%z")
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
@@ -115,7 +115,7 @@ LIB_LDFLAGS:=${LDFLAGS}
 BROKER_CFLAGS:=${LIB_CFLAGS} ${CPPFLAGS} -DVERSION="\"${VERSION}\"" -DTIMESTAMP="\"${TIMESTAMP}\"" -DWITH_BROKER
 CLIENT_CFLAGS:=${CFLAGS} ${CPPFLAGS} -I../lib -DVERSION="\"${VERSION}\""
 
-ifneq ($(or $(find $(UNAME),FreeBSD), $(find $(UNAME),OpenBSD)),)
+ifneq ($(or $(findstring $(UNAME),FreeBSD), $(findstring $(UNAME),OpenBSD)),)
 	BROKER_LIBS:=-lm
 else
 	BROKER_LIBS:=-ldl -lm

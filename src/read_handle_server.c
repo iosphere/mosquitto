@@ -82,6 +82,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	uint8_t connect_ack = 0;
 	char *client_id = NULL;
 	char *will_payload = NULL, *will_topic = NULL;
+	char *will_topic_mount;
 	uint16_t will_payloadlen;
 	struct mosquitto_message *will_struct = NULL;
 	uint8_t will, will_retain, will_qos, clean_session;
@@ -240,6 +241,21 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = 1;
 			goto handle_connect_error;
 		}
+
+		if(context->listener && context->listener->mount_point){
+			slen = strlen(context->listener->mount_point) + strlen(will_topic);
+			will_topic_mount = _mosquitto_malloc(slen+1);
+			if(!will_topic_mount){
+				rc = MOSQ_ERR_NOMEM;
+				goto handle_connect_error;
+			}
+			snprintf(will_topic_mount, slen, "%s%s", context->listener->mount_point, will_topic);
+			will_topic_mount[slen] = '\0';
+
+			_mosquitto_free(will_topic);
+			will_topic = will_topic_mount;
+		}
+
 		if(mosquitto_pub_topic_check(will_topic)){
 			rc = 1;
 			goto handle_connect_error;

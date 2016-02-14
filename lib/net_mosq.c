@@ -712,6 +712,7 @@ ssize_t _mosquitto_net_write(struct mosquitto *mosq, void *buf, size_t count)
 	errno = 0;
 #ifdef WITH_TLS
 	if(mosq->ssl){
+		mosq->want_write = false;
 		ret = SSL_write(mosq->ssl, buf, count);
 		if(ret < 0){
 			err = SSL_get_error(mosq->ssl, ret);

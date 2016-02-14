@@ -863,7 +863,6 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 		if(mosq->ssl){
 			if(mosq->want_write){
 				FD_SET(mosq->sock, &writefds);
-				mosq->want_write = false;
 			}else if(mosq->want_connect){
 				/* Remove possible FD_SET from above, we don't want to check
 				 * for writing if we are still connecting, unless want_write is
