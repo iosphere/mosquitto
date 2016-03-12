@@ -11,7 +11,13 @@ matrix:
   allow_failures:
     - os: osx
 
-script: make ; make test
+branches:
+  except:
+    - debian
+
+script:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make ; make test ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake . ; make ; make test ; fi
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq ; fi
